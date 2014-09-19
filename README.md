@@ -5,5 +5,8 @@ This is the workspace for master project of M.Gao, which contains current progre
 
 The middle and final presentation will take place after Christmas and before 15.April 2015 respectively.
 
+If you have any kind of comments and suggestions, please feel free to contact Maolin Gao(maolin.gao@tuebingen.mpg.de).
+
 
 Cheers!
+Maolin
