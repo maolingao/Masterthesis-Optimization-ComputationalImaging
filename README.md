@@ -1,15 +1,7 @@
-Masterthesis-Optimization-ComputationalImaging
+NOCI
 ==============================================
 
-I am master student of EECS at Technology University of Munich, currently I am working on my master thesis at department of Empirical Inference(Prof. Schölkopf), Max-Planck-Institut of Intelligent Systems at Tübingen, Germany. My supervisors for this project are Dr. Philipp Hennig and Dr. Michael Hirsch. This is the repository for master project, which contains newest progress, discussion ideas/notes ,and relevant working materials of the project.
+NOCI(stands for Numerial Optimization in Computational Imaging) is a project by Maolin Gao, Philipp Henning and Michael Hirsch.
 
+Main aim is by employing probabilistic numerical inference to tackle astronomical problem. Specifically making full use of image sequence to deconvolve blurry astronomical images.
 
-The middle and final presentation will take place after Christmas and before 15.April 2015 respectively.
-
-
-If you have any kind of comments and suggestions, please feel free to contact Maolin Gao(maolin.gao@tuebingen.mpg.de).
-
-
-Cheers!
-
-Maolin
