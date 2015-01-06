@@ -16,6 +16,9 @@ F = conv2MatOp(kernel,xsize,shape);
 % convolution
 convIm = F*nature;
 %% add noise
+SNR = 10;
+convIm = addnoise(convIm, SNR, nature);
+
 %% setups
 iter =  100;
 % initial guess
@@ -37,11 +40,14 @@ end
 function [im,f] = initialize
     % initiallize
     % ground truth
-    X = im2double(imread('cameraman.tif'));
+%     X = im2double(imread('cameraman.tif'));
+    load('satel.mat');
     im = im2double(X);
     im = im./max(vec(im));
     % filter
-    f = fspecial('motion', 15, 30);
+%     f = fspecial('motion', 15, 30);
+    load('AtmosphericBlur30.mat');
+    f = PSF;
     scale = 31/length(f); f = imresize(f,scale);
     f = f/sum(f(:));
 end
