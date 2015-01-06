@@ -97,14 +97,9 @@ for i = 1 : (iter + 1)
     %}
     % Tai code    
     [gx,gy] = gradient(lucy_dI);
-    [ggx,~] = gradient(flip(gx,2));
-    [~,ggy] = gradient(flip(gy,2));
-    rt = abs(gx).*ggx + abs(gy).*ggy ;
+    [ggx,~] = gradient(gx);
+    [gx,gy] = gradient(gy);
     
-     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));         % clip pixel here btw 0 and 1
-%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
-   
-    lucy_dI = clip(lucy_dI,1,0);    
     %{
     % easy update by Levin
     LI = clip(laplacian(lucy_dI), inf, -inf);

@@ -1,4 +1,4 @@
-function Lf = laplacian(f, domain)
+function Lf = lap(f, domain)
 if ~exist('domain', 'var')
   Lf = -4*del2(f);
 elseif exist('domain', 'var')

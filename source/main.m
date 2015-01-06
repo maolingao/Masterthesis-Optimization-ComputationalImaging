@@ -22,9 +22,10 @@ convIm = addnoise(convIm, SNR, nature);
 %% setups
 iter =  100;
 % initial guess
-ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % nfactor
+ci = 1; % start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % nfactor
+start = nature;
 tol = 1e-20; 
-eta = 0.5;
+eta = 0.01;
 % ### call pncg ###
 H = hessianMatrix(eye(size(F'*convIm)));
 pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta);

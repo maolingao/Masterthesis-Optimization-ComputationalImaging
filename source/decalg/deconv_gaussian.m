@@ -66,8 +66,8 @@ for i = 1 : (iter + 1)
     bgau = clip(F'*im,inf, 0);
 %     agau = clip( ( F'*(F*gaussian_dI) + eta*((Lp*gaussian_dI)) ) ,inf,0);
 %     cgau = clip(eta*((Ln*gaussian_dI)), inf, 0);
-    agau = clip( ( F'*(F*gaussian_dI) + eta*(laplacian(gaussian_dI,'+')) ) ,inf,0);
-    cgau = clip(eta*(laplacian(gaussian_dI,'-')), inf, 0);
+    agau = clip( ( F'*(F*gaussian_dI) + eta*(lap(gaussian_dI,'+')) ) ,inf,0);
+    cgau = clip(eta*(lap(gaussian_dI,'-')), inf, 0);
     
     nom = bgau + sqrt(bgau.*bgau + 4*agau.*cgau) + epsl;
     denom = 2.*agau + epsl;
@@ -96,31 +96,17 @@ f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',blu),hold on,
 f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',blu),hold on
 %
 %----- image evolution and residual curve -----
-figPath = '/is/ei/mgao/Documents/thesis/notes/meetingReport/fig';
+figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
 %
 f2 = figure(2); set(f2,'visible','on')
-filename = ['deconv_gaussian_with_curve','.tikz'];
+filename = 'deconv_gaussian_with_curve';
 filename = fullfile(figPath,filename);
-  matlab2tikz(filename,'standalone',true,...
-      'width','\fwidth','height','\fheight',...
-      'parseStrings',false,...
-      'extraAxisOptions',...
-    {'xlabel near ticks','ylabel near ticks','scale only axis',...
-    'label style={font=\footnotesize}', ...
-    'legend style={font=\tiny}'...
-    'title style={font=\footnotesize}'...
-    'xticklabel style={font=\footnotesize}','yticklabel style={font=\footnotesize}'},...
-    'showInfo', false);
+print(gcf, '-depsc2', filename)
 %----- gaussian deconved image -----
 f_gaussian = figure; set(f_gaussian,'visible','off');
 imagesc(clip(gaussian_dI,1,0)); axis equal, colormap(gray)
 title('my gaussian')
-filename = ['deconv_gaussian','.tikz'];
+filename = 'deconv_gaussian';
 filename = fullfile(figPath,filename);
-  matlab2tikz(filename,'standalone',true,...
-      'width','\fwidth','height','\fheight',...
-      'parseStrings',false,...
-      'extraAxisOptions',...
-      {'title style={font=\small}','hide x axis', 'hide y axis'},...
-      'showInfo', false);
+print(gcf, '-depsc2', filename)
 end
