@@ -135,6 +135,7 @@ for k = 1:numel(b)
     
 end
 figure(22), set(gcf,'visible','off'), plot(err,'Color',color), drawnow,hold on, set(gca,'Yscale','log')
-keyboard
+% keyboard
 
+clear H_crt
 end

@@ -84,21 +84,10 @@ if i == 1
     r_origin = b - A * x_start;
 else
 %     x_start = H_SU * (b - A^H_SU.i * r_origin) ; 
-    x_start = H_SU * (b - r_origin) ;  % # star #
+    x_start = H_SU * (b - r_origin) ; 
 end
     r0 = b - A*x_start;
-    switch i
-        case 1
-            figure(99),clf, plot(r0, 'r-*'), hold on
-        case 2
-            figure(99), plot(r0, 'b'), hold on
-        case 3
-            figure(99), plot(r0, 'k'), hold on
-        case 4
-            figure(99), plot(r0, 'y'), hold on
-        case 5
-            figure(99), plot(r0, 'g'), hold on
-    end
+    swit
 
 % [x_sol,H]= pncg_Hmfd(A,b,H);
 x_cg = cg(A,b,tol,iter);
