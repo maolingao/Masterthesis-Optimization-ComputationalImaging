@@ -6,7 +6,7 @@ function convIm = main(shape)
 startup;
 % option setup
 option.version = 'FH';
-option.figPath = '/is/ei/mgao/Documents/thesis/article/figure/lucy_regularization';
+option.figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
 
 % call class
 if nargin == 0
@@ -19,16 +19,16 @@ F = conv2MatOp(kernel,xsize,shape);
 % convolution
 convIm = F*nature;
 %% add noise
-% SNR = 10;
-% % convIm = addnoise(convIm, SNR, nature);
+SNR = 10;
+convIm = addnoise(convIm, SNR, nature);
 setupConv;
 %% setups
-iter =  5;
+iter =  100;
 % initial guess
 ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % nfactor
 % start = nature;
 tol = 1e-20; 
-eta = 0;
+eta = 0.01;
 % ### call pncg ###
 H = hessianMatrix(eye(size(F'*convIm)));
 pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
