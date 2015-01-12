@@ -1,0 +1,43 @@
+function Hup = updateH(H,MEMLIM)
+% class object H low rank update
+% make new class instance with updated L, R and clean up s, y, delta
+
+if nargin < 2    
+    MEMLIM = 90;                    % rank limit 
+end
+epsl = 1e-15;
+m = (H.i-1);
+y_norm = nan(1,m);
+s_norm = nan(1,m);
+for k = 1 : m
+    y_norm(k) = norm(H.y(:,k));
+    s_norm(k) = norm(H.s(:,k));
+end
+% y_norm = ones(1,m); % recover normal update H
+% s_norm = ones(1,m); % recover normal update H
+y_norm = repmat(y_norm, length(H.s(:,1)),1);
+s_norm = repmat(s_norm, length(H.s(:,1)),1);
+y = (H.y) ./ y_norm;
+s = (H.s) ./ s_norm;
+factor = y_norm(1:m,1:m)' .* s_norm(1:m,1:m); % H.y' * H.s == y' * s .* factor
+                                              % but y' * s is more
+                                              % numerical stable to invert.
+                                              
+% keyboard
+gram = diag(1./(diag(y' * s) + epsl));
+gram = gram ./ (factor + epsl);
+if isempty(H.l)
+    LH = [H.delta * gram, H.s * gram, - H.s * gram * (H.y' * H.delta)]; % build L and R for H
+    RH = [H.s, H.delta, H.s * gram];
+else
+keyboard
+    LH = [H.l, H.delta * gram, H.s * gram, - H.s * gram * (H.y' * H.delta)]; % build L and R for H
+    RH = [H.r, H.s,            H.delta,      H.s * gram                   ];
+end
+
+[L,R] = reduce(LH, RH, MEMLIM);   % reduce rank down to MEMLIM
+
+H0 = H.H;
+Hup = hessianMatrix(H0, L, R);    % update H, make new instance
+
+end

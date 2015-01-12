@@ -51,6 +51,7 @@ classdef hessianMatrix < handle
             
                 epsl = 1e-30;
                 % working version, using all terms to update H
+                %{%
                 tail = 0; % (update)
                 for k = 1 : obj.i - 1
 %                 tail = tail + (obj.s(:,k)'*obj.y(:,k) + epsl )\(obj.delta(:,k)*(obj.s(:,k)'*vec(x)) + epsl ) + ...
@@ -62,19 +63,20 @@ classdef hessianMatrix < handle
                         (den + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*vec(x))  ) - ...
                         (den^2 + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*obj.y(:,k))*(obj.s(:,k)'*vec(x)) );
                 end
+                %}
                 % ########################
                 % check, update fasion of H
-                %{
+                %{%
                 % *** update form: H = H0 + l*r' + tail ***
                 if ~isempty(obj.l)
                     lrt = obj.l*(obj.r'*vec(x));
-                    outp = vec(x) + vec(lrt) + tail; % output = vec(I*x) + tail
+                    outp = vec(x) + vec(lrt) + tail; % output = vec(I*x) + l*r'*vex(x) + tail
                 else
-                    outp = vec(x) + tail; % output = vec(I*x) + tail
+                    outp = vec(x) + tail;            % output = vec(I*x) + tail
                 end
                 %}
                 % *** update form: H = H0 + tail ***
-                outp = vec(x) + tail; % output = vec(I*x) + tail
+%                 outp = vec(x) + tail;              % output = vec(I*x) + tail
                 % ########################
                 
         end
@@ -97,7 +99,7 @@ classdef hessianMatrix < handle
                         (den + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*vec(x)) ) - ...
                         (den^2 + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*obj.y(:,end))*(obj.s(:,end)'*vec(x))  );
 %                 end
-                %}
+
                 outp = tail; % output = tail(last term)
 %                 outp = vec(obj.H*x) + tail; % H_i+1 <-- H_i + (update)
                 

@@ -1,4 +1,5 @@
-function x = cg(A,b,tol,iter)
+function [x] = cg(A,b,x_start,tol,iter)
+
 % example
 %{
   n = 6000;
@@ -10,20 +11,23 @@ function x = cg(A,b,tol,iter)
   norm(A*x-b)
 %}
 startup;
-
 if nargin < 3
+    x_start = b;
+end
+
+if nargin < 4
     tol = 10^-10;
 end
-if nargin < 4
+if nargin < 5
     iter = 100;
 end
-
-x = b;
+x = x_start;
 r = A*x - b;
 p = -r;
 epsl = 1e-30; % numerical stability
 
 err= [];
+
 for k = 1:numel(b)
     err = [err,norm(r)];
     figure(2), plot(err,'Color',blu), drawnow,hold on, set(gca,'Yscale','log');
@@ -42,7 +46,7 @@ for k = 1:numel(b)
         beta = ((r_1'*r_1) + epsl)\(r'*r);
         p_1 = p;
         p = -r + beta*p_1;
-        orth = p_1'*A*p
+        conj = p_1'*A*p
     end
     
 end

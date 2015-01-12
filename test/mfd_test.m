@@ -75,18 +75,22 @@ keyboard
 %% precondition
 %{%
 H_SU = hessianMatrix(eye(size(A)));
-for i = 1: 5
+residual_pncg_allframe = [];
+for i = 1: 7
 
 x = rand(n,1);
 b = A*x;
+
 if i == 1
-    x_start = zeros(size(b)); % b; %
-    r_origin = b - A * x_start;
+    x_start =  b; % zeros(size(b)); %
+    r_origin = A * x_start - b;
+    b_orth = b;
 else
-%     x_start = H_SU * (b - A^H_SU.i * r_origin) ; 
-    x_start = H_SU * (b - r_origin) ;  % # star #
+    [b_orth, alpha] = split(b,b_1);
+    x_start = H_SU * (b_orth + r_origin) ;  % # star #
+%     keyboard
 end
-    r0 = b - A*x_start;
+    r0 = A*x_start - b_orth;
     switch i
         case 1
             figure(99),clf, plot(r0, 'r-*'), hold on
@@ -98,18 +102,56 @@ end
             figure(99), plot(r0, 'y'), hold on
         case 5
             figure(99), plot(r0, 'g'), hold on
+        otherwise
+            figure(99), plot(r0, 'm'), hold on            
     end
 
-% [x_sol,H]= pncg_Hmfd(A,b,H);
-x_cg = cg(A,b,tol,iter);
+[x_cg] = cg(A,b_orth,x_start,tol,iter);
+if i == 1
+    NOP;
+else
+    [x_cg] = assemble(x_cg, x_cg_1, alpha);
+end
+x_cg_1 = x_cg;
+
 %
-option.version = 'SU';
+option.version = 'FH';
 if i == 1
     option.flag = 0;
 else
     option.flag = 1;
 end
-[x_sol,H_SU]= pncg_Hmfd(A,b,H_SU,x_start,tol,iter,option);
+% keyboard
+[x_pncg,H_SU,~,residual_pncg]= pncg_Hmfd(A,b_orth,H_SU,x_start,tol,iter,option);
+residual_pncg_allframe = [residual_pncg_allframe,residual_pncg];
+if i == 1
+    NOP;
+else
+    [x_pncg] = assemble(x_pncg, x_pncg_1, alpha);
+end
+x_pncg_1 = x_pncg;
+b_1 = b;
+% keyboard
+% H_SU_up = updateH(H_SU,10);
+
+% Gram matrix
+figure(101), imagesc(log10(abs((H_SU.s'*H_SU.y)))), colormap gray,  axis equal 
+colorbar('southoutside')
+figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
+figname = fullfile(figPath,figname);
+print('-depsc2', figname);
+% % % residual matrix
+% % figure(102), imagesc(log10(abs((residual_pncg_allframe'*H_SU.s)))), colormap gray,  axis equal 
+% % colorbar('southoutside')
+% % figname = strcat('rp_toy_',option.version,'_', num2str(i), '.eps');
+% % figname = fullfile(figPath,figname);
+% % print('-depsc2', figname);
+
+% keyboard
+% clear H_SU
+% H_SU = H_SU_up;
+% clear H_SU_up
+
 % #########
 % residual
 figure(22),set(gcf,'visible','off'),legend('Nocedal','pncg-SU')
@@ -123,13 +165,7 @@ figure(1), imagesc(log10(abs(A*H_mtx))), colormap gray, axis equal
 colorbar('southoutside')
 figname = strcat('HA_toy_',option.version,'_', num2str(i), 'frames.eps');
 figname = fullfile(figPath,figname);
-print('-depsc2',figname)
-% Gram matrix
-figure(101), imagesc(log10(abs((H_SU.s'*H_SU.y)))), colormap gray,  axis equal 
-colorbar('southoutside')
-figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
-figname = fullfile(figPath,figname);
-print('-depsc2',figname)
+print('-depsc2',figname);
 end
 
 figure(997)
@@ -150,11 +186,11 @@ x = rand(n,1);
 b = A*x;
 x_start = b; % zeros(size(b));  % only allow zero as initial guess
 % [x_sol,H]= pncg_Hmfd(A,b,H);
-x_cg = cg(A,b,tol,iter);
+x_cg = cg(A,b,x_start,tol,iter);
 %
 option.flag = 0;
 option.version = 'CG';
-[x_sol,H_CG]= pncg_Hmfd(A,b,H_CG,x_start,tol,iter,option);
+[x_pncg,H_CG]= pncg_Hmfd(A,b,H_CG,x_start,tol,iter,option);
 % #########
 % residual
 figure(22),set(gcf,'visible','off'),legend('Nocedal','pncg-exact')
@@ -177,7 +213,7 @@ figname = fullfile(figPath,figname);
 print('-depsc2',figname)
 %
 option.version = 'FH';
-[x_sol,H_FH]= pncg_Hmfd(A,b,H_FH,x_start,tol,iter,option);
+[x_pncg,H_FH]= pncg_Hmfd(A,b,H_FH,x_start,tol,iter,option);
 % A*H_mtx -> asymptotic identity matrix
 clear H, H = H_FH;
 buildH;
