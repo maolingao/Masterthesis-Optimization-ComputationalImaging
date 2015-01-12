@@ -1,10 +1,16 @@
-function [lucy_dI,errs] = deconv_rl(F,im,iter,nature,start,eta)
+function [lucy_dI,errs] = deconv_rl(F,im,iter,nature,start,eta,option)
 % Richardson-Lucy deconvolution
 startup;
 
 if nargin < 5
     start = F'*im;
     % start = start./sum(start(:)); % nfactor
+end
+if nargin < 6
+    eta = 0;
+end
+if nargin < 7
+    option.figPath = '/is/ei/mgao/figure2drag';
 end
 
 lucy_dI = start; % custermized start guess; 
@@ -163,7 +169,7 @@ f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',ora),hold on,
 f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',ora),hold on
 %
 %----- image evolution and residual curve -----
-figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
+figPath = option.figPath;
 %
 f1 = figure(1); set(f1,'visible','on')
 filename = 'deconv_lucy_with_curve';

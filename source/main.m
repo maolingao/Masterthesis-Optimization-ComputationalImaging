@@ -4,10 +4,13 @@ function convIm = main(shape)
 % [kernel,nature] = initialize; % <-- guess kernel
 
 startup;
+% option setup
+option.version = 'FH';
+option.figPath = '/is/ei/mgao/Documents/thesis/article/figure/lucy_regularization';
 
 % call class
 if nargin == 0
-    shape = 'full';
+    shape = 'same';
 end
 
 xsize = size(nature);
@@ -16,26 +19,28 @@ F = conv2MatOp(kernel,xsize,shape);
 % convolution
 convIm = F*nature;
 %% add noise
-SNR = 10;
-convIm = addnoise(convIm, SNR, nature);
-
+% SNR = 10;
+% % convIm = addnoise(convIm, SNR, nature);
+setupConv;
 %% setups
-iter =  100;
+iter =  5;
 % initial guess
-ci = 1; % start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % nfactor
-start = nature;
+ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % nfactor
+% start = nature;
 tol = 1e-20; 
-eta = 0.01;
+eta = 0;
 % ### call pncg ###
 H = hessianMatrix(eye(size(F'*convIm)));
-pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta);
+pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
 % ### call cg ###
-cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta);
+cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta,option);
 % ### call lucy ###
-lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta);
+lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta,option);
 % ### call gaussian ###
-gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta);
+gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta,option);
 
+% plot
+saveResultFigure;
 end
 %%
 function [im,f] = initialize

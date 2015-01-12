@@ -1,10 +1,18 @@
-function [gaussian_dI,errs] = deconv_gaussian(F,im,iter,nature,start,eta)
+function [gaussian_dI,errs] = deconv_gaussian(F,im,iter,nature,start,eta,option)
 % Gaussian noise deconvolution
 startup;
 
 if nargin < 5
     start = F'*im;
     % start = start./sum(start(:)); % nfactor
+end
+
+if nargin < 6
+    eta = 0;
+end
+
+if nargin < 7
+    option.figPath = '/is/ei/mgao/figure2drag';
 end
 
 %##### setup #####
@@ -96,7 +104,7 @@ f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',blu),hold on,
 f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',blu),hold on
 %
 %----- image evolution and residual curve -----
-figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
+figPath = option.figPath;
 %
 f2 = figure(2); set(f2,'visible','on')
 filename = 'deconv_gaussian_with_curve';
@@ -104,7 +112,7 @@ filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
 %----- gaussian deconved image -----
 f_gaussian = figure; set(f_gaussian,'visible','off');
-imagesc(clip(gaussian_dI,1,0)); axis equal, colormap(gray)
+imagesc(clip(gaussian_dI,1,0)); axis equal off, colormap(gray)
 title('my gaussian')
 filename = 'deconv_gaussian';
 filename = fullfile(figPath,filename);

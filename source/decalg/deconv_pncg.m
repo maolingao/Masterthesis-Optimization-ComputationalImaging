@@ -23,6 +23,7 @@ if nargin < 8
 end
 if nargin < 9
     option.version = 'FH';
+    option.figPath = '/is/ei/mgao/figure2drag';
 end
 
 b = F'*im;
@@ -143,8 +144,8 @@ for k = 1:(iter + 1)  %numel(im)
         
         % ###################
         tElapsed = toc(tStart);
-% orthogonal
-        orth = p_1'*vec(vec((F'*(F*reshape(p,imageSize))))  + vec(eta*(L*reshape(p,imageSize))) + a*p)
+% conjugate
+        conj = p_1'*vec(vec((F'*(F*reshape(p,imageSize))))  + vec(eta*(L*reshape(p,imageSize))) + a*p)
         time = [time;time(end)+tElapsed];
     end
     
@@ -169,7 +170,7 @@ f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',dre),hold on,
 f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',dre),hold on
 %
 %----- image evolution and residual curve -----
-figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
+figPath = option.figPath;
 %
 f4 = figure(4); set(f4,'visible','on')
 filename = 'deconv_pncg_with_curve';

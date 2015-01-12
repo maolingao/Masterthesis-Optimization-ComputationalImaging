@@ -1,4 +1,4 @@
-function [cg_dI,errs,tDeconv] = deconv_cg(F,im,nature,iter,start,tol,eta)
+function [cg_dI,errs,tDeconv] = deconv_cg(F,im,nature,iter,start,tol,eta,option)
 % conjugate gradient
 
 startup;
@@ -15,6 +15,12 @@ if nargin < 5
 end
 if nargin < 6
     tol = 10^-6;
+end
+if nargin < 7
+    eta = 0;
+end
+if nargin < 8
+    option.figPath = '/is/ei/mgao/figure2drag';
 end
 
 b = F'*im;
@@ -93,7 +99,8 @@ for i = 1: (iter + 1)  %numel(im)
         p = -r(:) + beta*p_1;
         tElapsed = toc(tStart);
         time = [time;time(end)+tElapsed];
-        orth = p_1'*vec((F'*(F*reshape(p,imageSize))) + eta*(L*(reshape(p,imageSize))) + a*reshape(p,imageSize))
+% conjugate
+        conj = p_1'*vec((F'*(F*reshape(p,imageSize))) + eta*(L*(reshape(p,imageSize))) + a*reshape(p,imageSize))
     end
     
 end
@@ -116,7 +123,8 @@ f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',mpg),hold on,
 f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',mpg),hold on
 %
 %----- image evolution and residual curve -----
-figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
+figPath = option.figPath;
+
 f3 = figure(3); set(f3,'visible','on')
 filename = 'deconv_cg_with_curve';
 filename = fullfile(figPath,filename);
