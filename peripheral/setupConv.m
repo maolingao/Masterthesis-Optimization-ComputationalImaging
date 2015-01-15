@@ -3,10 +3,14 @@
 
 
 figPath = option.figPath;
-figure(12), clf
-figure(10), clf
-figure(11), clf
-figure(13), clf
+% for debug
+figure(14),  set(gcf,'visible','on'), clf
+figure(15),  set(gcf,'visible','on'), clf
+% for latex
+figure(12),  set(gcf,'visible','off'), clf
+figure(10),  set(gcf,'visible','off'), clf
+figure(11),  set(gcf,'visible','off'), clf
+figure(13),  set(gcf,'visible','off'), clf
 
 %----- nature -----
 fnature = figure; set(fnature,'visible','off')

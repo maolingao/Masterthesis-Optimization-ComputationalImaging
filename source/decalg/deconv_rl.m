@@ -47,14 +47,16 @@ for i = 1 : (iter + 1)
     f1 = figure(1);
     subplot(121)
     imagesc(clip(lucy_dI,1,0)); axis image, colormap(gray)
-    title(sprintf('my lucy - Iteration %d/%d',i,iter + 1))
+    title(sprintf('lucy - Iteration %d/%d',i,iter + 1))
     drawnow    
     
     subplot(122)
-    loglog(errs,'Color',ora)        
-    ylabel('$\|Fx - y\| / pixel$','Interpreter','Latex')
-    xlabel('$\#steps$','Interpreter','Latex')
-    drawnow
+    hData = loglog(errs, 'Color', ora);
+    hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+    hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
+    thisFigure;   
+    drawnow 
+    
     if i == (iter + 1)
         break
     end
@@ -153,32 +155,43 @@ for i = 1 : (iter + 1)
 
 end
 
-%##### figure #####
+%%##### figure #####
+%----- main curves -----
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
-%----- main curves -----
 % for debug
-fclk = figure(14);  set(fclk,'visible','on'),subplot(121),loglog(time,errs,'Color',ora),hold on, 
-subplot(122), set(fclk,'visible','on'),loglog(time,rerrs,'Color',ora),hold on
-fstp = figure(15); set(fstp,'visible','on'),subplot(121),loglog(errs,'Color',ora),hold on, 
-subplot(122), set(fstp,'visible','on'),loglog(rerrs,'Color',ora),hold on
+fclk = figure(14); set(fclk,'visible','on'),
+subplot(121), hData = loglog(time ,errs,'Color',ora); thisFigure; hold on
+subplot(122), hData = loglog(time,rerrs,'Color',ora); thisFigure; hold on
+fstp = figure(15); set(fstp,'visible','on'),
+subplot(121), hData = loglog( errs,'Color',ora); thisFigure; hold on
+subplot(122), hData = loglog(rerrs,'Color',ora); thisFigure; hold on
 % for latex
-f10=figure(10); set(f10,'visible','off'),loglog(time,errs,'Color',ora),hold on, 
-f12=figure(12); set(f12,'visible','off'),loglog(time,rerrs,'Color',ora),hold on
-f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',ora),hold on, 
-f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',ora),hold on
+f10=figure(10); set(f10,'visible','off');
+hData = loglog(time, errs,'Color',ora); 
+axis tight; thisFigure; hold on
+f12=figure(12); set(f12,'visible','off');
+hData = loglog(time,rerrs,'Color',ora); 
+axis tight; thisFigure; hold on
+f11=figure(11); set(f11,'visible','off');
+hData = plot(errs, 'Color',ora); 
+set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
+f13=figure(13); set(f13,'visible','off');
+hData = plot(rerrs,'Color',ora); 
+set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 %
 %----- image evolution and residual curve -----
 figPath = option.figPath;
-%
+
 f1 = figure(1); set(f1,'visible','on')
 filename = 'deconv_lucy_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+% keyboard
 %----- lucy deconved image -----
 f_lucy = figure; set(f_lucy,'visible','off');
-imagesc(clip(lucy_dI,1,0)); axis equal, colormap(gray)
-title('my lucy')
+imagesc(clip(lucy_dI,1,0)); axis image off, colormap(gray)
+title('lucy')
 filename = 'deconv_lucy';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)

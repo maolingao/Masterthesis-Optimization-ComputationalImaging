@@ -3,7 +3,7 @@ function [cg_dI,errs,tDeconv] = deconv_cg(F,im,nature,iter,start,tol,eta,option)
 
 startup;
 
-a = 1e-8; % ensure pos-def
+a = 1e-30; % ensure pos-def
 
 if nargin < 4
     iter = 100;
@@ -66,13 +66,14 @@ for i = 1: (iter + 1)  %numel(im)
     f3 = figure(3);
     subplot(121)
     imagesc(clip(cg_dI,1,0)); axis image, colormap(gray)
-    title(sprintf('my cg - iteration %d/%d',i,iter + 1))
+    title(sprintf('cg - iteration %d/%d',i,iter + 1))
     drawnow          
 
     subplot(122)
-    loglog(errs,'Color',mpg)        
-    ylabel('$\|Fx - y\| / pixel$','Interpreter','Latex')
-    xlabel('$\#steps$','Interpreter','Latex')
+    hData = loglog(errs, 'Color', mpg);
+    hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+    hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
+    thisFigure;   
     drawnow
     
     if norm(im_residual) < numel(im_residual)*tol
@@ -112,15 +113,25 @@ tDeconv = time(end);
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
 % for debug
-fclk = figure(14); set(fclk,'visible','on'),subplot(121),loglog(time,errs,'Color',mpg),hold on, 
-subplot(122), set(fclk,'visible','on'),loglog(time,rerrs,'Color',mpg),hold on
-fstp = figure(15); set(fstp,'visible','on'),subplot(121),loglog(errs,'Color',mpg),hold on, 
-subplot(122), set(fstp,'visible','on'),loglog(rerrs,'Color',mpg),hold on
+fclk = figure(14); set(fclk,'visible','on'),
+subplot(121), hData = loglog(time ,errs,'Color',mpg); thisFigure; hold on
+subplot(122), hData = loglog(time,rerrs,'Color',mpg); thisFigure; hold on
+fstp = figure(15); set(fstp,'visible','on'),
+subplot(121), hData = loglog( errs,'Color',mpg); thisFigure; hold on
+subplot(122), hData = loglog(rerrs,'Color',mpg); thisFigure; hold on
 % for latex
-f10=figure(10); set(f10,'visible','off'),loglog(time,errs,'Color',mpg),hold on, 
-f12=figure(12); set(f12,'visible','off'),loglog(time,rerrs,'Color',mpg),hold on
-f11=figure(11); set(f11,'visible','off'),loglog(errs,'Color',mpg),hold on, 
-f13=figure(13); set(f13,'visible','off'),loglog(rerrs,'Color',mpg),hold on
+f10=figure(10); set(f10,'visible','off');
+hData = loglog(time, errs,'Color',mpg); 
+axis tight; thisFigure; hold on
+f12=figure(12); set(f12,'visible','off');
+hData = loglog(time,rerrs,'Color',mpg); 
+axis tight; thisFigure; hold on
+f11=figure(11); set(f11,'visible','off');
+hData = plot(errs, 'Color',mpg); 
+set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
+f13=figure(13); set(f13,'visible','off');
+hData = plot(rerrs,'Color',mpg); 
+set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 %
 %----- image evolution and residual curve -----
 figPath = option.figPath;
@@ -129,11 +140,11 @@ f3 = figure(3); set(f3,'visible','on')
 filename = 'deconv_cg_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-
+% keyboard
 %----- cg deconved image -----
 f_cg = figure; set(f_cg,'visible','off');
-imagesc(clip(cg_dI,1,0)); axis image,colormap(gray)
-title('my cg')
+imagesc(clip(cg_dI,1,0)); axis image off, colormap(gray)
+title('cg')
 filename = 'deconv_cg';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)

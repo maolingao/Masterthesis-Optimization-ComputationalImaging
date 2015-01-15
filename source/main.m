@@ -1,4 +1,6 @@
 function convIm = main(shape)
+localsetup;
+
 %% generate blurred image
 [nature,kernel] = initialize; % <-- guess ground truth
 % [kernel,nature] = initialize; % <-- guess kernel
@@ -6,38 +8,49 @@ function convIm = main(shape)
 startup;
 % option setup
 option.version = 'FH';
-option.figPath = '/is/ei/mgao/Documents/thesis/article/figure/lucy_regularization';
+% option.figPath = '/is/ei/mgao/Documents/thesis/article/figure/lucy_regularization';
+option.color = 'dre';
+option.LineStyle = '-';
 
 % call class
 if nargin == 0
     shape = 'same';
 end
 
+%% --- regularization figure setting ---
+% colors = {'dre','ora','blu','gra','mpg'};
+% LineStyles = {'-','--','-.',':','-'};
+% figure(34), clf
+% for i=1:5
+% option.color = colors{i};
+% option.LineStyle = LineStyles{i};
+
+%% 
 xsize = size(nature);
 F = conv2MatOp(kernel,xsize,shape);
-
 % convolution
 convIm = F*nature;
 %% add noise
-% SNR = 10;
-% % convIm = addnoise(convIm, SNR, nature);
+SNR = 10;
+convIm = addnoise(convIm, SNR, nature);
 setupConv;
 %% setups
-iter =  5;
+iter =  50;
 % initial guess
-ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % nfactor
+ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./max(start(:)); % nfactor, if guessing Kernel!
 % start = nature;
 tol = 1e-20; 
+% eta = (i - 1)./(i - 1 + eps) * 10^(-5 + i);
 eta = 0;
 % ### call pncg ###
 H = hessianMatrix(eye(size(F'*convIm)));
 pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
 % ### call cg ###
-cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta,option);
+% cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta,option);
 % ### call lucy ###
-lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta,option);
+% lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta,option);
 % ### call gaussian ###
-gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta,option);
+% gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta,option);
 
 % plot
 saveResultFigure;
