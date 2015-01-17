@@ -11,6 +11,32 @@ if nargin < 6
 end
 if nargin < 7
     option.figPath = '/is/ei/mgao/figure2drag';
+    option.color = 'ora';
+    option.LineStyle = '-';
+end
+if ~exist(option.color)
+    color = ora;
+else
+    color = option.color;
+    switch color
+        case 'dre'
+            color = dre;
+        case 'ora'
+            color = ora;
+        case 'blu'
+            color = blu;
+        case 'mpg'
+            color = mpg;
+        case 'gra'
+            color = gra;
+        otherwise
+            color = dre;
+    end
+end
+if ~exist(option.LineStyle)
+    linestyle = '-';
+else
+    linestyle = option.LineStyle;
 end
 
 lucy_dI = start; % custermized start guess; 
