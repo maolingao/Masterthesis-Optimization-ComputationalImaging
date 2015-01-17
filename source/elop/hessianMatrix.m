@@ -64,17 +64,17 @@ classdef hessianMatrix < handle
                 end
                 % ########################
                 % check, update fasion of H
-                %{
+                %{%
                 % *** update form: H = H0 + l*r' + tail ***
                 if ~isempty(obj.l)
                     lrt = obj.l*(obj.r'*vec(x));
-                    outp = vec(x) + vec(lrt) + tail; % output = vec(I*x) + tail
+                    outp = vec(x) + vec(lrt) + tail; % output = vec(I*x) + l*r'*vec(x) + tail
                 else
-                    outp = vec(x) + tail; % output = vec(I*x) + tail
+                    outp = vec(x) + tail;            % output = vec(I*x) + tail
                 end
                 %}
                 % *** update form: H = H0 + tail ***
-                outp = vec(x) + tail; % output = vec(I*x) + tail
+%                 outp = vec(x) + tail; % output = vec(I*x) + tail
                 % ########################
                 
         end
