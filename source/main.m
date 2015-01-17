@@ -4,15 +4,23 @@ function convIm = main(shape)
 % [kernel,nature] = initialize; % <-- guess kernel
 
 startup;
+localsetup;
 % option setup
 option.version = 'FH';
-option.figPath = '/home/gao/Documents/MPI/thesis/article/figure/lucy_regularization';
 
 % call class
 if nargin == 0
     shape = 'same';
 end
 
+%% --- regularization figure setting ---
+colors = {'dre','ora','blu','gra','mpg'};
+LineStyles = {'-','--','-.',':','-'};
+figure(34), clf
+for i=1:5
+option.color = colors{i};
+option.LineStyle = LineStyles{i};
+%% 
 xsize = size(nature);
 F = conv2MatOp(kernel,xsize,shape);
 
@@ -30,17 +38,18 @@ ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./sum(start(:)); % n
 tol = 1e-20; 
 eta = 0.01;
 % ### call pncg ###
-H = hessianMatrix(eye(size(F'*convIm)));
-pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
+% H = hessianMatrix(eye(size(F'*convIm)));
+% pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
 % ### call cg ###
-cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta,option);
+% cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta,option);
 % ### call lucy ###
 lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta,option);
 % ### call gaussian ###
-gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta,option);
+% gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta,option);
 
-% plot
+%% plot
 saveResultFigure;
+end
 end
 %%
 function [im,f] = initialize
