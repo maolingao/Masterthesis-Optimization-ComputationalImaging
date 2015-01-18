@@ -42,7 +42,7 @@ end
 % set(gcf,'visible','on');
 if exist('hData', 'var')    
     % Adjust line properties (functional & aesthetics)
-    set(hData, 'LineStyle', '-' , 'LineWidth', 1, 'LineStyle',linestyle, 'Color', color)
+    set(hData, 'LineWidth', 1, 'LineStyle',linestyle, 'Color', color)
     % set(hData1, 'LineStyle', '-.', 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)
     % set(hData2, 'LineStyle', ':' , 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)
     % set(hData3, 'LineStyle', '--', 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)
@@ -50,7 +50,7 @@ if exist('hData', 'var')
 end
 if exist('hTitle', 'var')    
     % Adjust title properties (aesthetics)
-    set(hTitle, 'FontName', 'AvantGarde', 'FontWeight' , 'bold',  'FontSize', 16 )    
+    set(hTitle, 'FontName', 'AvantGarde', 'FontSize', 17 )    
 end
 if exist('hXLabel', 'var')   
     % Adjust xlabel properties (aesthetics) 
@@ -67,12 +67,13 @@ end
 
 % Adjust axes properties
 set(gca, 'FontName', 'Helvetica','FontSize', 8 )
-axis tight
+axis tight;
 set(gca, 'Box', 'off', 'TickDir', 'out', 'TickLength', [.02 .02], ...
     'XMinorTick', 'on', 'YMinorTick', 'on', 'YGrid', 'on', ...
     'XColor', [.3 .3 .3], 'YColor', [.3 .3 .3], ...
     'LineWidth', 1)
-
+%%
+clear hData hYLabel hXlabel hTitle hLegend
 %% additional options
 % Adjust line properties (aesthetics)
 %{

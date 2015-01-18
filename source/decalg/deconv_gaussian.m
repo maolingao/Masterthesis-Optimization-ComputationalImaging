@@ -61,6 +61,7 @@ for i = 1 : (iter + 1)
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
+%     keyboard
     drawnow 
         
     if i == (iter + 1)
