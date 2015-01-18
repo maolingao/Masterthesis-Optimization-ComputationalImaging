@@ -5,6 +5,13 @@ dre = [0.4906,0,0]; % color [130,0,0]
 ora = [255,153,51] ./ 255;
 blu = [0,0,0.509];
 gra = 0.5 * ones(3,1);
+% Maolin Gao's color
+tumblue = [0,101,189] ./ 255;
+tumgreen = [162,173,  0] ./ 255;
+tumred= [229, 52, 24] ./ 255;
+tumivory = [218,215,203] ./ 255;
+tumorange = [227,114, 34] ./ 255;
+tumlightblue = [152,198,234] ./ 255;
 
 lightmpg = [1,1,1] - 0.5 * ([1,1,1] - mpg);
 lightdre = [1,1,1] - 0.5 * ([1,1,1] - dre);

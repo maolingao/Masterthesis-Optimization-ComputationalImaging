@@ -1,10 +1,10 @@
-function I_noisy = addnoise(I,SNR,nature)
+function [I_noisy, noiseVar] = addnoise(I,SNR,nature)
 
 %//////// Add noise to image
-v = var(nature(:)) / (10^(SNR/10)); % variance of the noise
+noiseVar = var(nature(:)) / (10^(SNR/10)); % variance of the noise
 
 %##### gaussian
-I_noisy = imnoise(I, 'gaussian', 0, v); % add noise with sigma = v to image I
+I_noisy = imnoise(I, 'gaussian', 0, noiseVar); % add noise with sigma = v to image I
 % equivalent to imnoise(I, 'gaussian', 0, v)
 %{
 noise = randn(size(I));                 % gaussian distribution noise

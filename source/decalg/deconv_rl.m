@@ -11,8 +11,27 @@ if nargin < 6
 end
 if nargin < 7
     option.figPath = '/is/ei/mgao/figure2drag';
+    option.color = 'ora';
+    option.LineStyle = '-';
+end
+if ~isfield(option,'color')
+    color = ora;
+else
+    color = eval(option.color);
+end
+if ~isfield(option,'LineStyle')
+    linestyle = '-';
+else
+    linestyle = option.LineStyle;
+end
+if ~isfield(option,'noiseVar')
+    noiseVar = 0.004;
+else
+    noiseVar = option.noiseVar;
 end
 
+
+%% ############################
 lucy_dI = start; % custermized start guess; 
 imageSize = size(lucy_dI);
 %##### Tikhonov #####
@@ -51,7 +70,7 @@ for i = 1 : (iter + 1)
     drawnow    
     
     subplot(122)
-    hData = loglog(errs, 'Color', ora);
+    hData = loglog(errs, 'Color',color,'LineStyle',linestyle);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
@@ -94,8 +113,8 @@ for i = 1 : (iter + 1)
     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));
     lucy_dI = clip(lucy_dI,1,0);
     %}
-    %{
     % Tai Paper
+    %{
     LI = lap(lucy_dI);                          % laplace(I)
     [gx,gy] = gradient(lucy_dI);
     nablaI = sqrt(gx.^2 + gy.^2);                     % abs(nabla(I))
@@ -104,6 +123,7 @@ for i = 1 : (iter + 1)
     lucy_dI = clip(lucy_dI,1,0);    
     %}
     % Tai code    
+    %{
     [gx,gy] = gradient(lucy_dI);
     [ggx,~] = gradient(flip(gx,2));
     [~,ggy] = gradient(flip(gy,2));
@@ -113,8 +133,32 @@ for i = 1 : (iter + 1)
 %    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
    
     lucy_dI = clip(lucy_dI,1,0);    
-    %{
+    %}
+    % Tai code    
+    %{%
+    [gx,gy] = gradient(lucy_dI);
+%     [ggx,~] = gradient(flip(gx,2));
+%     [~,ggy] = gradient(flip(gy,2));
+    [ggx,~] = gradient(gx);
+    [~,ggy] = gradient(gy);
+    gx = abs(gx) + epsl;
+    gy = abs(gy) + epsl;
+    gx = clip(gx,1,1/255);
+    gy = clip(gy,1,1/255);
+    d = 0.8; % Tai's parameter
+    noiseVar = option.noiseVar;
+    minWeight = exp(-1/noiseVar * (1/255).^d) .* (1/255).^(d-1);
+    wx = exp(-1/noiseVar * gx.^d) .* gx.^(d-1) / minWeight;
+    wy = exp(-1/noiseVar * gy.^d) .* gy.^(d-1) / minWeight;
+    rt = wx.*ggx + wy.*ggy ;
+    
+     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));         % clip pixel here btw 0 and 1
+%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
+   
+    lucy_dI = clip(lucy_dI,1,0);    
+    %}
     % easy update by Levin
+    %{
     LI = clip(laplacian(lucy_dI), inf, -inf);
     rt = LI;
     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));
@@ -192,7 +236,21 @@ print(gcf, '-depsc2', filename)
 f_lucy = figure; set(f_lucy,'visible','off');
 imagesc(clip(lucy_dI,1,0)); axis image off, colormap(gray)
 title('lucy')
-filename = 'deconv_lucy';
+filename = sprintf('deconv_lucy_eta%d',eta);
 filename = fullfile(figPath,filename);
+print(gcf, '-depsc2', filename)
+%----- relative error for regularization -----
+figure(34), set(gcf,'visible','on');
+hData = plot(rerrs,'Color',color,'LineStyle',linestyle); hold on;
+hLegend = legend('$\eta\ 0$','$\eta\ 1e-5$','$\eta\ 1e-4$','$\eta\ 1e-3$', '$\eta\ 1e-2$',...
+'$\eta\ 1e-1$','$\eta\ 1$','$\eta\ 10$','$\eta\ 1e2$','$\eta\ 1e3$');
+% hLegend = legend('SNR 10','SNR 20','SNR 30','SNR 40','SNR 50');
+set(hLegend,'Interpreter','latex');
+hYLabel = ylabel('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex') ;
+% ylabel('$Relative error$','Interpreter','Latex')
+hXLabel = xlabel('$\#steps$','Interpreter','Latex');
+filename = 'deconv_lucy_relativeError_enlarge';
+filename = fullfile(figPath,filename);
+thisFigure;
 print(gcf, '-depsc2', filename)
 end

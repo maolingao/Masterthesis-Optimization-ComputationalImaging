@@ -9,7 +9,7 @@ startup;
 % option setup
 option.version = 'FH';
 % option.figPath = '/is/ei/mgao/Documents/thesis/article/figure/lucy_regularization';
-option.color = 'dre';
+% option.color = 'ora';
 option.LineStyle = '-';
 
 % call class
@@ -18,12 +18,12 @@ if nargin == 0
 end
 
 %% --- regularization figure setting ---
-% colors = {'dre','ora','blu','gra','mpg'};
-% LineStyles = {'-','--','-.',':','-'};
-% figure(34), clf
-% for i=1:5
-% option.color = colors{i};
-% option.LineStyle = LineStyles{i};
+colors = {'dre','ora','blu','gra','mpg','tumblue','lightdre', 'lightora', 'lightblu','lightmpg'};
+LineStyles = {'-','--','-.','--','-','--','-.','--','-',':'};
+figure(34), clf
+for i=1:10
+option.color = colors{i};
+option.LineStyle = LineStyles{i};
 
 %% 
 xsize = size(nature);
@@ -32,7 +32,7 @@ F = conv2MatOp(kernel,xsize,shape);
 convIm = F*nature;
 %% add noise
 SNR = 10;
-convIm = addnoise(convIm, SNR, nature);
+[convIm, option.noiseVar] = addnoise(convIm, SNR, nature);
 setupConv;
 %% setups
 iter =  50;
@@ -40,18 +40,20 @@ iter =  50;
 ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./max(start(:)); % nfactor, if guessing Kernel!
 % start = nature;
 tol = 1e-20; 
-% eta = (i - 1)./(i - 1 + eps) * 10^(-5 + i);
-eta = 0;
+eta = (i - 1)./(i - 1 + eps) * 10^(-7 + i);
+% eta = 0;
 % ### call pncg ###
-H = hessianMatrix(eye(size(F'*convIm)));
-pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
+% H = hessianMatrix(eye(size(F'*convIm)));
+% pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);
 % ### call cg ###
 % cg_dI = deconv_cg(F,convIm,nature,iter,start,tol,eta,option);
 % ### call lucy ###
-% lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta,option);
+% keyboard
+lucy_dI = deconv_rl(F,convIm,iter,nature,start,eta,option);
 % ### call gaussian ###
 % gaussian_dI = deconv_gaussian(F,convIm,iter,nature,start,eta,option);
 
+end
 % plot
 saveResultFigure;
 end

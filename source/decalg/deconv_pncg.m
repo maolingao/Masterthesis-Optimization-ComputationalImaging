@@ -27,25 +27,17 @@ if nargin < 9
     option.color = 'dre';
     option.LineStyle = '-';
 end
-% % if ~exist(option.color)
-% %     color = dre;
-% % end
-color = option.color;
-switch color
-    case 'dre'
-        color = dre;
-    case 'ora'
-        color = ora;
-    case 'blu'
-        color = blu;
-    case 'mpg'
-        color = mpg;
-    case 'gra'
-        color = gra;
-    otherwise
-        color = dre;
+if ~isfield(option,'color')
+    color = ora;
+else
+    color = eval(option.color);
 end
-linestyle = option.LineStyle;
+if ~isfield(option,'LineStyle')
+    linestyle = '-';
+else
+    linestyle = option.LineStyle;
+end
+%% ############################
 b = F'*im;
 imageSize = size(b);
 %##### Tikhonov #####
@@ -219,16 +211,17 @@ title('pncg')
 filename = 'deconv_pncg';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-%----- relative error -----
+%----- relative error for regularization -----
 % figure(34), set(gcf,'visible','on');
-% plot(rerrs,'Color',color,'LineStyle',linestyle), hold on;
-% h = legend('$\eta\ 0$','$\eta\ 0.001$','$\eta\ 0.01$','$\eta\ 0.1$','$\eta\ 1$','Location','NorthWest');
-% set(h,'Interpreter','latex')
-% % legend('SNR 10','SNR 20','SNR 30','SNR 40','SNR 50','Location','NorthWest')
-% ylabel('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex') 
+% hData = plot(rerrs,'Color',color,'LineStyle',linestyle); hold on;
+% hLegend = legend('$\eta\ 0$','$\eta\ 0.001$','$\eta\ 0.01$','$\eta\ 0.1$','$\eta\ 1$');
+% hLegend = legend('SNR 10','SNR 20','SNR 30','SNR 40','SNR 50');
+% set(hLegend,'Interpreter','latex');
+% hYLabel = ylabel('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex') ;
 % % ylabel('$Relative error$','Interpreter','Latex')
-% xlabel('$\#steps$','Interpreter','Latex')
+% hXLabel = xlabel('$\#steps$','Interpreter','Latex');
 % filename = 'deconv_pncg_relativeError';
 % filename = fullfile(figPath,filename);
+% thisFigure;
 % print(gcf, '-depsc2', filename)
 end
