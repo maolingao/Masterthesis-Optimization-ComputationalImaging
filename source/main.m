@@ -21,7 +21,7 @@ end
 colors = {'dre','ora','blu','gra','mpg','tumblue','lightdre', 'lightora', 'lightblu','lightmpg'};
 LineStyles = {'-','--','-.','--','-','--','-.','--','-',':'};
 figure(34), clf
-for i=1:10
+for i=1:3
 option.color = colors{i};
 option.LineStyle = LineStyles{i};
 
@@ -31,17 +31,18 @@ F = conv2MatOp(kernel,xsize,shape);
 % convolution
 convIm = F*nature;
 %% add noise
-SNR = 10;
+SNR = inf;
 [convIm, option.noiseVar] = addnoise(convIm, SNR, nature);
 setupConv;
 %% setups
-iter =  50;
+iter =  20;
 % initial guess
 ci = 1; start = ci*(F'*convIm)+0*randn(xsize); start = start./max(start(:)); % nfactor, if guessing Kernel!
 % start = nature;
 tol = 1e-20; 
-eta = (i - 1)./(i - 1 + eps) * 10^(-7 + i);
-% eta = 0;
+% eta = (i - 1)./(i - 1 + eps) * 10^(-7 + i);
+% eta = 10*i;
+eta = 10;
 % ### call pncg ###
 % H = hessianMatrix(eye(size(F'*convIm)));
 % pncg_dI = deconv_pncg(F,convIm,nature,H,iter,start,tol,eta,option);

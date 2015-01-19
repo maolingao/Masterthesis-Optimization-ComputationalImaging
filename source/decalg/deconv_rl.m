@@ -136,26 +136,32 @@ for i = 1 : (iter + 1)
     %}
     % Tai code    
     %{%
+    noiseVar = option.noiseVar;
+    if noiseVar == 0
+        noiseVar = epsl;
+    else 
+        NOP;
+    end
     [gx,gy] = gradient(lucy_dI);
 %     [ggx,~] = gradient(flip(gx,2));
 %     [~,ggy] = gradient(flip(gy,2));
     [ggx,~] = gradient(gx);
     [~,ggy] = gradient(gy);
-    gx = abs(gx) + epsl;
-    gy = abs(gy) + epsl;
+    gx = abs(gx);
+    gy = abs(gy);
     gx = clip(gx,1,1/255);
     gy = clip(gy,1,1/255);
-    d = 0.8; % Tai's parameter
-    noiseVar = option.noiseVar;
-    minWeight = exp(-1/noiseVar * (1/255).^d) .* (1/255).^(d-1);
-    wx = exp(-1/noiseVar * gx.^d) .* gx.^(d-1) / minWeight;
-    wy = exp(-1/noiseVar * gy.^d) .* gy.^(d-1) / minWeight;
+    d = 2; % Tai's parameter
+    minWeight = exp(-1/(noiseVar) * (1/255).^d) .* (1/255).^(d-1) +epsl;
+%     keyboard
+    wx = exp(-1/(noiseVar) * gx.^d) .* gx.^(d-1) / minWeight;
+    wy = exp(-1/(noiseVar) * gy.^d) .* gy.^(d-1) / minWeight;
     rt = wx.*ggx + wy.*ggy ;
-    
+    figure(995), imagesc(rt), axis image, colorbar('southoutside'), drawnow
+    keyboard   % clip pixel here btw 0 and 1
      lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));         % clip pixel here btw 0 and 1
-%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
-   
-    lucy_dI = clip(lucy_dI,1,0);    
+%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );      
+    lucy_dI = clip(lucy_dI,100,-inf);    
     %}
     % easy update by Levin
     %{
