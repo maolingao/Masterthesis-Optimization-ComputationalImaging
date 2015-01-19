@@ -30,7 +30,7 @@ errs_allframes_cg = [];
 errs_allframes_gaussian = [];
 % ##### general setup #####
 numFrame = numel(multiFrame);
-eta = 0;
+eta = 0.05;
 % kernel estimating
 tolK = 1e-7;
 HK = hessianMatrix(eye(fsize));

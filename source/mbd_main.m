@@ -21,5 +21,5 @@ start = multiFrame{1}; multiFrame = multiFrame(2:end);
 % start = start./numFrame;
 
 %
-iter = 70;
+iter = 80;
 I = mbd(multiFrame, F, start, iter, nature, multiFilt_ds,option);
