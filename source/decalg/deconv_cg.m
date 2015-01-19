@@ -78,11 +78,12 @@ for i = 1: (iter + 1)  %numel(im)
     
     if norm(im_residual) < numel(im_residual)*tol
         disp('==> solution found!')
+        cg_dI = clip(cg_dI,1,0);
         break
     else
         
         if i == (iter + 1)
-            cg_dI = reshape(x,imageSize);
+            cg_dI = clip(reshape(x,imageSize),1,0);
             break
         end
         
@@ -135,7 +136,7 @@ set(gca,'Yscale','log'), axis tight; thisFigure; hold on
 %
 %----- image evolution and residual curve -----
 figPath = option.figPath;
-
+%
 f3 = figure(3); set(f3,'visible','on')
 filename = 'deconv_cg_with_curve';
 filename = fullfile(figPath,filename);
@@ -148,4 +149,5 @@ title('cg')
 filename = 'deconv_cg';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+close gcf
 end

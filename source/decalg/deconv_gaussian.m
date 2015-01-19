@@ -65,6 +65,7 @@ for i = 1 : (iter + 1)
     drawnow 
         
     if i == (iter + 1)
+        gaussian_dI = clip(gaussian_dI,1,0);
         break
     end    
     tStart = tic; 
@@ -117,7 +118,7 @@ set(gca,'Yscale','log'), axis tight; thisFigure; hold on
 %
 %----- image evolution and residual curve -----
 figPath = option.figPath;
-
+%
 f2 = figure(2); set(f2,'visible','on')
 filename = 'deconv_gaussian_with_curve';
 filename = fullfile(figPath,filename);
@@ -130,4 +131,5 @@ title('gaussian')
 filename = 'deconv_gaussian';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+close gcf
 end

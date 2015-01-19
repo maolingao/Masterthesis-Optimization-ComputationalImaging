@@ -32,14 +32,15 @@ errs_allframes_gaussian = [];
 numFrame = numel(multiFrame);
 eta = 0.05;
 % kernel estimating
-tolK = 1e-7;
+tolK = -inf;
 HK = hessianMatrix(eye(fsize));
 X = conv2MatOp(im2double(start),fsize,shape);   % initial guess of convMtx X
-startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image
+% startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image, gaussian
+startK = zeros(fsize)./prod(fsize);              % initial guess of kernel, flat image
 % nature estimating
 iterN = 1; % one step for estimating nature
 HN = hessianMatrix(eye(imagesize));
-tolN = 1e-5;
+tolN = -inf;
 % iteration
 %{
 % all methods in one loop
@@ -148,30 +149,75 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
+            % -------- kernel comparison figure --------
+            cgKernelImg = figure; set(cgKernelImg,'visible','off'),
+            subplot(1,2,1)
+            imagesc(clip(natureK,1,0)); 
+            axis image off; colormap gray;
+            subplot(1,2,2)
+            imagesc(clip(cg_kernel,1,0)); 
+            axis image off; colormap gray;
+            filename = sprintf('cgKernelImg_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            
+%             keyboard
             % ##### estimate nature #####
+            clear Kcg
             Kcg = conv2MatOp(im2double(cg_kernel),imagesize,shape);  % convMtx of kernel, cg
             if k == 1
                 [cg_dI, errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
             else
-                [cg_dI,errs_cgN] = deconv_cg(Kcg, frame, natureI, HN, iterN, cg_dI, tolN, eta, option); % cg
+                [cg_dI,errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
             end
+            clear X
+            X = conv2MatOp(im2double(cg_dI),fsize,shape);   % new guess of convMtx X
+            % -------- ground truth comparison figure --------
+            cgNatureImg = figure;  set(cgNatureImg,'visible','off'),
+            subplot(1,2,1)
+            imagesc(clip(natureI,1,0)); 
+            axis image off; colormap gray;
+            subplot(1,2,2)
+            imagesc(clip(cg_dI,1,0)); 
+            axis image off; colormap gray;
+            filename = sprintf('cgNatureImg_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
 
             % statitics 
             % all frame errors 
             errs_allframes_cg = [errs_allframes_cg,errs_cgN(end)]; % cg 
 
             % plots    
-            % cg
+            % -------- ground truth frame error figure --------
+            % for debug
             figure(f_cg); subplot(121)
             imagesc(clip(cg_dI,1,0)), axis image,colormap(gray)
-            title(sprintf('cg - frame %d/%d',k,length(multiFrame)))
+            title(sprintf('gaussian - frame %d/%d',k,length(multiFrame)))
             drawnow
             subplot(122)   
-            plot(1:length(errs_allframes_cg),errs_allframes_cg,'k')
-            xlabel('#frames'), ylabel('residual |Fx - y| / pixel')
-            title(sprintf('frame %d/%d',k,numFrame))
-            drawnow    
-        end
+            hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', mpg);          
+            hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('frame %d/%d',k,numFrame));
+            thisFigure;   
+            drawnow
+        end 
+            % -------- ground truth frame error figure --------
+            % for latex
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', blu);          
+            hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_errAllFrame_cg');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
         I = cg_dI;
     case 'rl'
     case 'gaussian'
@@ -185,11 +231,13 @@ switch option.method
             % -------- kernel comparison figure --------
             gaussianKernelImg = figure; set(gaussianKernelImg,'visible','off'),
             subplot(1,2,1)
-            imagesc(natureK); 
+            imagesc(clip(natureK,1,0)); 
             axis image off; colormap gray;
+            drawnow
             subplot(1,2,2)
-            imagesc(gaussian_kernel); 
+            imagesc(clip(gaussian_kernel,1,0)); 
             axis image off; colormap gray;
+            drawnow
             filename = sprintf('gaussianKernelImg_%d',k);
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
@@ -209,11 +257,13 @@ switch option.method
             % -------- ground truth comparison figure --------
             gaussianNatureImg = figure;  set(gaussianNatureImg,'visible','off'),
             subplot(1,2,1)
-            imagesc(natureI); 
+            imagesc(clip(natureI,1,0)); 
             axis image off; colormap gray;
+            drawnow
             subplot(1,2,2)
-            imagesc(gaussian_dI); 
+            imagesc(clip(gaussian_dI,1,0)); 
             axis image off; colormap gray;
+            drawnow
             filename = sprintf('gaussianNatureImg_%d',k);
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
@@ -247,6 +297,7 @@ switch option.method
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('%d frames', numFrame));
             thisFigure;   
+            drawnow
             filename = sprintf('mbd_errAllFrame_gaussian');
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
