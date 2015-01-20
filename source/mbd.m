@@ -30,7 +30,7 @@ errs_allframes_cg = [];
 errs_allframes_gaussian = [];
 % ##### general setup #####
 numFrame = numel(multiFrame);
-eta = 0.05;
+eta = 0;                                        % regularization parameter
 % kernel estimating
 tolK = -inf;
 HK = hessianMatrix(eye(fsize));
@@ -173,13 +173,20 @@ switch option.method
             end
             clear X
             X = conv2MatOp(im2double(cg_dI),fsize,shape);   % new guess of convMtx X
+            %            
+            % sum of cg_dI(more an edge img) and frame
+%             keyboard
+            cg_dI_show = bsxfun(@times,cg_dI,(cg_dI>1e-5));
+            cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
+            cg_dI_show = cg_dI_show + frame;
+            cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
             % -------- ground truth comparison figure --------
             cgNatureImg = figure;  set(cgNatureImg,'visible','off'),
             subplot(1,2,1)
             imagesc(clip(natureI,1,0)); 
             axis image off; colormap gray;
             subplot(1,2,2)
-            imagesc(clip(cg_dI,1,0)); 
+            imagesc(clip(cg_dI_show,1,0)); 
             axis image off; colormap gray;
             filename = sprintf('cgNatureImg_%d',k);
             filename = fullfile(figPath,filename);
@@ -195,7 +202,7 @@ switch option.method
             % for debug
             figure(f_cg); subplot(121)
             imagesc(clip(cg_dI,1,0)), axis image,colormap(gray)
-            title(sprintf('gaussian - frame %d/%d',k,length(multiFrame)))
+            title(sprintf('cg - frame %d/%d',k,length(multiFrame)))
             drawnow
             subplot(122)   
             hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', mpg);          
@@ -203,7 +210,7 @@ switch option.method
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('frame %d/%d',k,numFrame));
             thisFigure;   
-            drawnow
+            drawnow        
         end 
             % -------- ground truth frame error figure --------
             % for latex
