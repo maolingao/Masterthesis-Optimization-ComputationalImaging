@@ -8,18 +8,21 @@ option.method = 'cg';
 % generate psf
 multiFilt = betterImRead; % 100 speckle samples
 % sample psf
-multiFilt_ds = multiFilt(1:1:50); 
+multiFilt_ds = multiFilt(1:1:30); 
 numFrame = length(multiFilt_ds);
 % generate multi frame with controlable noise
 [multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);
 % mbd framework
-start = multiFrame{1}; multiFrame = multiFrame(2:end);
-
-% start = zeros(size(multiFrame{1})); % avarage of all frames
-% for k = 1 : numFrame
-%     start = start + multiFrame{k};
-% end
-% start = start./numFrame;
+% --- use the first frame as start estimate for ground truth --- 
+% start = multiFrame{1}; multiFrame = multiFrame(2:end);
+%
+% --- use the average of first 10 frames as start estimate for ground truth --- 
+numFrameStart = 10;
+start = zeros(size(multiFrame{1})); % avarage of all frames
+for k = 1 : numFrameStart
+    start = start + multiFrame{k};
+end
+start = start./numFrameStart; multiFrame = multiFrame((numFrameStart+1):end);
 
 %
 iter = 10;

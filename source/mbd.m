@@ -30,13 +30,12 @@ errs_allframes_cg = [];
 errs_allframes_gaussian = [];
 % ##### general setup #####
 numFrame = numel(multiFrame);
-eta = 0;                                        % regularization parameter
+eta = 0;                                        % ### <--- regularization parameter
 % kernel estimating
 tolK = -inf;
 HK = hessianMatrix(eye(fsize));
 X = conv2MatOp(im2double(start),fsize,shape);   % initial guess of convMtx X
-% startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image, gaussian
-startK = zeros(fsize)./prod(fsize);              % initial guess of kernel, flat image
+
 % nature estimating
 iterN = 1; % one step for estimating nature
 HN = hessianMatrix(eye(imagesize));
@@ -142,6 +141,7 @@ switch option.method
         end
         I = pncg_dI;
     case 'cg'
+        startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
         f_cg = figure(115); clf(f_cg); set(f_cg,'visible','on')
         for k = 1 : numFrame
             % ##### special setup #####
@@ -228,6 +228,7 @@ switch option.method
         I = cg_dI;
     case 'rl'
     case 'gaussian'
+        startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
         f_gaussian = figure(112); clf(f_gaussian); set(f_gaussian,'visible','on')
         for k = 1 : numFrame
             % ##### special setup #####
