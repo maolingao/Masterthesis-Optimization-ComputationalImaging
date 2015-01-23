@@ -2,13 +2,25 @@ function [x] = cg(A,b,x_start,tol,iter)
 
 % example
 %{
-  n = 6000;
-  m = 8000;
+  n = 60;
+  m = 80;
   A = randn(n,m);
   A = A * A';
   b = randn(n,1);
   tic, x = cg(A,b); toc
   norm(A*x-b)
+%}
+%{
+    n = 60;
+    % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
+    u = rand(n,1);
+    Q = RandomRotation(n); 
+    D = diag(u);
+    A = Q*D*Q';
+    x = randn(n,1)
+    b = A*x;
+    tic, x = cg(A,b); toc
+    norm(A*x-b)
 %}
 startup;
 if nargin < 3

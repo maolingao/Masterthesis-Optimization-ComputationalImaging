@@ -19,7 +19,7 @@ H_FH = hessianMatrix(eye(size(A)));
 
 %
 tol = 1e-14;
-iter = 60;
+iter = 5;
 % option.version = 'CG';
 
 %% statistical test
@@ -82,12 +82,12 @@ x = rand(n,1);
 b = A*x;
 
 if i == 1
-    x_start =  b; % zeros(size(b)); %
+    x_start =   zeros(size(b)); %b; %
     r_origin = A * x_start - b;
     b_orth = b;
 else
     [b_orth, alpha] = split(b,b_1);
-    x_start = H_SU * (b_orth + r_origin) ;  % # star #
+    x_start =   zeros(size(b)); % H_SU * (b_orth + r_origin) ; % % # star #
 %     keyboard
 end
     r0 = A*x_start - b_orth;
@@ -121,6 +121,7 @@ if i == 1
 else
     option.flag = 1;
 end
+option.frame = i;
 % keyboard
 [x_pncg,H_SU,~,residual_pncg]= pncg_Hmfd(A,b_orth,H_SU,x_start,tol,iter,option);
 residual_pncg_allframe = [residual_pncg_allframe,residual_pncg];
@@ -135,7 +136,8 @@ b_1 = b;
 % H_SU_up = updateH(H_SU,10);
 
 % Gram matrix
-figure(101), imagesc(log10(abs((H_SU.s'*H_SU.y)))), colormap gray,  axis equal 
+% keyboard
+figure(101), imagesc(log10(abs((H_SU.s'*H_SU.y)))), colormap gray,  axis image 
 colorbar('southoutside')
 figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);
@@ -155,6 +157,8 @@ print('-depsc2', figname);
 % #########
 % residual
 figure(22),set(gcf,'visible','off'),legend('Nocedal','pncg-SU')
+ylabel('$\|Fx - y\| / pixel$','Interpreter','Latex')
+xlabel('$\#steps$','Interpreter','Latex')
 figname = 'residualSUNocedal.eps';
 figname = fullfile(figPath,figname);
 print('-depsc2', figname);
@@ -173,7 +177,7 @@ figname = strcat('H_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);
 print('-depsc2',figname)
 % residual
-figure(22),set(gcf,'visible','off'),legend('Nocedal','pncg-SU')
+figure(22),set(gcf,'visible','off'),legend('Nocedal','pncg')
 figname = 'residualCGFHNocedal.eps';
 figname = fullfile(figPath,figname);
 print('-depsc2',figname)

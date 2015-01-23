@@ -14,8 +14,7 @@ classdef hessianMatrix < handle
     end
     
     methods
-        function obj = hessianMatrix(H,l,r,s,y,delta)
-            obj.i = 1;
+        function obj = hessianMatrix(H,l,r,s,y,delta,i)
             if nargin > 0
                 obj.H = H;
                 if exist('l','var')
@@ -33,7 +32,12 @@ classdef hessianMatrix < handle
                 end
                 if exist('delta','var')
                     obj.delta = delta;
-                end               
+                end   
+                if exist('i','var')
+                    obj.i = i;
+                else
+                    obj.i = 1;
+                end             
              end
             
         end
@@ -50,6 +54,10 @@ classdef hessianMatrix < handle
             % multiplication with matrix and vector
             
                 epsl = 1e-30;
+                X = x;
+%                 keyboard
+                for col_ind = 1:size(X,2)
+                    x = X(:,col_ind);
                 % working version, using all terms to update H
                 %{%
                 tail = 0; % (update)
@@ -70,9 +78,10 @@ classdef hessianMatrix < handle
                 % *** update form: H = H0 + l*r' + tail ***
                 if ~isempty(obj.l)
                     lrt = obj.l*(obj.r'*vec(x));
-                    outp = vec(x) + vec(lrt) + tail; % output = vec(I*x) + l*r'*vex(x) + tail
+                    outp(:,col_ind) = vec(x) + vec(lrt) + tail; % output = vec(I*x) + l*r'*vex(x) + tail
                 else
-                    outp = vec(x) + tail;            % output = vec(I*x) + tail
+                    outp(:,col_ind) = vec(x) + tail;            % output = vec(I*x) + tail
+                end
                 end
                 %}
                 % *** update form: H = H0 + tail ***

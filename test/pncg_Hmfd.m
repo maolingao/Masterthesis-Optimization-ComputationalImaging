@@ -35,10 +35,12 @@ if nargin < 6
 end
 if nargin < 6
     option.version = 'FH';
+    option.frame = 1;
 end
 switch option.version
     case 'FH'
-        M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta); % preconditioner
+%         keyboard
+        M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta,H.i); % preconditioner
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
@@ -48,30 +50,33 @@ switch option.version
         color = dre;
         % ----DEBUG----
         err=[];
+        %{%
         if isempty(H.s)
             NOP;
-        else            
-            err = norm(r0);
-            q = A*p;
-            alpha = - (p'*q + 1e-30)\(p'*r);
-            x = x_start + alpha * p;
-            r0 = A * x - b;
+        else       
+%             err = norm(r0);
+%             q = A*p;
+%             alpha = - (p'*q + 1e-30)\(p'*r);
+%             x = x_start + alpha * p;
+%             r0 = A * x - b;
             p0 = M * r0;
             r = r0;
             p = p0;
         end
+        %}
         % ----DEBUG----
     case 'CG'
         M = eye(size(A)); % preconditioner
-%         M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta); % preconditioner
+%         M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta,H.i); % preconditioner
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
         m = M*r0;
         p = m;
         color = mpg;
+        err=[];
     case 'SU'
-        M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta); % preconditioner
+        M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta,H.i); % preconditioner
         H_crt = hessianMatrix(H.H,H.l,H.r);                     % hessian matrix for current frame
         x = x_start;
         r0 = A*(x) - b;
@@ -104,6 +109,7 @@ A_inv = inv(A); diffz = [];
 epsl = 1e-30;
 % err= []; 
 x_stack = [];residual = r; %zeros(60,1);
+% keyboard
 for k = 1:numel(b)
     % all intermediat solutions
     x_stack = [x_stack, x];
@@ -126,6 +132,7 @@ for k = 1:numel(b)
         switch option.version
             case 'FH'
                 delta = s - H*y;        % delta_i <-- s_i - H_i*y_i
+%                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'SU'
@@ -147,7 +154,16 @@ for k = 1:numel(b)
        
 % % %         H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
         if s'*y > -1e-15
-        	H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
+            if option.frame > inf
+            % eliminate the component in new tuple [s,y,delta] which are
+            % already contained in previous spanned Krylov subspace.
+                [S,Y,Delta] = purify(H,s,y,delta); 
+%                 keyboard
+                clear H
+                H = hessianMatrix(M.H,[],[],S,Y,Delta,(M.i+1));
+            else
+                H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
+            end
         else
                     keyboard
             display 'direction changes too small.'
@@ -165,7 +181,7 @@ for k = 1:numel(b)
             otherwise
                 error('check option.version in pncg_Hmfd')
         end
-        
+%         keyboard
         buildH;
         diffz = [diffz, norm(H_mtx - A_inv)/numel(H.H)];
         figure(997); hold on, plot(diffz), drawnow, xlabel('#steps'),ylabel('norm( H - A^{-1} ) / pixel')
