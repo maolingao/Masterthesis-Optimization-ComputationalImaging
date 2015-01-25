@@ -1,7 +1,7 @@
 function Ginv = invGram(Ginv0,S,Y)
 % invert Gramm matrix G = S'*Y
 %
-epsl = 1e-7;
+epsl = 1e-9;
 s = S(:,end);               % last observation in S
 y = Y(:,end);               % last observation in Y
 a = S(:,1:end-1)'*y;        % new column in G apart from the last element

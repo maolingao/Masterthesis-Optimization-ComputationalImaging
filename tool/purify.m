@@ -6,18 +6,35 @@ function [S,Y,Delta,GInv] = purify(s,y,delta,Ginv,MEMLIM)
 if nargin < 5
     MEMLIM = 10;
 end
-epsl = 1e-10;
-SIGMA = 'LM';
-[U,D] = eigs(Ginv,MEMLIM,SIGMA);
-U = bsxfun(@rdivide, U, max(abs(U)));
-S = s*U;
-Y = y*U;
-keyboard
-U'*U;
-Delta = delta * U;
-GInv = (S'*Y + epsl)\eye(size(S,2));
+%     keyboard
+if MEMLIM > size(s,2)
+    S = s;
+    Y = y;
+    Delta = delta;
+    GInv = Ginv;
+else
+    epsl = 1e-10;
+    SIGMA = 'LM';
+    % [U,D] = eigs(Ginv,(MEMLIM),SIGMA);
+    G = s'*y;
+    [U,D] = eigs(G,(MEMLIM),SIGMA);
+    % keyboard
+    U = real(U(:,1:MEMLIM));
+    D = real(D(1:MEMLIM,1:MEMLIM));
+    %
+    % U = bsxfun(@rdivide, U, max(abs(U)));
+    % keyboard
+    figure(3), imagesc(real(log10(U'*U))), colormap gray, axis image, colorbar('southoutside')
+    S = s*U;
+    Y = y*U;
+    Delta = delta * U;
+    % M = S'*Y;
+    % GInv = ( M'*M + epsl)\eye(size(S,2)) * M';
+    % keyboard
+    GInv = diag((diag(D) + eps).\1);
 end
-
+end
+%
 % unittest
 %{
 n = 80;

@@ -190,6 +190,7 @@ for k = 1:numel(b)
         residual = [residual,r]; 
         display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)))
 % conjugate
+% keyboard
         conj = p_1'*A*p
         % ###################
     end

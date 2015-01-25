@@ -1,4 +1,4 @@
-epsll = 1e-7;
+epsll = 1e-9;
 % tail = zeros(numel(H.H));
 tailM = zeros(size(H.H));
 
@@ -12,7 +12,8 @@ for k = 1 : H.i - 1
             Ginv = 1/((H.s)'*H.s + epsll);
         else
             keyboard
-            Ginv = invGram(H.Ginv0,H.s,H.y);
+            Ginv = invGram(obj.Ginv0,obj.s,obj.y);
+%             Ginv = ((obj.s)'*obj.y) \ eye(size(obj.s,2));
         end
         SGinv = H.s * Ginv;
         SGinvDelta = SGinv * (H.delta)';

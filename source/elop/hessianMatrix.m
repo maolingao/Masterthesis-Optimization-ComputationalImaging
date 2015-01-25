@@ -78,10 +78,31 @@ classdef hessianMatrix < handle
                     tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
                     tail = tailM * vec(x);
                     obj.Ginv0 = Ginv;
-                    %}
                 else
                     tail = 0;
                 end
+                %}                
+                %{
+                if ~isempty(obj.s)
+                    if size(obj.s,2) == size(obj.Ginv0,1)
+%                         keyboard
+                        Ginv = obj.Ginv0;
+                    elseif size(obj.s,2) < 2 
+                        Ginv = 1/((obj.s)'*obj.s + epsl);
+                    else
+%                         keyboard
+                        M = (obj.s)'*obj.y;
+                        Ginv = (M'*M) \ eye(size(obj.s,2)) * M';
+                    end
+                    SGinv = obj.s * Ginv;
+                    SGinvDelta = SGinv * (obj.delta)';
+                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
+                    tail = tailM * vec(x);
+                    obj.Ginv0 = Ginv;
+                else
+                    tail = 0;
+                end
+                %}
                 % *** update form: H = H0 + tail ***
                 outp = vec(x) + tail;              % output = vec(I*x) + tail
                 % ########################

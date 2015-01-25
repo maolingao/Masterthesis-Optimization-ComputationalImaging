@@ -3,8 +3,9 @@ clear all
 figure(997), clf
 figure(2), clf
 figure(22), set(gcf,'visible','off'),clf
-% figPath = '/is/ei/mgao/Documents/thesis/notes/cgs/fig/';
-figPath = '/home/gao/Documents/MPI/thesis/article/figure/toy_example';
+%
+localsetup;
+figPath = option.figPath;
 %
 n = 60;
 % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
@@ -19,7 +20,7 @@ H_FH = hessianMatrix(eye(size(A)));
 
 %
 tol = 1e-14;
-iter = 55;
+iter = 60;
 % option.version = 'CG';
 
 %% statistical test
@@ -76,7 +77,7 @@ keyboard
 %{%
 H_SU = hessianMatrix(eye(size(A)));
 residual_pncg_allframe = [];
-for i = 1: 4
+for i = 1: 10
 
 x = rand(n,1);
 b = A*x;
@@ -119,23 +120,26 @@ x_pncg_1 = x_pncg;
 b_1 = b;
 % ################################
 %{%
-MEMLIM = 20;
-keyboard
+MEMLIM = 50;% size(H_SU.s,2);
+% keyboard
 [S,Y,Delta,GInv] = purify(H_SU.s,H_SU.y,H_SU.delta,H_SU.Ginv0,MEMLIM);
+% keyboard
 clear H_SU
-H_SU = hessianMatrix(eye(size(A)),S,Y,Delta,GInv,(MEMLIM+1));
+H_SU = hessianMatrix(eye(size(A)), S, Y, Delta, GInv, size(S,2)+1);
+max(max(S'*Y - diag(1./diag(H_SU.Ginv0))))
+% max(max(diag(1./diag(S'*Y)) - (H_SU.Ginv0))))
 %}
 % ################################
 % keyboard
 % H_SU_up = updateH(H_SU,10);
 
 % Gram matrix
-% keyboard
 figure(101), imagesc(log10(abs((H_SU.s'*H_SU.y)))), colormap gray,  axis image 
 colorbar('southoutside')
 figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);
 print('-depsc2', figname);
+% keyboard
 % % % residual matrix
 % % figure(102), imagesc(log10(abs((residual_pncg_allframe'*H_SU.s)))), colormap gray,  axis equal 
 % % colorbar('southoutside')
