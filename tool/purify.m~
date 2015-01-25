@@ -14,34 +14,21 @@ if MEMLIM > size(s,2)       % MEMLIM > observations --> DO NOTHING
     GInv = Ginv;
 else                        % MEMLIM < observations --> purify
     epsl = 1e-10;
-    SIGMA = 'LM';           
+    SIGMA = 'LM';           % preserve eigenvalues with largest MEMLIM magnetitude 
+                            % and cooresponding eigenvector
     G = s'*y;
-    [U,D] = eigs(G,(MEMLIM),SIGMA);     % preserve G's eigenvalue with MEMLIM largest magnetitude 
-                                        % and cooresponding eigenvector
-    %
-    % [U,D] = eigs(Ginv,(MEMLIM),SIGMA);
-    %
+    [U,D] = eigs(G,(MEMLIM),SIGMA);
     % keyboard
     U = real(U(:,1:MEMLIM));
     D = real(D(1:MEMLIM,1:MEMLIM));
-%
-%--------------- unittest_1 ---------------%
-% should give a matrix U'*U approximately = I
-%     keyboard
-%     figure(3), imagesc(real((U'*U))), colormap gray, axis image, colorbar('southoutside')
-%---------------    END     ---------------%
-%
-    %
-    S = s*U;                            % new tuple of {S, Y, Delta}
-    Y = y*U;                            % S should be orthogonal to Y, S'*Y = D
+    % keyboard
+%     figure(3), imagesc(real(log10(U'*U))), colormap gray, axis image, colorbar('southoutside')
+    S = s*U;
+    Y = y*U;
     Delta = delta * U;
-%
-%--------------- unittest_2 ---------------%
-% should give a matrix with amost all zero element
-%     keyboard
-%     S'*Y - D
-%---------------    END     ---------------%
-%
+    % M = S'*Y;
+    % GInv = ( M'*M + epsl)\eye(size(S,2)) * M';
+    % keyboard
     GInv = diag((diag(D) + eps).\1);
 end
 end

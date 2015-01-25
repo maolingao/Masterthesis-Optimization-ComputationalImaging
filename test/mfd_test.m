@@ -20,7 +20,7 @@ H_FH = hessianMatrix(eye(size(A)));
 
 %
 tol = 1e-14;
-iter = 60;
+iter = 30;
 % option.version = 'CG';
 
 %% statistical test
