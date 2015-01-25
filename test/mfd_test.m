@@ -19,7 +19,7 @@ H_FH = hessianMatrix(eye(size(A)));
 
 %
 tol = 1e-14;
-iter = 5;
+iter = 55;
 % option.version = 'CG';
 
 %% statistical test
@@ -76,7 +76,7 @@ keyboard
 %{%
 H_SU = hessianMatrix(eye(size(A)));
 residual_pncg_allframe = [];
-for i = 1: 7
+for i = 1: 4
 
 x = rand(n,1);
 b = A*x;
@@ -90,21 +90,6 @@ else
     x_start =   zeros(size(b)); % H_SU * (b_orth + r_origin) ; % % # star #
 %     keyboard
 end
-    r0 = A*x_start - b_orth;
-    switch i
-        case 1
-            figure(99),clf, plot(r0, 'r-*'), hold on
-        case 2
-            figure(99), plot(r0, 'b'), hold on
-        case 3
-            figure(99), plot(r0, 'k'), hold on
-        case 4
-            figure(99), plot(r0, 'y'), hold on
-        case 5
-            figure(99), plot(r0, 'g'), hold on
-        otherwise
-            figure(99), plot(r0, 'm'), hold on            
-    end
 
 [x_cg] = cg(A,b_orth,x_start,tol,iter);
 if i == 1
@@ -132,6 +117,15 @@ else
 end
 x_pncg_1 = x_pncg;
 b_1 = b;
+% ################################
+%{%
+MEMLIM = 20;
+keyboard
+[S,Y,Delta,GInv] = purify(H_SU.s,H_SU.y,H_SU.delta,H_SU.Ginv0,MEMLIM);
+clear H_SU
+H_SU = hessianMatrix(eye(size(A)),S,Y,Delta,GInv,(MEMLIM+1));
+%}
+% ################################
 % keyboard
 % H_SU_up = updateH(H_SU,10);
 

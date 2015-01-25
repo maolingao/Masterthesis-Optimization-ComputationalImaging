@@ -8,21 +8,14 @@ classdef hessianMatrix < handle
         y           % corrected step residual
         delta       % difference btw corrected step error and back-calculated corrected step residual
         i           % iteration index
-        l           % low rank update matrix H = H0 + l*r
-        r           % low rank update matrix H = H0 + l*r
+        Ginv0       % inverse of last Gramm matrix
         
     end
     
     methods
-        function obj = hessianMatrix(H,l,r,s,y,delta,i)
+        function obj = hessianMatrix(H,s,y,delta,Ginv0,i)
             if nargin > 0
                 obj.H = H;
-                if exist('l','var')
-                    obj.l = l;
-                end
-                if exist('r','var')
-                    obj.r = r;
-                end
                 if exist('s','var')
                     obj.s = s;
                     obj.i = size(s,2) + 1;
@@ -32,6 +25,9 @@ classdef hessianMatrix < handle
                 end
                 if exist('delta','var')
                     obj.delta = delta;
+                end   
+                if exist('Ginv0','var')
+                    obj.Ginv0 = Ginv0;
                 end   
                 if exist('i','var')
                     obj.i = i;
@@ -54,38 +50,40 @@ classdef hessianMatrix < handle
             % multiplication with matrix and vector
             
                 epsl = 1e-30;
-                X = x;
 %                 keyboard
-                for col_ind = 1:size(X,2)
-                    x = X(:,col_ind);
                 % working version, using all terms to update H
-                %{%
+                %{
                 tail = 0; % (update)
                 for k = 1 : obj.i - 1
-%                 tail = tail + (obj.s(:,k)'*obj.y(:,k) + epsl )\(obj.delta(:,k)*(obj.s(:,k)'*vec(x)) + epsl ) + ...
-%                     (obj.s(:,k)'*obj.y(:,k) + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*vec(x)) + epsl ) - ...
-%                     ((obj.s(:,k)'*obj.y(:,k))^2 + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*obj.y(:,k))*(obj.s(:,k)'*vec(x)) + epsl );
-%                 end
                     den = (obj.s(:,k)'*obj.y(:,k) );
                     tail = tail + (den + epsl )\(obj.delta(:,k)*(obj.s(:,k)'*vec(x))  ) + ...
                         (den + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*vec(x))  ) - ...
                         (den^2 + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*obj.y(:,k))*(obj.s(:,k)'*vec(x)) );
                 end
                 %}
-                % ########################
-                % check, update fasion of H
+                % debug, using full H
                 %{%
-                % *** update form: H = H0 + l*r' + tail ***
-                if ~isempty(obj.l)
-                    lrt = obj.l*(obj.r'*vec(x));
-                    outp(:,col_ind) = vec(x) + vec(lrt) + tail; % output = vec(I*x) + l*r'*vex(x) + tail
+                if ~isempty(obj.s)
+                    if size(obj.s,2) == size(obj.Ginv0,1)
+%                         keyboard
+                        Ginv = obj.Ginv0;
+                    elseif size(obj.s,2) < 2 
+                        Ginv = 1/((obj.s)'*obj.s + epsl);
+                    else
+%                         keyboard
+                        Ginv = invGram(obj.Ginv0,obj.s,obj.y);
+                    end
+                    SGinv = obj.s * Ginv;
+                    SGinvDelta = SGinv * (obj.delta)';
+                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
+                    tail = tailM * vec(x);
+                    obj.Ginv0 = Ginv;
+                    %}
                 else
-                    outp(:,col_ind) = vec(x) + tail;            % output = vec(I*x) + tail
+                    tail = 0;
                 end
-                end
-                %}
                 % *** update form: H = H0 + tail ***
-%                 outp = vec(x) + tail;              % output = vec(I*x) + tail
+                outp = vec(x) + tail;              % output = vec(I*x) + tail
                 % ########################
                 
         end

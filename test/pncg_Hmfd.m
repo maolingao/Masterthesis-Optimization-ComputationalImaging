@@ -40,10 +40,11 @@ end
 switch option.version
     case 'FH'
 %         keyboard
-        M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta,H.i); % preconditioner
+        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
+%         keyboard
         m = M*r0;
         p = m;
 %         p = -r0;
@@ -67,7 +68,7 @@ switch option.version
         % ----DEBUG----
     case 'CG'
         M = eye(size(A)); % preconditioner
-%         M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta,H.i); % preconditioner
+%         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
@@ -76,8 +77,8 @@ switch option.version
         color = mpg;
         err=[];
     case 'SU'
-        M = hessianMatrix(H.H,H.l,H.r,H.s,H.y,H.delta,H.i); % preconditioner
-        H_crt = hessianMatrix(H.H,H.l,H.r);                     % hessian matrix for current frame
+        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
+        H_crt = hessianMatrix(H.H);                     % hessian matrix for current frame
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
@@ -131,8 +132,8 @@ for k = 1:numel(b)
         y = alpha*q;           % y_i <-- A*s_i
         switch option.version
             case 'FH'
-                delta = s - H*y;        % delta_i <-- s_i - H_i*y_i
-%                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
+%                 delta = s - H*y;        % delta_i <-- s_i - H_i*y_i
+                delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'SU'
@@ -160,7 +161,7 @@ for k = 1:numel(b)
                 [S,Y,Delta] = purify(H,s,y,delta); 
 %                 keyboard
                 clear H
-                H = hessianMatrix(M.H,[],[],S,Y,Delta,(M.i+1));
+                H = hessianMatrix(M.H,S,Y,Delta,(M.i+1));
             else
                 H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
             end
