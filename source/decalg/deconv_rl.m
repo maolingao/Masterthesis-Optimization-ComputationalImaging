@@ -35,11 +35,14 @@ end
 lucy_dI = start; % custermized start guess; 
 imageSize = size(lucy_dI);
 %##### Tikhonov #####
-%{
-l = [0 -1 0
-     -1 4 -1
-     0 -1 0]; % laplacian matrix WORK! 
-L = conv2MatOp(l,imageSize,'same');
+%{%
+% l = [0 -1 0
+%      -1 4 -1
+%      0 -1 0]; % laplacian matrix WORK! 
+% l = -[0.5 1 0.5
+%      1 -6 1
+%      0.5 1 0.5]; % try
+% L = conv2MatOp(l,imageSize,'same');
 %}
 % eta = 0.001;  % choice according to image noise
 % namda =  1e-3;
@@ -99,20 +102,6 @@ for i = 1 : (iter + 1)
     lucy_dI = clip(lucy_dI,1,0);
     %}
     % Laplacian regularization
-    %{
-    LI = clip(laplacian(lucy_dI), inf, -inf);
-    ItrLI = clip(lucy_dI'*LI, inf, -inf);                          % Itranspose*laplacian*I
-    [gx,gy] = gradient(lucy_dI);
-    nablaI = sqrt(gx.^2 + gy.^2);
-    etaf = -1/eta;
-%     rt = clip(etaf * exp( etaf * ItrLI) * nablaI * LI, inf, -inf); % Itranspose*laplacian*I
-%     rt = clip(etaf * exp( etaf * nablaI.*nablaI) * nablaI * LI, inf, -inf); % abs(nabla*I)
-%     rt = clip( exp( ItrLI) .* nablaI .* LI, inf, -inf);               % Itranspose*laplacian*I
-    rt = clip( exp( nablaI.*nablaI) .* nablaI .* LI, inf, -inf); % abs(nabla*I)
-%     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl);
-    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));
-    lucy_dI = clip(lucy_dI,1,0);
-    %}
     % Tai Paper
     %{
     LI = lap(lucy_dI);                          % laplace(I)
@@ -124,18 +113,6 @@ for i = 1 : (iter + 1)
     %}
     % Tai code    
     %{
-    [gx,gy] = gradient(lucy_dI);
-    [ggx,~] = gradient(flip(gx,2));
-    [~,ggy] = gradient(flip(gy,2));
-    rt = abs(gx).*ggx + abs(gy).*ggy ;
-    
-     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));         % clip pixel here btw 0 and 1
-%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
-   
-    lucy_dI = clip(lucy_dI,1,0);    
-    %}
-    % Tai code    
-    %{%
     noiseVar = option.noiseVar;
     if noiseVar == 0
         noiseVar = epsl;
@@ -152,53 +129,25 @@ for i = 1 : (iter + 1)
     gx = clip(gx,1,1/255);
     gy = clip(gy,1,1/255);
     d = 2; % Tai's parameter
-    minWeight = exp(-1/(noiseVar) * (1/255).^d) .* (1/255).^(d-1) +epsl;
+    minWeight = exp(-1/(noiseVar) * (1/255).^d) .* (1/255).^(d-1);
 %     keyboard
     wx = exp(-1/(noiseVar) * gx.^d) .* gx.^(d-1) / minWeight;
     wy = exp(-1/(noiseVar) * gy.^d) .* gy.^(d-1) / minWeight;
     rt = wx.*ggx + wy.*ggy ;
-    figure(995), imagesc(rt), axis image, colorbar('southoutside'), drawnow
-    keyboard   % clip pixel here btw 0 and 1
-     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));         % clip pixel here btw 0 and 1
+    figure(995), imagesc(rt), axis image, colorbar('southoutside'), colormap gray, drawnow
+    keyboard 
+     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) ) ./ ( F' * ones(size(im))));    
 %    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );      
-    lucy_dI = clip(lucy_dI,100,-inf);    
+    lucy_dI = clip(lucy_dI,1,0);         % clip pixel here btw 0 and 1
     %}
-    % easy update by Levin
-    %{
-    LI = clip(laplacian(lucy_dI), inf, -inf);
-    rt = LI;
-    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));
-    lucy_dI = clip(lucy_dI,1,0);
+    % my try
+    %{%
+    rt = clip(lap(lucy_dI),4,-4);
+%     figure(155), imagesc(rt), colormap gray, axis image, colorbar('southoutside')
+%     keyboard
+    lucy_dI = lucy_dI ./ (1 + eta * rt) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) )) ./ ( F' * ones(size(im))));         % clip pixel here btw 0 and 1
+    lucy_dI =  clip(lucy_dI,1,0);
     %}
-    % ***** gaussian noise model *****
-    % pure
-%     lucy_dI = lucy_dI + ( F' * (im  - (F * lucy_dI) ) );
-    % TV regularization    
-    %{
-    [gx,gy] = gradient(lucy_dI);
-    nablaI = sqrt(gx.^2 + gy.^2);
-    [dgx, ~] = gradient(gx./(nablaI + epsl));
-    [~, dgy] = gradient(gy./(nablaI + epsl));
-    rt = - (dgx + dgy); 
-    lucy_dI = lucy_dI + ( F' * (im  - (F * lucy_dI) ) ) + eta * rt;
-    lucy_dI = clip(lucy_dI,1,0);
-    %}
-    % Laplacian regularization
-    %{
-    LI = clip(laplacian(lucy_dI), inf, -inf);
-    ItrLI = clip(lucy_dI'*LI, inf, -inf);                          % Itranspose*laplacian*I
-    [gx,gy] = gradient(lucy_dI);
-    nablaI = sqrt(gx.^2 + gy.^2);
-    etaf = -1/eta;
-%     rt = clip(etaf * exp( etaf * ItrLI) .* nablaI .* LI, 1, -1); % Itranspose*laplacian*I
-%     rt = clip(etaf * exp( etaf * nablaI.*nablaI) * nablaI * LI, inf, -inf); % abs(nabla*I)
-    rt = clip( exp( ItrLI) .* nablaI .* LI, 1, -1); % Itranspose*laplacian*I
-%     rt = clip( exp(  nablaI.*nablaI) .* nablaI .* LI, inf, -inf); % abs(nabla*I)
-    lucy_dI = lucy_dI + ( F' * (im  - (F * lucy_dI) ) ) + eta * rt;
-    lucy_dI = clip(lucy_dI,1,0);
-%     figure(10), imagesc(rt), colormap gray, axis equal
-    %}
-    % Bilateral regularization
 %%%%%%%%%%%%%%%%%%%%%
     tElapsed = toc(tStart);
     time = [time;time(end)+tElapsed];
