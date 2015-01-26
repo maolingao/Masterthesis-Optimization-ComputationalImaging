@@ -9,7 +9,7 @@ figPath = option.figPath;
 %
 n = 60;
 % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
-u = rand(n,1);
+u = rand(n,1); % u(1:10) = 10*u(1:10);
 Q = RandomRotation(n); 
 D = diag(u);
 A = Q*D*Q';
@@ -120,7 +120,7 @@ x_pncg_1 = x_pncg;
 b_1 = b;
 % ################################
 %{%
-MEMLIM = 50;% size(H_SU.s,2);
+MEMLIM = 30;% size(H_SU.s,2);
 % keyboard
 [S,Y,Delta,GInv] = purify(H_SU.s,H_SU.y,H_SU.delta,H_SU.Ginv0,MEMLIM);
 % keyboard
