@@ -27,25 +27,17 @@ if nargin < 9
     option.color = 'dre';
     option.LineStyle = '-';
 end
-% % if ~exist(option.color)
-% %     color = dre;
-% % end
-color = option.color;
-switch color
-    case 'dre'
-        color = dre;
-    case 'ora'
-        color = ora;
-    case 'blu'
-        color = blu;
-    case 'mpg'
-        color = mpg;
-    case 'gra'
-        color = gra;
-    otherwise
-        color = dre;
+if ~isfield(option,'color')
+    color = dre;
+else
+    color = eval(option.color);
 end
-linestyle = option.LineStyle;
+if ~isfield(option,'LineStyle')
+    linestyle = '-';
+else
+    linestyle = option.LineStyle;
+end
+
 b = F'*im;
 imageSize = size(b);
 %##### Tikhonov #####

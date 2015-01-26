@@ -107,6 +107,7 @@ end
 %}
 switch option.method
     case 'pncg'
+        startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
         f_pncg = figure(114); clf(f_pncg); set(f_pncg,'visible','on')
         for k = 1 : numFrame
             % ##### special setup #####
@@ -114,31 +115,77 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             option.version = 'FH';
             % ##### estimate kernel #####
-            [pncg_kernel,HK,errs_pncg_kernel] = deconv_pncg(X,frame,natureK,HK,iterK,startK,tolK,eta,option); % pncg
+            [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame, natureK, HK, iterK, startK, tolK, eta, option); % pncg
+            pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
+            % -------- kernel comparison figure --------
+            pncgKernelImg = figure; set(pncgKernelImg,'visible','off'),
+            subplot(1,2,1)
+            imagesc(clip(natureK,1,0)); 
+            axis image off; colormap gray;
+            subplot(1,2,2)
+            imagesc(clip(pncg_kernel,1,0)); 
+            axis image off; colormap gray;
+            filename = sprintf('pncgKernelImg_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            
+%             keyboard
             % ##### estimate nature #####
+            clear Kpncg
             Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
             if k == 1
-                [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg,frame,natureI,HN,iterN,start,tolN,eta,option); % pncg
+                [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
             else
-                [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg,frame,natureI,HN,iterN,pncg_dI,tolN,eta,option); % pncg
+                [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
             end
-
+            pncg_dI = clip(pncg_dI,1,0);
+            clear X
+            X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X
+            % -------- ground truth comparison figure --------
+            pncgNatureImg = figure;  set(pncgNatureImg,'visible','off'),
+            subplot(1,2,1)
+            imagesc(clip(natureI,1,0)); 
+            axis image off; colormap gray;
+            subplot(1,2,2)
+            imagesc(clip(pncg_dI,1,0)); 
+            axis image off; colormap gray;
+            filename = sprintf('pncgNatureImg_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
             % statitics 
             % all frame errors
             errs_allframes_pncg = [errs_allframes_pncg,errs_pncgN(end)]; % pncg 
 
             % plots    
-            % pncg
+            % -------- ground truth frame error figure --------
+            % for debug
             figure(f_pncg); subplot(121)
             imagesc(clip(pncg_dI,1,0)), axis image,colormap(gray)
             title(sprintf('pncg - frame %d/%d',k,length(multiFrame)))
             drawnow
             subplot(122)   
-            plot(1:length(errs_allframes_pncg),errs_allframes_pncg,'k')
-            xlabel('#frames'), ylabel('residual |Fx - y| / pixel')
-            title(sprintf('frame %d/%d',k,numFrame))
-            drawnow    
+            hData = plot(1:length(errs_allframes_pncg),errs_allframes_pncg,'Color', dre);          
+            hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('frame %d/%d',k,numFrame));
+            thisFigure;   
+            drawnow        
         end
+            % -------- ground truth frame error figure --------
+            % for latex
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(errs_allframes_pncg),errs_allframes_pncg,'Color', dre);          
+            hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_errAllFrame_pncg');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
         I = pncg_dI;
     case 'cg'
         startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
@@ -149,6 +196,7 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
+            cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
             cgKernelImg = figure; set(cgKernelImg,'visible','off'),
             subplot(1,2,1)
@@ -169,24 +217,30 @@ switch option.method
             if k == 1
                 [cg_dI, errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
             else
-                [cg_dI,errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
+                [cg_dI, errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
             end
+%             keyboard
+%             cg_dI = feasible(cg_dI);                        % scale and clip pixel value [0,1]
+            cg_dI = clip(cg_dI,1,0);
             clear X
             X = conv2MatOp(im2double(cg_dI),fsize,shape);   % new guess of convMtx X
             %            
+            %--------------- TOOL ---------------%
             % sum of cg_dI(more an edge img) and frame
+            %
 %             keyboard
-            cg_dI_show = bsxfun(@times,cg_dI,(cg_dI>1e-5));
-            cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
-            cg_dI_show = cg_dI_show + frame;
-            cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
+%             cg_dI_show = bsxfun(@times,cg_dI,(cg_dI>1e-5));
+%             cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
+%             cg_dI_show = cg_dI_show + frame;
+%             cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
+            %--------------- END  ---------------%
             % -------- ground truth comparison figure --------
             cgNatureImg = figure;  set(cgNatureImg,'visible','off'),
             subplot(1,2,1)
             imagesc(clip(natureI,1,0)); 
             axis image off; colormap gray;
             subplot(1,2,2)
-            imagesc(clip(cg_dI_show,1,0)); 
+            imagesc(clip(cg_dI,1,0)); 
             axis image off; colormap gray;
             filename = sprintf('cgNatureImg_%d',k);
             filename = fullfile(figPath,filename);
@@ -215,7 +269,7 @@ switch option.method
             % -------- ground truth frame error figure --------
             % for latex
             figure;  set(gcf,'visible','off'),
-            hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', blu);          
+            hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', mpg);          
             hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('%d frames', numFrame));

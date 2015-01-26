@@ -48,7 +48,7 @@ for i = 1:numFrame + 1
     F = conv2MatOp(kernel,xsize,shape); % <-- convolution matrix
     convIm = F*nature; % <-- convolvution operation
     % add noise
-%     SNR = 15;
+%     SNR = 5;
 %     convIm = addnoise(convIm,SNR,nature);
     figure(333), imagesc(convIm), colormap gray, axis off image, 
     if exist('SNR','var')
