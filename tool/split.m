@@ -4,6 +4,6 @@ function [b_orth, alpha] = split(b,basis)
 % namely a linear equation in the basis direction and its orthogonal one.
 
 alpha = proj(b,basis);
-b_orth = b - alpha * basis;
+b_orth = b - alpha .* basis;
 
 end

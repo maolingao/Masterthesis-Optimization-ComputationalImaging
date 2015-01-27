@@ -9,7 +9,8 @@ figPath = option.figPath;
 %
 n = 60;
 % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
-u = rand(n,1); % u(1:10) = 10*u(1:10);
+u = rand(n,1); u = clip((u*10),10,1); 
+step = 50; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
 Q = RandomRotation(n); 
 D = diag(u);
 A = Q*D*Q';
@@ -20,7 +21,7 @@ H_FH = hessianMatrix(eye(size(A)));
 
 %
 tol = 1e-14;
-iter = 30;
+iter = 10;
 % option.version = 'CG';
 
 %% statistical test
@@ -87,7 +88,9 @@ if i == 1
     r_origin = A * x_start - b;
     b_orth = b;
 else
-    [b_orth, alpha] = split(b,b_1);
+%     keyboard
+%     [b_orth, alpha] = split(b,b_1);
+    [b_orth, alpha] = split(b,0);           % not split
     x_start =   zeros(size(b)); % H_SU * (b_orth + r_origin) ; % % # star #
 %     keyboard
 end
