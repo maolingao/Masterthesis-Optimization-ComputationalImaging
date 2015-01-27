@@ -17,7 +17,7 @@ multiFrame = cell(1,numFrame);
 [nature,~] = initialize;
 xsize = size(nature);
 shape = 'same';
-figure(33), clf
+% figure(33), clf
 
 for i = 1:numFrame + 1
 
@@ -78,12 +78,14 @@ for i = 1:numFrame + 1
     %}
     % ################
     multiFrame{i} = convIm;
-    
+    % ------------ show kernel and blurry image ------------ %
+    %{
     figure(33), subplot(numFrame+1,2,i*2-1),imshow(imresize(kernel/max(kernel(:)),20))
     title(sprintf('kernel %d/%d',i,numFrame))
     subplot(numFrame+1,2,i*2),imshow(convIm/max(convIm(:)))
     title(sprintf('image %d/%d',i,numFrame))
     drawnow
+    %}
     
 %     kernel = rotatekernel(kernel,theta); % shift kernel every 5 degree  % ---> change for rotateKernel
     
@@ -104,9 +106,9 @@ end
 
 function [im,f] = initialize
     % initiallize
-    % ground truth
-%     X = im2double(imread('cameraman.tif'));
-    load('satel.mat');
+%     ground truth
+    X = im2double(imread('cameraman.tif'));
+%     load('satel.mat');
     im = im2double(X);
     im = im./max(vec(im));
     % filter

@@ -35,6 +35,15 @@ eta = 0;                                        % ### <--- regularization parame
 tolK = -inf;
 HK = hessianMatrix(eye(fsize));
 X = conv2MatOp(im2double(start),fsize,shape);   % initial guess of convMtx X
+% ############### gradient img to deconvolve f ###############
+% keyboard
+% gstart = lap(start);
+% % gstart = gstart - min(vec(gstart));
+% % gstart = gstart./max(vec(gstart));
+% % figure, imagesc(gstart); colormap gray, axis image
+% X = conv2MatOp(im2double(gstart),fsize,shape);   % initial guess of convMtx X
+% ############### END of gradient img to deconvolve f ###############
+
 
 % nature estimating
 iterN = 1; % one step for estimating nature
@@ -193,6 +202,14 @@ switch option.method
         for k = 1 : numFrame
             % ##### special setup #####
             frame = multiFrame{k};
+            % ############### gradient img to deconvolve f ###############
+%             keyboard
+%             gframe = lap(frame);
+%             gframe = gframe - min(vec(gframe));
+%             gframe = gframe./max(vec(gframe));
+%             figure, imagesc(gframe); colormap gray, axis image
+            % ############### END of gradient img to deconvolve f ###############
+            %
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
@@ -224,6 +241,12 @@ switch option.method
             cg_dI = clip(cg_dI,1,0);
             clear X
             X = conv2MatOp(im2double(cg_dI),fsize,shape);   % new guess of convMtx X
+            % ############### gradient img to deconvolve f ###############
+%             gcg_dI = lap(cg_dI);
+% %             gcg_dI = gcg_dI - min(vec(gcg_dI));
+% %             gcg_dI = gcg_dI./max(vec(gcg_dI));
+%             X = conv2MatOp(im2double(gcg_dI),fsize,shape);   % new guess of convMtx X
+            % ############### END of gradient img to deconvolve f ###############
             %            
             %--------------- TOOL ---------------%
             % sum of cg_dI(more an edge img) and frame

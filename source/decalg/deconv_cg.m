@@ -49,18 +49,32 @@ for i = 1: (iter + 1)  %numel(im)
     cg_dI = reshape(x,imageSize);
 %         cg_dI = clip(cg_dI,1,0);
 %         cg_dI = cg_dI./sum(cg_dI(:)); % nfactor
-
+    % resudial error
 %         im_residual = F'*(F * cg_dI) - F'*im; % cg_dIdepad - nature; % 
     im_residual = (F * cg_dI - im); % cg_dIdepad - nature; % 
+    % crop away edge
+%     keyboard
+    kernelSize = min(F.xsize, F.fsize);
+    corpMarginSize = kernelSize;
+    Pim = patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual = Pim'*im_residual;
 %           im_residual = (cg_dI - double(nature)) ;
-
+    % absolute error
+    errorabso = cg_dI - nature;
+    if unique(abs(kernelSize - size(cg_dI)) > abs(max(F.xsize, F.fsize) - size(cg_dI)))
+        errorabso = Pim'*errorabso;        % current solving x, crop    
+    else
+        errorabso = errorabso;             % current solving f, NOT crop
+    end
+    % average residual & relative error of ground truth
     if norm(im_residual )==0
         errs(i) = 1e-20;
         rerrs(i) = 1e-20;
     else            
         errs(i) = (norm(im_residual) / numel(im_residual));
-        rerrs(i) = (norm(cg_dI - nature) / norm(nature));
+        rerrs(i) = (norm(errorabso) / norm(Pim'*nature));
     end
+        
 
     
     f3 = figure(3);
