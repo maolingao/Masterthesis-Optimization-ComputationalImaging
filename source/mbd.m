@@ -30,6 +30,14 @@ errs_allframes_cg = [];
 errs_allframes_gaussian = [];
 % ##### general setup #####
 numFrame = numel(multiFrame);
+for i = 1 : numFrame                            % register observation images
+    fixed = natureI;                            % r.t. ground truth
+    moving = multiFrame{i};
+    subpixel = 1;
+    [multiFrame{i}, output] = efficient_imregister(fixed, moving, subpixel);
+    %
+    multiKernel{i} =  center(multiKernel{i});   % center all kernel, only for error analysis
+end
 eta = 0;                                        % ### <--- regularization parameter
 % kernel estimating
 tolK = -inf;
@@ -214,6 +222,7 @@ switch option.method
             % ##### estimate kernel #####
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
+            cg_kernel = center(cg_kernel);                  % center PSF
             % -------- kernel comparison figure --------
             cgKernelImg = figure; set(cgKernelImg,'visible','off'),
             subplot(1,2,1)
@@ -236,6 +245,11 @@ switch option.method
             else
                 [cg_dI, errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
             end
+%             if k == 1
+%                 [cg_dI,errs_cgN] = deconv_gaussian(Kcg,frame,iterN,natureI,start,eta); % gaussian
+%             else
+%                 [cg_dI,errs_cgN] = deconv_gaussian(Kcg,frame,iterN,natureI,cg_dI,eta); % gaussian
+%             end
 %             keyboard
 %             cg_dI = feasible(cg_dI);                        % scale and clip pixel value [0,1]
             cg_dI = clip(cg_dI,1,0);
