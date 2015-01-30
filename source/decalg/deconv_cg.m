@@ -1,4 +1,4 @@
-function [cg_dI,errs,tDeconv] = deconv_cg(F,im,nature,iter,start,tol,eta,option)
+function [cg_dI,errs,tDeconv,rerrs] = deconv_cg(F,im,nature,iter,start,tol,eta,option)
 % conjugate gradient
 
 startup;
@@ -40,9 +40,9 @@ p = -r(:);
 epsl = 1e-30; % numerical stable
 errs = nan(1,iter);
 rerrs = nan(1,iter);
+errRelChange = nan;
 
 time = 1e-2;
-
 
 %##### iteration #####
 for i = 1: (iter + 1)  %numel(im)
@@ -62,17 +62,21 @@ for i = 1: (iter + 1)  %numel(im)
     % absolute error
     errorabso = cg_dI - nature;
     if unique(abs(kernelSize - size(cg_dI)) > abs(max(F.xsize, F.fsize) - size(cg_dI)))
+%         keyboard
+%         figure(5), imagesc(im_residual), colormap gray, axis image
         errorabso = Pim'*errorabso;        % current solving x, crop    
+        natureCrop = Pim'*nature;
     else
         errorabso = errorabso;             % current solving f, NOT crop
+        natureCrop = nature;
     end
     % average residual & relative error of ground truth
     if norm(im_residual )==0
         errs(i) = 1e-20;
         rerrs(i) = 1e-20;
     else            
-        errs(i) = (norm(im_residual) / numel(im_residual));
-        rerrs(i) = (norm(errorabso) / norm(Pim'*nature));
+        errs(i) = (norm(im_residual) / numel(im_residual)); % average, absolute residual
+        rerrs(i) = (norm(errorabso) / norm(natureCrop)); % relative error ||x - hat(x)|| / ||x||
     end
         
 
@@ -95,8 +99,15 @@ for i = 1: (iter + 1)  %numel(im)
         cg_dI = clip(cg_dI,1,0);
         break
     else
+        % stop creterien ########
+        if i > 3
+%             keyboard
+            errRelChange = errs(2:i) - errs(1:i-1);
+            errRelChange = sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
+        end
         
-        if i == (iter + 1)
+        if i == (iter + 1) || errRelChange > -1e-2
+%             keyboard
             cg_dI = clip(reshape(x,imageSize),1,0);
             break
         end

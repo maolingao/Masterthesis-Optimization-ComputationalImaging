@@ -107,8 +107,8 @@ end
 function [im,f] = initialize
     % initiallize
 %     ground truth
-%     X = im2double(imread('cameraman.tif'));
-    load('satel.mat');
+    X = im2double(imread('cameraman.tif'));
+%     load('satel.mat');
     im = im2double(X);
     im = im./max(vec(im));
     % filter

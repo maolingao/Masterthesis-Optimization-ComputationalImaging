@@ -122,8 +122,9 @@ for k = 1:(iter + 1)  %numel(im)
         
         switch option.version
             case 'FH'
-                Hy = vec(H*reshape(y,imageSize));
-                delta = s - Hy;        % delta_i <-- s_i - H_i*y_i
+%                 Hy = vec(H*reshape(y,imageSize));
+%                 delta = s - Hy;        % delta_i <-- s_i - H_i*y_i
+                delta = s - H.scale*y;          % ########29.01#########
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'SU'
@@ -158,6 +159,9 @@ for k = 1:(iter + 1)  %numel(im)
         
         % ###################
         tElapsed = toc(tStart);
+        % ########29.01###########
+%         keyboard
+%         buildH;
 % orthogonal
         residual = [residual,r];
         display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)));
@@ -168,6 +172,13 @@ for k = 1:(iter + 1)  %numel(im)
     
 end
 tDeconv = time(end);
+        % ########29.01###########
+        buildH;
+        [U,D] = eig(H_mtx);
+        figure(6), imagesc(log10(abs(real(U'*U)))), colormap gray, axis image
+        figure(7), imagesc(log10(diag(sort(diag(abs(real(D))),'ascend')))),    colormap gray, axis image
+        print -depsc2 eigenspectrum_img
+        keyboard
 pncg_dI = clip(pncg_dI,1,0);
 
 

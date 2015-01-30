@@ -1,4 +1,4 @@
-function [gaussian_dI,errs] = deconv_gaussian(F,im,iter,nature,start,eta,option)
+function [gaussian_dI,errs,rerrs] = deconv_gaussian(F,im,iter,nature,start,eta,option)
 % Gaussian noise deconvolution
 startup;
 
@@ -42,14 +42,32 @@ for i = 1 : (iter + 1)
     
     im_residual = F * gaussian_dI - im;
 %     im_residual = (gaussian_dI - double(nature)) ;
+    % crop away edge
+%     keyboard
+    kernelSize = min(F.xsize, F.fsize);
+    corpMarginSize = kernelSize;
+    Pim = patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual = Pim'*im_residual;
+    %
+    % absolute error
+    errorabso = gaussian_dI - nature;
+    if unique(abs(kernelSize - size(gaussian_dI)) > abs(max(F.xsize, F.fsize) - size(gaussian_dI)))
+        errorabso = Pim'*errorabso;        % current solving x, crop    
+        natureCrop = Pim'*nature;
+    else
+        errorabso = errorabso;             % current solving f, NOT crop
+        natureCrop = nature;
+    end
+    %
+    % average residual & relative error of ground truth
     if norm(im_residual )==0
         errs(i) = 1e-20;
         rerrs(i) = 1e-20;
-    else
-        errs(i) = norm(im_residual)/ numel(im_residual); % average, absolute residual
-        rerrs(i) = norm(gaussian_dI - nature)/ norm(nature); % relative error ||x - hat(x)|| / ||x||
+    else            
+        errs(i) = (norm(im_residual) / numel(im_residual)); % average, absolute residual
+        rerrs(i) = (norm(errorabso) / norm(natureCrop)); % relative error ||x - hat(x)|| / ||x||
     end
-    
+    %
     f2 = figure(2);
     subplot(121) 
     imagesc(clip(gaussian_dI,1,0)); axis image, colormap(gray)

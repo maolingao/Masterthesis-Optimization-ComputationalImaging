@@ -25,9 +25,9 @@ else
 end
 shape = F.shape;
 
-errs_allframes_pncg = [];
-errs_allframes_cg = [];
-errs_allframes_gaussian = [];
+errs_allframes_pncg = []; rerrs_allframes_pncg = [];
+errs_allframes_cg = []; rerrs_allframes_cg = [];
+errs_allframes_gaussian = []; rerrs_allframes_gaussian = [];
 % ##### general setup #####
 numFrame = numel(multiFrame);
 for i = 1 : numFrame                            % register observation images
@@ -41,7 +41,7 @@ end
 eta = 0;                                        % ### <--- regularization parameter
 % kernel estimating
 tolK = -inf;
-HK = hessianMatrix(eye(fsize));
+HK = hessianMatrix(eye(fsize)*1e0);
 X = conv2MatOp(im2double(start),fsize,shape);   % initial guess of convMtx X
 % ############### gradient img to deconvolve f ###############
 % keyboard
@@ -132,6 +132,10 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             option.version = 'FH';
             % ##### estimate kernel #####
+            % use ground truth to guess kernel
+            clear X
+            X = conv2MatOp(im2double(natureI),fsize,shape);   % initial guess of convMtx X
+            %
             [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
@@ -222,7 +226,6 @@ switch option.method
             % ##### estimate kernel #####
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
-            cg_kernel = center(cg_kernel);                  % center PSF
             % -------- kernel comparison figure --------
             cgKernelImg = figure; set(cgKernelImg,'visible','off'),
             subplot(1,2,1)
@@ -241,9 +244,9 @@ switch option.method
             clear Kcg
             Kcg = conv2MatOp(im2double(cg_kernel),imagesize,shape);  % convMtx of kernel, cg
             if k == 1
-                [cg_dI, errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
+                [cg_dI, errs_cgN,~,rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
             else
-                [cg_dI, errs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
+                [cg_dI, errs_cgN,~,rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
             end
 %             if k == 1
 %                 [cg_dI,errs_cgN] = deconv_gaussian(Kcg,frame,iterN,natureI,start,eta); % gaussian
@@ -286,8 +289,8 @@ switch option.method
 
             % statitics 
             % all frame errors 
-            errs_allframes_cg = [errs_allframes_cg,errs_cgN(end)]; % cg 
-
+            errs_allframes_cg = [errs_allframes_cg,errs_cgN(end)]; % residual, cg 
+            rerrs_allframes_cg = [rerrs_allframes_cg,rerrs_cgN(end)]; % relative error, cg
             % plots    
             % -------- ground truth frame error figure --------
             % for debug
@@ -305,6 +308,7 @@ switch option.method
         end 
             % -------- ground truth frame error figure --------
             % for latex
+            % residual error
             figure;  set(gcf,'visible','off'),
             hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', mpg);          
             hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
@@ -312,7 +316,19 @@ switch option.method
             hTitle = title(sprintf('%d frames', numFrame));
             thisFigure;   
             drawnow
-            filename = sprintf('mbd_errAllFrame_cg');
+            filename = sprintf('mbd_residualErrorAllFrame_cg');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            % relative error
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(rerrs_allframes_cg),rerrs_allframes_cg,'Color', mpg);          
+            hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_relativeErrorAllFrame_cg');
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;
@@ -327,6 +343,7 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
             [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame,iterK,natureK,startK,eta,option); % gaussian
+            gaussian_kernel = preserveNorm(gaussian_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
             gaussianKernelImg = figure; set(gaussianKernelImg,'visible','off'),
             subplot(1,2,1)
@@ -347,9 +364,9 @@ switch option.method
             clear Kgaussian
             Kgaussian = conv2MatOp(im2double(gaussian_kernel),imagesize,shape);  % convMtx of kernel, gaussian
             if k == 1
-                [gaussian_dI,errs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,start,eta); % gaussian
+                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,start,eta); % gaussian
             else
-                [gaussian_dI,errs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,gaussian_dI,eta); % gaussian
+                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,gaussian_dI,eta); % gaussian
             end
             clear X
             X = conv2MatOp(im2double(gaussian_dI),fsize,shape);   % new guess of convMtx X
@@ -371,6 +388,7 @@ switch option.method
             % statitics 
             % all frame errors
             errs_allframes_gaussian = [errs_allframes_gaussian,errs_gaussianN(end)]; % gaussian 
+            rerrs_allframes_gaussian = [rerrs_allframes_gaussian,rerrs_gaussianN(end)]; % relative error, cg
 
             % plots    
             % -------- ground truth frame error figure --------
@@ -390,6 +408,7 @@ switch option.method
         end            
             % -------- ground truth frame error figure --------
             % for latex
+            % residual error
             figure;  set(gcf,'visible','off'),
             hData = plot(1:length(errs_allframes_gaussian),errs_allframes_gaussian,'Color', blu);          
             hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
@@ -397,7 +416,19 @@ switch option.method
             hTitle = title(sprintf('%d frames', numFrame));
             thisFigure;   
             drawnow
-            filename = sprintf('mbd_errAllFrame_gaussian');
+            filename = sprintf('mbd_residualErrorAllFrame_gaussian');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            % relative error
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(rerrs_allframes_gaussian),rerrs_allframes_gaussian,'Color', mpg);          
+            hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_relativeErrorAllFrame_gaussian');
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;
