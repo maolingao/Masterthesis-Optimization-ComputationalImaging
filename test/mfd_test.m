@@ -10,10 +10,11 @@ figPath = option.figPath;
 n = 60;
 % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
 u = rand(n,1); u = clip((u*10),10,1); 
-step = 50; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
+step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
 Q = RandomRotation(n); 
 D = diag(u);
 A = Q*D*Q';
+A_ori= A;
 % figure(5), imagesc(A),colormap
 % H  = eye(size(A));
 H_CG = hessianMatrix(eye(size(A)));
@@ -78,15 +79,16 @@ keyboard
 %{%
 H_SU = hessianMatrix(eye(size(A)));
 residual_pncg_allframe = [];
-for i = 1: 10
+for i = 1: 20
 
 x = rand(n,1);
-b = A*x;
-
+b = A_ori*x;
+b = b./ max(u);
 if i == 1
     x_start =   zeros(size(b)); %b; %
     r_origin = A * x_start - b;
     b_orth = b;
+    A = A./max(u);
 else
 %     keyboard
 %     [b_orth, alpha] = split(b,b_1);
