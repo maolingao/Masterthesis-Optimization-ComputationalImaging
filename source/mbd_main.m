@@ -4,12 +4,12 @@
 % setup
 localsetup;
 % option.method = 'gaussian';
-option.method = 'cg';
-% option.method = 'pncg';
+% option.method = 'cg';
+option.method = 'pncg';
 % generate psf
 multiFilt = betterImRead; % 100 speckle samples
 % sample psf
-multiFilt_ds = multiFilt(1:1:10); 
+multiFilt_ds = multiFilt(1:1:7); 
 numFrame = length(multiFilt_ds);
 % generate multi frame with controlable noise
 [multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);
@@ -27,5 +27,5 @@ start = start./numFrameStart; multiFrame = multiFrame((numFrameStart+1):end);
 multiFilt_ds = multiFilt_ds((numFrameStart+1):end);
 
 %
-iter = 5;
+iter = 20;
 I = mbd(multiFrame, F, start, iter, nature, multiFilt_ds,option);

@@ -1,8 +1,6 @@
-function [pncg_dI,H, errs, tDeconv] = deconv_pncg(F, im, nature, H, iter, start, tol, eta, option)
+function [pncg_dI,H,errs,tDeconv] = deconv_pncg_BAK(F,im,nature,H,iter,start,tol,eta,option)
 % probabilistic solver, conjugate gradient
-% written for mfd_test script, to verify idea of multi-frame deconv(update of H with class hessianMatrix)
 
-% example - input start = x, output must stay at start
 startup;
 a = 1e-30; 
 
@@ -15,6 +13,7 @@ end
 
 if nargin < 6
     start = F'*im;
+%     start = F'*(F*(F'*im));
 end
 if nargin < 7
     tol = 10^-6;
@@ -47,54 +46,27 @@ l = [0 -1 0
      0 -1 0]; % laplacian matrix WORK! 
 L = conv2MatOp(l,imageSize,'same');
 % eta = 0.01;
-
 % ##### setup #####
+x = start;
+r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
+r = r0;
 switch option.version
-    case 'FH'
-%         keyboard
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        x = start;
-        r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-        r = r0;
-%         keyboard
-        p = M*r0;
-%         p = -r0;
-        color = dre;
-    case 'CG'
-        M = hessianMatrix(H.H); % preconditioner
-%         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        x = start;
-        r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-        r = r0;
-        p = M*r0;
-        color = mpg;
-        err=[];
-    case 'SU'
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        H_crt = hessianMatrix(H.H);                     % hessian matrix for current frame
-        x = start;
-        r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-        r = r0;
-        p = M*r0;
-%         p = -r0;
-        color = ora;
-        % ----DEBUG----
-        err=[];
-        if isempty(H.s) && isempty(H.l) 
-            NOP;
-        else            
-            err = norm(r0);
-            q = F'*(F*p);
-            alpha = - (p'*q + 1e-30)\(p'*r);
-            x = start + alpha * p;
-            r0 = F'*(F * x) - b;
-            p0 = M * r0;
-            r = r0;
-            p = p0;
+    case 'FH' % full H 
+        if isempty(H.s) %H == eye(size(A)) %
+            p = -r;
+        else
+            p = H*r;
         end
-        % ----DEBUG----
+    case 'CG'
+        p = -r;
+    case 'SU' % speed up
+        if isempty(H.s) %H == eye(size(A)) %
+            p = -r;
+        else
+            p = H*r;
+        end
     otherwise
-        error('check option.version in pncg_Hmfd')
+        error('check option.version!')
 end
 
 epsl = 1e-30;
@@ -107,8 +79,7 @@ time = 1e-2;
 residual = r;
 
 %##### iteration #####
-% keyboard
-for k = 1 : (iter + 1)  %numel(im)
+for k = 1:(iter + 1)  %numel(im)
     pncg_dI = reshape(x,imageSize);  
     im_residual = (F * pncg_dI - im); % 
     if norm(im_residual )==0
@@ -131,8 +102,7 @@ for k = 1 : (iter + 1)  %numel(im)
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
     drawnow 
-    %
-
+    
     if norm(im_residual) < numel(im_residual)*tol
         disp('==> solution found!')
         break
@@ -144,70 +114,56 @@ for k = 1 : (iter + 1)  %numel(im)
         tStart = tic;
         % ###################
         q = vec((F'*(F*(reshape(p,imageSize)))  + eta*(L*reshape(p,imageSize)) + a*reshape(p,imageSize))); % A*p register
-        alpha = - (p'*q + epsl)\(p'*r);
+%         q = vec((F'*(F*(reshape(p,imageSize))) + a*reshape(p,imageSize))); % A*p register, without Tikhonov
+        alpha = -(p'*q + epsl)\(p'*r);
         
         s = alpha*p;           % s_i <-- x_i+1 - x_i
         y = alpha*q;           % y_i <-- A*s_i
         
         switch option.version
             case 'FH'
-%                 delta = s - H*y;        % delta_i <-- s_i - H_i*y_i
-                delta = s - y;        % delta_i <-- s_i - H_i*y_i
+%                 Hy = vec(H*reshape(y,imageSize));
+%                 delta = s - Hy;        % delta_i <-- s_i - H_i*y_i
+                delta = s - y;        
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'SU'
-                delta = s - H_crt*y;        % delta_i <-- s_i - H_i*y_i
-% % %                 H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                if s'*y > -1e-15
-                    H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                else
-                    keyboard
-                    display 'direction changes too small.'
-                    break
-                end
+                delta = s - y;        % delta_i <-- s_i - H_i*y_i
             otherwise
-                error('check option.version in pncg_Hmfd')
+                error('check option.version!')
         end
              
         x = x + s;              % x_i+1 <-- x_i - alpha*p_i
-        r = r + y;              % r_i+1 <-- r_i - A*alpa*p_i        
-       
+        r = r + y;              % r_i+1 <-- r_i - A*alpa*p_i
+        
+%         den = s'*y;
+%         H = H + (den + epsl)\(delta*s') + (den + epsl)\(s*delta') - ((den)^2 + epsl)\(s*delta'*y*s');% H_i+1 <-- H_i + (update)
         H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
-% % %         if s'*y > -1e-15
-% % %             if option.frame > inf
-% % %             % eliminate the component in new tuple [s,y,delta] which are
-% % %             % already contained in previous spanned Krylov subspace.
-% % %                 [S,Y,Delta] = purify(H,s,y,delta); 
-% % % %                 keyboard
-% % %                 clear H
-% % %                 H = hessianMatrix(M.H,S,Y,Delta,(M.i+1));
-% % %             else
-% % %                 H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
-% % %             end
-% % %         else
-% % %                     keyboard
-% % %             display 'direction changes too small.'
-% % %             break
-% % %         end
         
         p_1 = p;
         switch option.version
             case 'FH'
-                p = vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
+                if k == 1
+                    p = vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H*r;
+                else
+                    p = vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H*r;
+%                     p = vec(Hy + p + H.*r);
+                end
             case 'CG'
                 p = r + H.*r;
             case 'SU'
-                p = H_crt*r;                    
+                p = r + H.*r;
             otherwise
-                error('check option.version in pncg_Hmfd')
+                error('check option.version!')
         end
+        
         % ###################
         tElapsed = toc(tStart);
 %         keyboard
 %         buildH;
-% orthogonal      
-        residual = [residual,r]; 
-        display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)))
+% orthogonal
+        residual = [residual,r];
+        display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)));
 % conjugate
         conj = p_1'*vec(vec((F'*(F*reshape(p,imageSize))))  + vec(eta*(L*reshape(p,imageSize))) + a*p)
         time = [time;time(end)+tElapsed];
@@ -215,12 +171,16 @@ for k = 1 : (iter + 1)  %numel(im)
     
 end
 tDeconv = time(end);
-% keyboard
+        % ########29.01###########
+        buildH;
+        [U,D] = eig(H_mtx);
+        figure(6), imagesc(log10(abs(real(U'*U)))), colormap gray, axis image
+        figure(7), imagesc(log10(diag(sort(diag(abs(real(D))),'ascend')))),    colormap gray, axis image
+        print -depsc2 eigenspectrum_img
+        keyboard
 pncg_dI = clip(pncg_dI,1,0);
 
-clear H_crt
-%
-%
+
 %##### figure #####
 %----- main curves -----
 errs = errs(~isnan(errs));
