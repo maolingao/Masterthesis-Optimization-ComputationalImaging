@@ -4,7 +4,7 @@ function [pncg_dI,H, errs, tDeconv] = deconv_pncg(F, im, nature, H, iter, start,
 
 % example - input start = x, output must stay at start
 startup;
-a = 1e-30; 
+a = 1e-6; 
 
 if nargin < 4
     H = hessianMatrix(eye(size(F'*im)));
@@ -49,6 +49,7 @@ L = conv2MatOp(l,imageSize,'same');
 % eta = 0.01;
 
 % ##### setup #####
+%{
 switch option.version
     case 'FH'
 %         keyboard
@@ -96,7 +97,15 @@ switch option.version
     otherwise
         error('check option.version in pncg_Hmfd')
 end
-
+%}        
+%         keyboard
+        x = start;
+        r = (F'*(F*x) +eta*((L*x)) + a*x) - b;
+%         p = H*r;
+        p = -r;
+        color = dre;
+        %
+        %
 epsl = 1e-30;
 errs = nan(1,iter);
 rerrs = nan(1,iter);
@@ -151,20 +160,9 @@ for k = 1 : (iter + 1)  %numel(im)
         
         switch option.version
             case 'FH'
-%                 delta = s - H*y;        % delta_i <-- s_i - H_i*y_i
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
-            case 'SU'
-                delta = s - H_crt*y;        % delta_i <-- s_i - H_i*y_i
-% % %                 H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                if s'*y > -1e-15
-                    H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                else
-                    keyboard
-                    display 'direction changes too small.'
-                    break
-                end
             otherwise
                 error('check option.version in pncg_Hmfd')
         end
@@ -196,8 +194,6 @@ for k = 1 : (iter + 1)  %numel(im)
                 p = vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
             case 'CG'
                 p = r + H.*r;
-            case 'SU'
-                p = H_crt*r;                    
             otherwise
                 error('check option.version in pncg_Hmfd')
         end
@@ -218,7 +214,6 @@ tDeconv = time(end);
 % keyboard
 pncg_dI = clip(pncg_dI,1,0);
 
-clear H_crt
 %
 %
 %##### figure #####

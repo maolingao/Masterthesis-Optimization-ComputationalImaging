@@ -9,7 +9,7 @@ option.method = 'pncg';
 % generate psf
 multiFilt = betterImRead; % 100 speckle samples
 % sample psf
-multiFilt_ds = multiFilt(1:1:7); 
+multiFilt_ds = multiFilt(1:1:20); 
 numFrame = length(multiFilt_ds);
 % generate multi frame with controlable noise
 [multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);

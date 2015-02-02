@@ -8,15 +8,22 @@ classdef hessianMatrix < handle
         y           % corrected step residual
         delta       % difference btw corrected step error and back-calculated corrected step residual
         i           % iteration index
-        Ginv0       % inverse of last Gramm matrix
-        scale       % scale of diagonal element in H
+        l           % low rank update matrix H = H0 + l*r
+        r           % low rank update matrix H = H0 + l*r
+        
     end
     
     methods
-        function obj = hessianMatrix(H,s,y,delta,Ginv0,i)
+        function obj = hessianMatrix(H,l,r,s,y,delta)
+            obj.i = 1;
             if nargin > 0
                 obj.H = H;
-                obj.scale = unique(diag(obj.H));
+                if exist('l','var')
+                    obj.l = l;
+                end
+                if exist('r','var')
+                    obj.r = r;
+                end
                 if exist('s','var')
                     obj.s = s;
                     obj.i = size(s,2) + 1;
@@ -26,15 +33,7 @@ classdef hessianMatrix < handle
                 end
                 if exist('delta','var')
                     obj.delta = delta;
-                end   
-                if exist('Ginv0','var')
-                    obj.Ginv0 = Ginv0;
-                end   
-                if exist('i','var')
-                    obj.i = i;
-                else
-                    obj.i = 1;
-                end             
+                end               
              end
             
         end
@@ -51,61 +50,31 @@ classdef hessianMatrix < handle
             % multiplication with matrix and vector
             
                 epsl = 1e-30;
-%                 keyboard
                 % working version, using all terms to update H
-                %{
                 tail = 0; % (update)
                 for k = 1 : obj.i - 1
+%                 tail = tail + (obj.s(:,k)'*obj.y(:,k) + epsl )\(obj.delta(:,k)*(obj.s(:,k)'*vec(x)) + epsl ) + ...
+%                     (obj.s(:,k)'*obj.y(:,k) + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*vec(x)) + epsl ) - ...
+%                     ((obj.s(:,k)'*obj.y(:,k))^2 + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*obj.y(:,k))*(obj.s(:,k)'*vec(x)) + epsl );
+%                 end
                     den = (obj.s(:,k)'*obj.y(:,k) );
                     tail = tail + (den + epsl )\(obj.delta(:,k)*(obj.s(:,k)'*vec(x))  ) + ...
                         (den + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*vec(x))  ) - ...
                         (den^2 + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*obj.y(:,k))*(obj.s(:,k)'*vec(x)) );
                 end
-                %}
-                % debug, using full H
+                % ########################
+                % check, update fasion of H
                 %{%
-                if ~isempty(obj.s)
-                    if size(obj.s,2) == size(obj.Ginv0,1)
-                        Ginv = obj.Ginv0;
-                    elseif size(obj.s,2) < 2 
-%                         keyboard
-                        Ginv = 1/((obj.s)'*obj.y + epsl);
-                    else
-%                         keyboard
-                        Ginv = invGram(obj.Ginv0,obj.s,obj.y);
-                    end
-                    SGinv = obj.s * Ginv;
-                    SGinvDelta = SGinv * (obj.delta)';
-                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
-                    tail = tailM * vec(x);
-                    obj.Ginv0 = Ginv;
+                % *** update form: H = H0 + l*r' + tail ***
+                if ~isempty(obj.l)
+                    lrt = obj.l*(obj.r'*vec(x));
+                    outp = vec(x) + vec(lrt) + tail; % output = vec(I*x) + l*r'*vec(x) + tail
                 else
-                    tail = 0;
-                end
-                %}                
-                %{
-                if ~isempty(obj.s)
-                    if size(obj.s,2) == size(obj.Ginv0,1)
-%                         keyboard
-                        Ginv = obj.Ginv0;
-                    elseif size(obj.s,2) < 2 
-                        Ginv = 1/((obj.s)'*obj.s + epsl);
-                    else
-%                         keyboard
-                        M = (obj.s)'*obj.y;
-                        Ginv = (M'*M) \ eye(size(obj.s,2)) * M';
-                    end
-                    SGinv = obj.s * Ginv;
-                    SGinvDelta = SGinv * (obj.delta)';
-                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
-                    tail = tailM * vec(x);
-                    obj.Ginv0 = Ginv;
-                else
-                    tail = 0;
+                    outp = vec(x) + tail;            % output = vec(I*x) + tail
                 end
                 %}
                 % *** update form: H = H0 + tail ***
-                outp = obj.scale * vec(x) + tail;              % output = vec(I*x) + tail
+%                 outp = vec(x) + tail; % output = vec(I*x) + tail
                 % ########################
                 
         end
@@ -128,7 +97,7 @@ classdef hessianMatrix < handle
                         (den + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*vec(x)) ) - ...
                         (den^2 + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*obj.y(:,end))*(obj.s(:,end)'*vec(x))  );
 %                 end
-
+                %}
                 outp = tail; % output = tail(last term)
 %                 outp = vec(obj.H*x) + tail; % H_i+1 <-- H_i + (update)
                 

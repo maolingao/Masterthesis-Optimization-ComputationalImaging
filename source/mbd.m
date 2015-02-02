@@ -134,7 +134,9 @@ switch option.method
             % ##### estimate kernel #####
             % use ground truth to guess kernel
             clear X
-            X = conv2MatOp(im2double(natureI),fsize,shape);   % initial guess of convMtx X
+            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+            clear HK
+            HK = hessianMatrix(eye(fsize)*1e0);               % same initial for HessianMatrix HK --- mfd
             %
             [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
@@ -155,14 +157,19 @@ switch option.method
             % ##### estimate nature #####
             clear Kpncg
             Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
+%             if k == 1
+%                 [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
+%             else
+%                 [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
+%             end
             if k == 1
-                [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
+                [pncg_dI,errs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta); % gaussian
             else
-                [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
+                [pncg_dI,errs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta); % gaussian
             end
             pncg_dI = clip(pncg_dI,1,0);
             clear X
-            X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X
+%             X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X %#################
             % -------- ground truth comparison figure --------
             pncgNatureImg = figure;  set(pncgNatureImg,'visible','off'),
             subplot(1,2,1)
@@ -224,6 +231,10 @@ switch option.method
             %
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
+            % use ground truth to guess kernel
+            clear X
+            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+            %
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
@@ -388,7 +399,7 @@ switch option.method
             % statitics 
             % all frame errors
             errs_allframes_gaussian = [errs_allframes_gaussian,errs_gaussianN(end)]; % gaussian 
-            rerrs_allframes_gaussian = [rerrs_allframes_gaussian,rerrs_gaussianN(end)]; % relative error, cg
+            rerrs_allframes_gaussian = [rerrs_allframes_gaussian,rerrs_gaussianN(end)]; % relative error, gaussian
 
             % plots    
             % -------- ground truth frame error figure --------
