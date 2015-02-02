@@ -68,7 +68,7 @@ classdef hessianMatrix < handle
 %                         keyboard
                         Ginv = obj.Ginv0;
                     elseif size(obj.s,2) < 2 
-                        Ginv = 1/((obj.s)'*obj.s + epsl);
+                        Ginv = 1/((obj.s)'*obj.y + epsl);
                     else
 %                         keyboard
                         Ginv = invGram(obj.Ginv0,obj.s,obj.y);
