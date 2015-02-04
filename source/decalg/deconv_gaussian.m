@@ -24,6 +24,7 @@ rerrs = nan(1,iter);
             
 epsl = 1e-7;
 time = 1e-2;
+errRelChange = nan;
 %##### Tikhonov #####
 %{
 l = [0 -1 0
@@ -82,7 +83,13 @@ for i = 1 : (iter + 1)
 %     keyboard
     drawnow 
         
-    if i == (iter + 1)
+    % stop creterien ########
+    if i > 3
+%             keyboard
+        errRelChange = errs(2:i) - errs(1:i-1);
+        errRelChange = sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
+    end
+    if i == (iter + 1) || errRelChange > -1e-3
         gaussian_dI = clip(gaussian_dI,1,0);
         break
     end    

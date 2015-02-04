@@ -106,7 +106,7 @@ for i = 1: (iter + 1)  %numel(im)
             errRelChange = sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
         end
         
-        if i == (iter + 1) || errRelChange > -1e-2
+        if i == (iter + 1) || errRelChange > -1e-3
 %             keyboard
             cg_dI = clip(reshape(x,imageSize),1,0);
             break

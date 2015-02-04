@@ -151,8 +151,8 @@ switch option.method
 %             end
 %             frame = frame./10^(3);           % <---- scale y
             % !!!!!!!! non blind !!!!!!!!
-%             clear X
-%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+            clear X
+            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
 %             clear HK
 %             HK = hessianMatrix(eye(fsize)*1e0);               % same initial for HessianMatrix HK --- mfd
             %
@@ -188,16 +188,16 @@ switch option.method
             % ##### estimate nature #####
             clear Kpncg
             Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
-%             if k == 1
-%                 [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
-%             else
-%                 [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
-%             end
             if k == 1
-                [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta); % gaussian
+                [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
             else
-                [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta); % gaussian
+                [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
             end
+%             if k == 1
+%                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta); % gaussian
+%             else
+%                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta); % gaussian
+%             end
             pncg_dI = clip(pncg_dI,inf,0);
             clear X
             X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X %#################
@@ -276,9 +276,10 @@ switch option.method
             %
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
-            % use ground truth to guess kernel
+            % !!!!!!!! non blind !!!!!!!!
             clear X
             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+            %
             %
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
@@ -300,9 +301,9 @@ switch option.method
             clear Kcg
             Kcg = conv2MatOp(im2double(cg_kernel),imagesize,shape);  % convMtx of kernel, cg
             if k == 1
-                [cg_dI, errs_cgN,~,rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
+                [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
             else
-                [cg_dI, errs_cgN,~,rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
+                [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
             end
 %             if k == 1
 %                 [cg_dI,errs_cgN] = deconv_gaussian(Kcg,frame,iterN,natureI,start,eta); % gaussian
@@ -398,6 +399,10 @@ switch option.method
             frame = multiFrame{k};
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
+            % !!!!!!!! non blind !!!!!!!!
+            clear X
+            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+            %
             [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame,iterK,natureK,startK,eta,option); % gaussian
             gaussian_kernel = preserveNorm(gaussian_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------

@@ -3,13 +3,13 @@
 % call all the multi-frame blind deconvolution shell
 % setup
 localsetup;
-% option.method = 'gaussian';
+option.method = 'gaussian';
 % option.method = 'cg';
-option.method = 'pncg';
+% option.method = 'pncg';
 % generate psf
 multiFilt = betterImRead; % 100 speckle samples
 % sample psf
-multiFilt_ds = multiFilt(1:1:15); 
+multiFilt_ds = multiFilt(1:1:7); 
 numFrame = length(multiFilt_ds);
 % generate multi frame with controlable noise
 [multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);

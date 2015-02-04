@@ -74,10 +74,17 @@ classdef hessianMatrix < handle
 %                         keyboard
                         Ginv = invGram(obj.Ginv0,obj.s,obj.y);
                     end
+%                     SGinv = obj.s * Ginv;
+%                     SGinvDelta = SGinv * (obj.delta)';
+%                     tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
+%                     tail = tailM * vec(x);                    
+                    %----------------------------%
+%                     keyboard
+                    SX = (obj.s' * vec(x));
+                    GinvSX = Ginv * SX;
                     SGinv = obj.s * Ginv;
-                    SGinvDelta = SGinv * (obj.delta)';
-                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
-                    tail = tailM * vec(x);
+                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
+                    %----------------------------%
                     obj.Ginv0 = Ginv;
                 else
                     tail = 0;
