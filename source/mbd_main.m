@@ -3,9 +3,9 @@
 % call all the multi-frame blind deconvolution shell
 % setup
 localsetup;
-option.method = 'gaussian';
+% option.method = 'gaussian';
 % option.method = 'cg';
-% option.method = 'pncg';
+option.method = 'pncg';
 % generate psf
 multiFilt = betterImRead; % 100 speckle samples
 % sample psf

@@ -151,8 +151,8 @@ switch option.method
 %             end
 %             frame = frame./10^(3);           % <---- scale y
             % !!!!!!!! non blind !!!!!!!!
-            clear X
-            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+%             clear X
+%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
 %             clear HK
 %             HK = hessianMatrix(eye(fsize)*1e0);               % same initial for HessianMatrix HK --- mfd
             %
@@ -277,8 +277,8 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
             % !!!!!!!! non blind !!!!!!!!
-            clear X
-            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+%             clear X
+%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
             %
             %
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
@@ -400,8 +400,8 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
             % !!!!!!!! non blind !!!!!!!!
-            clear X
-            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+%             clear X
+%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
             %
             [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame,iterK,natureK,startK,eta,option); % gaussian
             gaussian_kernel = preserveNorm(gaussian_kernel);            % preserve energy norm of PSF
