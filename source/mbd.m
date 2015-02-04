@@ -41,8 +41,21 @@ end
 eta = 0;                                        % ### <--- regularization parameter
 % kernel estimating
 tolK = -inf;
-HK = hessianMatrix(eye(fsize)*1e0);
+scaler = 1e0;
+HK = hessianMatrix(eye(fsize)*scaler);
 X = conv2MatOp(im2double(start),fsize,shape);   % initial guess of convMtx X
+% -------- ground truth comparison figure - start --------
+startImg = figure;  set(startImg,'visible','off'),
+subplot(1,2,1)
+imagesc(clip(natureI,1,0)); 
+axis image off; colormap gray;
+subplot(1,2,2)
+imagesc(clip(start,1,0)); 
+axis image off; colormap gray;
+filename = sprintf('startNatureImg_%d',0);
+filename = fullfile(figPath,filename);
+print(gcf, '-depsc2', filename)
+close gcf;
 % ############### gradient img to deconvolve f ###############
 % keyboard
 % gstart = lap(start);
@@ -132,14 +145,32 @@ switch option.method
             natureK = multiKernel{k}; % for error calculation
             option.version = 'FH';
             % ##### estimate kernel #####
-            % use ground truth to guess kernel
-            clear X
-            X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
-            clear HK
-            HK = hessianMatrix(eye(fsize)*1e0);               % same initial for HessianMatrix HK --- mfd
+            % !!!!!!!! scale down image deconvolution matrix X and blurry observation frame !!!!!!!!
+%             if k == 1
+%                 natureI = natureI./10^(3);   % <---- scale X
+%             end
+%             frame = frame./10^(3);           % <---- scale y
+            % !!!!!!!! non blind !!!!!!!!
+%             clear X
+%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+%             clear HK
+%             HK = hessianMatrix(eye(fsize)*1e0);               % same initial for HessianMatrix HK --- mfd
             %
             [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
+            
+            % ##### MEMLIM #####
+            %{%
+            MEMLIM = 50;% size(HK.s,2);
+%             keyboard
+            [S,Y,Delta,GInv] = purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM);
+            % keyboard
+            clear HK
+            HK = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
+%             keyboard
+            max(max(S'*Y - diag(1./diag(HK.Ginv0))))
+            %}
+            % ###################
             % -------- kernel comparison figure --------
             pncgKernelImg = figure; set(pncgKernelImg,'visible','off'),
             subplot(1,2,1)
@@ -163,13 +194,13 @@ switch option.method
 %                 [pncg_dI,~,errs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
 %             end
             if k == 1
-                [pncg_dI,errs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta); % gaussian
+                [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta); % gaussian
             else
-                [pncg_dI,errs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta); % gaussian
+                [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta); % gaussian
             end
-            pncg_dI = clip(pncg_dI,1,0);
+            pncg_dI = clip(pncg_dI,inf,0);
             clear X
-%             X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X %#################
+            X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X %#################
             % -------- ground truth comparison figure --------
             pncgNatureImg = figure;  set(pncgNatureImg,'visible','off'),
             subplot(1,2,1)
@@ -185,6 +216,7 @@ switch option.method
             % statitics 
             % all frame errors
             errs_allframes_pncg = [errs_allframes_pncg,errs_pncgN(end)]; % pncg 
+            rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(end)]; % relative error, pncg
 
             % plots    
             % -------- ground truth frame error figure --------
@@ -203,6 +235,7 @@ switch option.method
         end
             % -------- ground truth frame error figure --------
             % for latex
+            % residual error
             figure;  set(gcf,'visible','off'),
             hData = plot(1:length(errs_allframes_pncg),errs_allframes_pncg,'Color', dre);          
             hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
@@ -211,6 +244,18 @@ switch option.method
             thisFigure;   
             drawnow
             filename = sprintf('mbd_errAllFrame_pncg');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            % relative error
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(rerrs_allframes_pncg),rerrs_allframes_pncg,'Color', dre);          
+            hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_relativeErrorAllFrame_pncg');
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;

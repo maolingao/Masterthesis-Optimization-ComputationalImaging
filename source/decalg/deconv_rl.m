@@ -35,12 +35,12 @@ for i = 1 : (iter + 1)
 %     im_residual = (lucy_dI - double(nature)) ;
     
 
-    if norm(im_residual )==0
+    if norm(im_residual ,'fro')==0
         errs(i) = 1e-20;
         rerrs(i) = 1e-20;
     else
-        errs(i) = norm(im_residual)/ numel(im_residual); % average, absolute residual
-        rerrs(i) = norm(lucy_dI - nature)/ norm(nature); % relative error ||x - hat(x)|| / ||x||
+        errs(i) = norm(im_residual,'fro')/ numel(im_residual); % average, absolute residual
+        rerrs(i) = norm((lucy_dI - nature),'fro')/ norm(nature,'fro'); % relative error ||x - hat(x)|| / ||x||
     end
 
     

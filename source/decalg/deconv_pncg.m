@@ -49,7 +49,7 @@ L = conv2MatOp(l,imageSize,'same');
 % eta = 0.01;
 
 % ##### setup #####
-%{
+%{%
 switch option.version
     case 'FH'
 %         keyboard
@@ -69,43 +69,10 @@ switch option.version
         r = r0;
         p = M*r0;
         color = mpg;
-        err=[];
-    case 'SU'
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        H_crt = hessianMatrix(H.H);                     % hessian matrix for current frame
-        x = start;
-        r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-        r = r0;
-        p = M*r0;
-%         p = -r0;
-        color = ora;
-        % ----DEBUG----
-        err=[];
-        if isempty(H.s) && isempty(H.l) 
-            NOP;
-        else            
-            err = norm(r0);
-            q = F'*(F*p);
-            alpha = - (p'*q + 1e-30)\(p'*r);
-            x = start + alpha * p;
-            r0 = F'*(F * x) - b;
-            p0 = M * r0;
-            r = r0;
-            p = p0;
-        end
-        % ----DEBUG----
     otherwise
         error('check option.version in pncg_Hmfd')
 end
 %}        
-%         keyboard
-        x = start;
-        r = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-%         p = H*r;
-        p = -r;
-        color = dre;
-        %
-        %
 epsl = 1e-30;
 errs = nan(1,iter);
 rerrs = nan(1,iter);
@@ -114,18 +81,42 @@ r = vec(r);
 p = vec(p);
 time = 1e-2;
 residual = r;
+errRelChange = nan;
 
 %##### iteration #####
 % keyboard
 for k = 1 : (iter + 1)  %numel(im)
     pncg_dI = reshape(x,imageSize);  
     im_residual = (F * pncg_dI - im); % 
-    if norm(im_residual )==0
+    % crop away edge
+%     keyboard
+    kernelSize = min(F.xsize, F.fsize);
+    corpMarginSize = kernelSize;
+    Pim = patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual = Pim'*im_residual;
+%           im_residual = (cg_dI - double(nature)) ;
+    % absolute error
+    fixed = nature;                            % r.t. ground truth
+    moving = pncg_dI;
+    subpixel = 1;
+    [pncg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
+    errorabso = pncg_dI_reg - nature;
+    if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
+%         keyboard
+%         figure(5), imagesc(im_residual), colormap gray, axis image
+        errorabso = Pim'*errorabso;        % current solving x, crop    
+        natureCrop = Pim'*nature;
+    else
+        errorabso = errorabso;             % current solving f, NOT crop
+        natureCrop = nature;
+    end
+    % average residual & relative error of ground truth
+    if norm(im_residual,'fro' )==0
         errs(k) = 1e-20;
         rerrs(k) = 1e-20;
-    else
-        errs(k) = norm(im_residual)/ numel(im_residual); % average, absolute residual
-        rerrs(k) = norm(pncg_dI - nature)/ norm(nature); % relative error ||x - hat(x)|| / ||x||
+    else            
+        errs(k) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
+        rerrs(k) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
 
     f4 = figure(4);
@@ -142,12 +133,20 @@ for k = 1 : (iter + 1)  %numel(im)
     drawnow 
     %
 
-    if norm(im_residual) < numel(im_residual)*tol
+    if norm(im_residual,'fro') < numel(im_residual)*tol
         disp('==> solution found!')
         break
     else
-        if k == (iter + 1)
-            pncg_dI = reshape(x,imageSize);
+        % stop creterien ########
+        if k > 3
+%             keyboard
+            errRelChange = errs(2:k) - errs(1:k-1);
+            errRelChange = sum(errRelChange(k-3:k-1)) / sum(errs(k-3:k)) * 4/3 ;
+        end
+        
+        if k == (iter + 1) || errRelChange > 5*1e-2
+%             keyboard
+            pncg_dI = clip(reshape(x,imageSize),1,0);
             break
         end
         tStart = tic;
