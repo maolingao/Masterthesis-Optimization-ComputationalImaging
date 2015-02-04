@@ -79,7 +79,7 @@ keyboard
 %{%
 H_SU = hessianMatrix(eye(size(A)));
 residual_pncg_allframe = [];
-for i = 1: 20
+for i = 1: 5
 
 x = rand(n,1);
 b = A_ori*x;
