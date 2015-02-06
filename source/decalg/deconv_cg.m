@@ -75,6 +75,7 @@ for i = 1: (iter + 1)  %numel(im)
         errs(i) = 1e-20;
         rerrs(i) = 1e-20;
     else            
+%         keyboard
         errs(i) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
         rerrs(i) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end

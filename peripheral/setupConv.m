@@ -19,6 +19,7 @@ title('ground truth')
 filename = 'natureIm';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+close gcf
 
 %----- kernel -----
 fkernel = figure; set(fkernel,'visible','off')
@@ -27,6 +28,7 @@ title('kernel')
 filename = 'kernelIm';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+close gcf
 
 %----- blur image -----
 fblur = figure; set(fblur,'visible','off')
@@ -39,3 +41,4 @@ end
 filename = 'noiseIm';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+close gcf

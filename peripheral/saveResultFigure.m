@@ -32,6 +32,7 @@ hTitle = title(shape);
 hYLabel = ylabel ('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex');
 hXLabel = xlabel('$\#steps$','Interpreter','Latex');
 thisFigure;   
+%% plot
 % for latex
 f10 = figure(10); set(f10,'visible','off'),
 hTitle = title(shape);

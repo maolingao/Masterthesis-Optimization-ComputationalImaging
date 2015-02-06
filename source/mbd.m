@@ -4,6 +4,8 @@ function I = mbd(multiFrame, F, start, iterK, natureI, multiKernel, option)
 if nargin < 7
     option.figPath = '/is/ei/mgao/figure2drag';
     option.method = 'gaussian';
+    option.win = 'barthann';
+    option.MEMLIM = 50;
 end
 
 startup;
@@ -42,8 +44,9 @@ eta = 0;                                        % ### <--- regularization parame
 % kernel estimating
 tolK = -inf;
 scaler = 1e0;
-HK = hessianMatrix(eye(fsize)*scaler);
-X = conv2MatOp(im2double(start),fsize,shape);   % initial guess of convMtx X
+HK                  =   hessianMatrix(eye(fsize)*scaler);
+start4convmat       =   betterEdgeTaper(start,option);                      % edge taper initial guess of g.t.
+X                   =   conv2MatOp(im2double(start4convmat),fsize,shape);   % initial guess of convMtx X
 % -------- ground truth comparison figure - start --------
 startImg = figure;  set(startImg,'visible','off'),
 subplot(1,2,1)
@@ -68,7 +71,6 @@ close gcf;
 
 % nature estimating
 iterN = 1; % one step for estimating nature
-HN = hessianMatrix(eye(imagesize));
 tolN = -inf;
 % iteration
 %{
@@ -143,25 +145,26 @@ switch option.method
             % ##### special setup #####
             frame = multiFrame{k};
             natureK = multiKernel{k}; % for error calculation
-            option.version = 'FH';
             % ##### estimate kernel #####
             % !!!!!!!! scale down image deconvolution matrix X and blurry observation frame !!!!!!!!
 %             if k == 1
 %                 natureI = natureI./10^(3);   % <---- scale X
 %             end
 %             frame = frame./10^(3);           % <---- scale y
+            %
+            % !!!!!!!! edge taper !!!!!!!!
+            frame4estiKernel  =   betterEdgeTaper(frame,  option);
             % !!!!!!!! non blind !!!!!!!!
 %             clear X
-%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
-%             clear HK
-%             HK = hessianMatrix(eye(fsize)*1e0);               % same initial for HessianMatrix HK --- mfd
+%             natureI4convmat   =   betterEdgeTaper(natureI,option);
+%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
-            [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame, natureK, HK, iterK, startK, tolK, eta, option); % pncg
+            [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             
             % ##### MEMLIM #####
             %{%
-            MEMLIM = 50;% size(HK.s,2);
+            MEMLIM = option.MEMLIM;% size(HK.s,2);
 %             keyboard
             [S,Y,Delta,GInv] = purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM);
             % keyboard
@@ -188,6 +191,8 @@ switch option.method
             % ##### estimate nature #####
             clear Kpncg
             Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
+            clear HN
+            HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
             if k == 1
                 [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
             else
@@ -200,7 +205,9 @@ switch option.method
 %             end
             pncg_dI = clip(pncg_dI,inf,0);
             clear X
-            X = conv2MatOp(im2double(pncg_dI),fsize,shape);   % new guess of convMtx X %#################
+            pncg_dI4convmat =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
+            X               =   conv2MatOp(im2double(pncg_dI4convmat),fsize,shape);   % new guess of convMtx X 
+            %#################
             % -------- ground truth comparison figure --------
             pncgNatureImg = figure;  set(pncgNatureImg,'visible','off'),
             subplot(1,2,1)
@@ -276,12 +283,15 @@ switch option.method
             %
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
+            % !!!!!!!! edge taper !!!!!!!!
+            frame4estiKernel  =   betterEdgeTaper(frame,  option);
             % !!!!!!!! non blind !!!!!!!!
 %             clear X
-%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+%             natureI4convmat   =   betterEdgeTaper(natureI,option);
+%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
             %
-            [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame, natureK, iterK, startK, tolK, eta, option); % cg
+            [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame4estiKernel, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
             cgKernelImg = figure; set(cgKernelImg,'visible','off'),
@@ -314,7 +324,8 @@ switch option.method
 %             cg_dI = feasible(cg_dI);                        % scale and clip pixel value [0,1]
             cg_dI = clip(cg_dI,1,0);
             clear X
-            X = conv2MatOp(im2double(cg_dI),fsize,shape);   % new guess of convMtx X
+            cg_dI4convmat   =   betterEdgeTaper(cg_dI,option);                        % edge taper every guess of g.t.
+            X               =   conv2MatOp(im2double(cg_dI4convmat),fsize,shape);   % new guess of convMtx X
             % ############### gradient img to deconvolve f ###############
 %             gcg_dI = lap(cg_dI);
 % %             gcg_dI = gcg_dI - min(vec(gcg_dI));
@@ -346,8 +357,13 @@ switch option.method
 
             % statitics 
             % all frame errors 
-            errs_allframes_cg = [errs_allframes_cg,errs_cgN(end)]; % residual, cg 
-            rerrs_allframes_cg = [rerrs_allframes_cg,rerrs_cgN(end)]; % relative error, cg
+            if k == 1
+                errs_allframes_cg  = [errs_allframes_cg, errs_cgN(1), errs_cgN(end)]; % residual, cg 
+                rerrs_allframes_cg = [rerrs_allframes_cg,rerrs_cgN(1),rerrs_cgN(end)]; % relative error, cg
+            else                
+                errs_allframes_cg  = [errs_allframes_cg, errs_cgN(end)]; % residual, cg 
+                rerrs_allframes_cg = [rerrs_allframes_cg,rerrs_cgN(end)]; % relative error, cg
+            end
             % plots    
             % -------- ground truth frame error figure --------
             % for debug
@@ -356,7 +372,7 @@ switch option.method
             title(sprintf('cg - frame %d/%d',k,length(multiFrame)))
             drawnow
             subplot(122)   
-            hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', mpg);          
+            hData = plot(0:length(errs_allframes_cg)-1,errs_allframes_cg,'Color', mpg);          
             hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('frame %d/%d',k,numFrame));
@@ -367,7 +383,7 @@ switch option.method
             % for latex
             % residual error
             figure;  set(gcf,'visible','off'),
-            hData = plot(1:length(errs_allframes_cg),errs_allframes_cg,'Color', mpg);          
+            hData = plot(0:length(errs_allframes_cg)-1,errs_allframes_cg,'Color', mpg);          
             hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('%d frames', numFrame));
@@ -379,7 +395,7 @@ switch option.method
             close gcf;
             % relative error
             figure;  set(gcf,'visible','off'),
-            hData = plot(1:length(rerrs_allframes_cg),rerrs_allframes_cg,'Color', mpg);          
+            hData = plot(0:length(rerrs_allframes_cg)-1,rerrs_allframes_cg,'Color', mpg);          
             hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('%d frames', numFrame));
@@ -399,11 +415,14 @@ switch option.method
             frame = multiFrame{k};
             natureK = multiKernel{k}; % for error calculation
             % ##### estimate kernel #####
+            % !!!!!!!! edge taper !!!!!!!!
+            frame4estiKernel  =   betterEdgeTaper(frame,  option);
             % !!!!!!!! non blind !!!!!!!!
 %             clear X
-%             X = conv2MatOp(im2double(natureI),fsize,shape);   % convMtx X of nature --- mfd
+%             natureI4convmat   =   betterEdgeTaper(natureI,option);
+%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
-            [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame,iterK,natureK,startK,eta,option); % gaussian
+            [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame4estiKernel,iterK,natureK,startK,eta,option); % gaussian
             gaussian_kernel = preserveNorm(gaussian_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
             gaussianKernelImg = figure; set(gaussianKernelImg,'visible','off'),
@@ -500,7 +519,7 @@ switch option.method
 end
     
 
-%##### figure #####
+%##### set and save figure #####
 saveResultFigure;
 
 end
