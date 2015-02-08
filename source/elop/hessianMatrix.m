@@ -91,7 +91,7 @@ classdef hessianMatrix < handle
                     tail = 0;
                 end
                 %}                     
-                % debug, using full H
+                % debug, using full H, pseudo-invers
                 %{%
                 if ~isempty(obj.s)
                     G = obj.s'*obj.y;
