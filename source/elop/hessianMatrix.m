@@ -51,7 +51,7 @@ classdef hessianMatrix < handle
             
                 epsl = 1e-30;
 %                 keyboard
-                % working version, using all terms to update H
+                % working version, using all diagonal terms to update H
                 %{
                 tail = 0; % (update)
                 for k = 1 : obj.i - 1
@@ -62,7 +62,7 @@ classdef hessianMatrix < handle
                 end
                 %}
                 % debug, using full H
-                %{%
+                %{
                 if ~isempty(obj.s)
                     if size(obj.s,2) == size(obj.Ginv0,1)
 %                         keyboard
@@ -90,28 +90,24 @@ classdef hessianMatrix < handle
                 else
                     tail = 0;
                 end
-                %}                
-                %{
+                %}                     
+                % debug, using full H
+                %{%
                 if ~isempty(obj.s)
-                    if size(obj.s,2) == size(obj.Ginv0,1)
-%                         keyboard
-                        Ginv = obj.Ginv0;
-                    elseif size(obj.s,2) < 2 
-                        Ginv = 1/((obj.s)'*obj.s + epsl);
-                    else
-%                         keyboard
-                        M = (obj.s)'*obj.y;
-                        Ginv = (M'*M) \ eye(size(obj.s,2)) * M';
-                    end
+                    G = obj.s'*obj.y;
+                    Ginv = pinv(G);
+                    %----------------------------%
+%                     keyboard
+                    SX = (obj.s' * vec(x));
+                    GinvSX = Ginv * SX;
                     SGinv = obj.s * Ginv;
-                    SGinvDelta = SGinv * (obj.delta)';
-                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
-                    tail = tailM * vec(x);
+                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
+                    %----------------------------%
                     obj.Ginv0 = Ginv;
                 else
                     tail = 0;
                 end
-                %}
+                %}         
                 % *** update form: H = H0 + tail ***
                 outp = vec(x) + tail;              % output = vec(I*x) + tail
                 % ########################

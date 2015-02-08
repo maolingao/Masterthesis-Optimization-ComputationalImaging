@@ -24,9 +24,13 @@ else                        % MEMLIM < observations --> purify
     % keyboard
     U = real(U(:,1:MEMLIM));
     D = real(D(1:MEMLIM,1:MEMLIM));
+    %
+%     display(sprintf('Dmin=--------------------------------------%d',min((diag(D)))));
+%     U = bsxfun(@times,U,((sqrt(diag(D))+eps).\1)');    % make D unit matrix, numerical stabil if invert it
+%     D = eye(MEMLIM);
 %
 %--------------- unittest_1 ---------------%
-% should give a matrix U'*U approximately = I
+% should give a matrix U'*U approximately = I, diagnal matrix(actually inv(D))
 %     keyboard
 %     figure(3), imagesc(real((U'*U))), colormap gray, axis image, colorbar('southoutside')
 %---------------    END     ---------------%

@@ -130,16 +130,18 @@ for k = 1:numel(b)
         
         s = alpha*p;           % s_i <-- x_i+1 - x_i
         y = alpha*q;           % y_i <-- A*s_i
+                s_length = norm(s,'fro');
+                s = s ./ s_length;
+                y = y ./ s_length;
         switch option.version
             case 'FH'
-%                 delta = s - H*y;        % delta_i <-- s_i - H_i*y_i
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'SU'
                 delta = s - H_crt*y;        % delta_i <-- s_i - H_i*y_i
 % % %                 H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                if s'*y > -1e-15
+                if abs(s'*y) > 1e-15
                     H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
                 else
                     keyboard
@@ -150,11 +152,13 @@ for k = 1:numel(b)
                 error('check option.version in pncg_Hmfd')
         end
              
-        x = x + s;              % x_i+1 <-- x_i - alpha*p_i
-        r = r + y;              % r_i+1 <-- r_i - A*alpa*p_i        
+%         x = x +  s;              % x_i+1 <-- x_i - alpha*p_i
+%         r = r +  y;              % r_i+1 <-- r_i - A*alpa*p_i    
+        x = x +  s_length*s;              % x_i+1 <-- x_i - alpha*p_i
+        r = r +  s_length*y;              % r_i+1 <-- r_i - A*alpa*p_i        
        
 % % %         H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
-        if s'*y > -1e-15
+        if abs(s'*y) > 1e-15
             if option.frame > inf
             % eliminate the component in new tuple [s,y,delta] which are
             % already contained in previous spanned Krylov subspace.

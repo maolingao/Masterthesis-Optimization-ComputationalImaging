@@ -22,7 +22,7 @@ H_FH = hessianMatrix(eye(size(A)));
 
 %
 tol = 1e-14;
-iter = 10;
+iter = option.iter;
 % option.version = 'CG';
 
 %% statistical test
@@ -79,7 +79,7 @@ keyboard
 %{%
 H_SU = hessianMatrix(eye(size(A)));
 residual_pncg_allframe = [];
-for i = 1: 5
+for i = 1: option.numFrame
 
 x = rand(n,1);
 b = A_ori*x;
@@ -106,7 +106,6 @@ end
 x_cg_1 = x_cg;
 
 %
-option.version = 'FH';
 if i == 1
     option.flag = 0;
 else
@@ -125,13 +124,13 @@ x_pncg_1 = x_pncg;
 b_1 = b;
 % ################################
 %{%
-MEMLIM = 30;% size(H_SU.s,2);
+MEMLIM = option.MEMLIM ;% size(H_SU.s,2);
 % keyboard
 [S,Y,Delta,GInv] = purify(H_SU.s,H_SU.y,H_SU.delta,H_SU.Ginv0,MEMLIM);
 % keyboard
 clear H_SU
 H_SU = hessianMatrix(eye(size(A)), S, Y, Delta, GInv, size(S,2)+1);
-max(max(S'*Y - diag(1./diag(H_SU.Ginv0))))
+display(sprintf('accuracy of purify = %d', max(max(S'*Y - diag(1./diag(H_SU.Ginv0)))) ))
 % max(max(diag(1./diag(S'*Y)) - (H_SU.Ginv0))))
 %}
 % ################################
