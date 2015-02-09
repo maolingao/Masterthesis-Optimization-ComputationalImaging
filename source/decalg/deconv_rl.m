@@ -1,4 +1,4 @@
-function [lucy_dI,errs] = deconv_rl(F,im,iter,nature,start,eta,option)
+function [lucy_dI,errs,rerrs] = deconv_rl(F,im,iter,nature,start,eta,option)
 % Richardson-Lucy deconvolution
 startup;
 
@@ -33,16 +33,33 @@ for i = 1 : (iter + 1)
 
     im_residual = (F * lucy_dI - im) ;
 %     im_residual = (lucy_dI - double(nature)) ;
-    
 
-    if norm(im_residual ,'fro')==0
+    % crop away edge
+%     keyboard
+    kernelSize = min(F.xsize, F.fsize);
+    corpMarginSize = kernelSize;
+    Pim = patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual = Pim'*im_residual;
+    %
+    % absolute error
+    errorabso = lucy_dI - nature;
+    if unique(abs(kernelSize - size(lucy_dI)) > abs(max(F.xsize, F.fsize) - size(lucy_dI)))
+        errorabso = Pim'*errorabso;        % current solving x, crop    
+        natureCrop = Pim'*nature;
+    else
+        errorabso = errorabso;             % current solving f, NOT crop
+        natureCrop = nature;
+    end
+    %
+    % average residual & relative error of ground truth
+    if norm(im_residual,'fro' )==0
         errs(i) = 1e-20;
         rerrs(i) = 1e-20;
-    else
-        errs(i) = norm(im_residual,'fro')/ numel(im_residual); % average, absolute residual
-        rerrs(i) = norm((lucy_dI - nature),'fro')/ norm(nature,'fro'); % relative error ||x - hat(x)|| / ||x||
+    else            
+        errs(i) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
+        rerrs(i) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
-
+    %
     
     f1 = figure(1);
     subplot(121)
@@ -68,7 +85,8 @@ for i = 1 : (iter + 1)
 %%%%%%%%%%%%%%%%%%%%%
     % ***** poisson noise model *****
     % pure
-%     lucy_dI = lucy_dI .* ( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl);
+    lucy_dI = lucy_dI .* ( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl);
+    lucy_dI = clip(lucy_dI,1,0);    
     % TV regularization   
     %{
     [gx,gy] = gradient(lucy_dI);
@@ -104,6 +122,7 @@ for i = 1 : (iter + 1)
     lucy_dI = clip(lucy_dI,1,0);    
     %}
     % Tai code    
+    %{
     [gx,gy] = gradient(lucy_dI);
     [ggx,~] = gradient(flip(gx,2));
     [~,ggy] = gradient(flip(gy,2));
@@ -113,6 +132,7 @@ for i = 1 : (iter + 1)
 %    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
    
     lucy_dI = clip(lucy_dI,1,0);    
+    %}
     %{
     % easy update by Levin
     LI = clip(laplacian(lucy_dI), inf, -inf);
@@ -159,6 +179,7 @@ end
 %----- main curves -----
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
+if option.plotFlag == 1
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
 subplot(121), hData = loglog(time ,errs,'Color',ora); thisFigure; hold on
@@ -179,6 +200,7 @@ set(gca,'Yscale','log'), axis tight; thisFigure; hold on
 f13=figure(13); set(f13,'visible','off');
 hData = plot(rerrs,'Color',ora); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
+end
 %
 %----- image evolution and residual curve -----
 figPath = option.figPath;

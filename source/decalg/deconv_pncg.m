@@ -219,6 +219,7 @@ pncg_dI = clip(pncg_dI,1,0);
 %----- main curves -----
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
+if option.plotFlag == 1
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
 subplot(121), hData = loglog(time ,errs,'Color',dre); thisFigure; hold on
@@ -234,11 +235,12 @@ f12=figure(12); set(f12,'visible','off');
 hData = loglog(time,rerrs,'Color',dre); 
 axis tight; thisFigure; hold on
 f11=figure(11); set(f11,'visible','off');
-hData = plot(errs, 'Color',dre); 
+hData = loglog(errs, 'Color',dre); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 f13=figure(13); set(f13,'visible','off');
-hData = plot(rerrs,'Color',dre); 
+hData = loglog(rerrs,'Color',dre); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
+end
 %
 %----- image evolution and residual curve -----
 figPath = option.figPath;

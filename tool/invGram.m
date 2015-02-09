@@ -7,7 +7,7 @@ y = Y(:,end);               % last observation in Y
 a = S(:,1:end-1)'*y;        % new column in G apart from the last element
 c = s'*y;                   % last element of new column in G
 %
-% keyboard
+keyboard
 M = (c - a'*Ginv0*a + epsl)\1;     % last new element in Ginv
 Greg = a' * Ginv0;          % most expensive computation
 lowerLeft = -M * Greg;      % lower-left block in Ginv

@@ -30,6 +30,7 @@ shape = F.shape;
 errs_allframes_pncg = []; rerrs_allframes_pncg = [];
 errs_allframes_cg = []; rerrs_allframes_cg = [];
 errs_allframes_gaussian = []; rerrs_allframes_gaussian = [];
+errs_allframes_rl = []; rerrs_allframes_rl = [];
 % ##### general setup #####
 numFrame = numel(multiFrame);
 for i = 1 : numFrame                            % register observation images
@@ -47,6 +48,8 @@ scaler = 1e0;
 HK                  =   hessianMatrix(eye(fsize)*scaler);
 start4convmat       =   betterEdgeTaper(start,option);                      % edge taper initial guess of g.t.
 X                   =   conv2MatOp(im2double(start4convmat),fsize,shape);   % initial guess of convMtx X
+startK              =   X'*multiFrame{1} ;                                  % initial guess of kernel, b
+startK              =   startK./sum(vec(startK));
 % -------- ground truth comparison figure - start --------
 startImg = figure;  set(startImg,'visible','off'),
 subplot(1,2,1)
@@ -137,9 +140,12 @@ for k = 1 : numFrame
     drawnow    
 end
 %}
-switch option.method
+methodsAmount = length(option.method);
+for i = 1 : methodsAmount
+    method = option.method{i};
+switch method
     case 'pncg'
-        startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
+%         startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
         f_pncg = figure(114); clf(f_pncg); set(f_pncg,'visible','on')
         for k = 1 : numFrame
             % ##### special setup #####
@@ -159,19 +165,21 @@ switch option.method
 %             natureI4convmat   =   betterEdgeTaper(natureI,option);
 %             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
+            option.plotFlag = 1;
             [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             
             % ##### MEMLIM #####
             %{%
             MEMLIM = option.MEMLIM;% size(HK.s,2);
+            lambda = option.memoryStrength;
 %             keyboard
-            [S,Y,Delta,GInv] = purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM);
+            [S,Y,Delta,GInv] = purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
             % keyboard
             clear HK
             HK = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
 %             keyboard
-            max(max(S'*Y - diag(1./diag(HK.Ginv0))))
+%             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
             %}
             % ###################
             % -------- kernel comparison figure --------
@@ -180,6 +188,14 @@ switch option.method
             imagesc(clip(natureK,1,0)); 
             axis image off; colormap gray;
             subplot(1,2,2)
+            imagesc(clip(pncg_kernel,1,0)); 
+            axis image off; colormap gray;
+            filename = sprintf('pncgKernelCom_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            %
+            pncgKernelImg = figure; set(pncgKernelImg,'visible','off'),
             imagesc(clip(pncg_kernel,1,0)); 
             axis image off; colormap gray;
             filename = sprintf('pncgKernelImg_%d',k);
@@ -193,6 +209,7 @@ switch option.method
             Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
             clear HN
             HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
+            option.plotFlag = 0;
             if k == 1
                 [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
             else
@@ -250,7 +267,7 @@ switch option.method
             hTitle = title(sprintf('%d frames', numFrame));
             thisFigure;   
             drawnow
-            filename = sprintf('mbd_errAllFrame_pncg');
+            filename = sprintf('mbd_residualErrorAllFrame_pncg');
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;
@@ -268,7 +285,7 @@ switch option.method
             close gcf;
         I = pncg_dI;
     case 'cg'
-        startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
+%         startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
         f_cg = figure(115); clf(f_cg); set(f_cg,'visible','on')
         for k = 1 : numFrame
             % ##### special setup #####
@@ -291,6 +308,7 @@ switch option.method
 %             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
             %
+            option.plotFlag = 1;
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame4estiKernel, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
@@ -299,6 +317,14 @@ switch option.method
             imagesc(clip(natureK,1,0)); 
             axis image off; colormap gray;
             subplot(1,2,2)
+            imagesc(clip(cg_kernel,1,0)); 
+            axis image off; colormap gray;
+            filename = sprintf('cgKernelCom_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            %
+            cgKernelImg = figure; set(cgKernelImg,'visible','off'),
             imagesc(clip(cg_kernel,1,0)); 
             axis image off; colormap gray;
             filename = sprintf('cgKernelImg_%d',k);
@@ -310,6 +336,7 @@ switch option.method
             % ##### estimate nature #####
             clear Kcg
             Kcg = conv2MatOp(im2double(cg_kernel),imagesize,shape);  % convMtx of kernel, cg
+            option.plotFlag = 0;
             if k == 1
                 [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
             else
@@ -407,8 +434,125 @@ switch option.method
             close gcf;
         I = cg_dI;
     case 'rl'
+%         startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
+        f_rl = figure(112); clf(f_rl); set(f_rl,'visible','on')
+        for k = 1 : numFrame
+            % ##### special setup #####
+            frame = multiFrame{k};
+            natureK = multiKernel{k}; % for error calculation
+            % ##### estimate kernel #####
+            % !!!!!!!! edge taper !!!!!!!!
+            frame4estiKernel  =   betterEdgeTaper(frame,  option);
+            % !!!!!!!! non blind !!!!!!!!
+%             clear X
+%             natureI4convmat   =   betterEdgeTaper(natureI,option);
+%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
+            %
+            option.plotFlag = 1;
+            [rl_kernel,errs_rl_kernel] = deconv_rl(X,frame4estiKernel,iterK,natureK,startK,eta,option); % gaussian
+            rl_kernel = preserveNorm(rl_kernel);            % preserve energy norm of PSF
+            % -------- kernel comparison figure --------
+            rlKernelImg = figure; set(rlKernelImg,'visible','off'),
+            subplot(1,2,1)
+            imagesc(clip(natureK,1,0)); 
+            axis image off; colormap gray;
+            drawnow
+            subplot(1,2,2)
+            imagesc(clip(rl_kernel,1,0)); 
+            axis image off; colormap gray;
+            drawnow
+            filename = sprintf('rlKernelCom_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            %            
+            rlKernelImg = figure; set(rlKernelImg,'visible','off'),
+            imagesc(clip(rl_kernel,1,0)); 
+            axis image off; colormap gray;
+            drawnow
+            filename = sprintf('rlKernelImg_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            
+%             keyboard
+            % ##### estimate nature #####
+            clear Krl
+            Krl = conv2MatOp(im2double(rl_kernel),imagesize,shape);  % convMtx of kernel, gaussian
+            option.plotFlag = 0;
+            if k == 1
+                [rl_dI,errs_rlN,rerrs_rlN] = deconv_rl(Krl,frame,iterN,natureI,start,eta,option); % gaussian
+            else
+                [rl_dI,errs_rlN,rerrs_rlN] = deconv_rl(Krl,frame,iterN,natureI,rl_dI,eta,option); % gaussian
+            end
+            clear X
+            X = conv2MatOp(im2double(rl_dI),fsize,shape);   % new guess of convMtx X
+            % -------- ground truth comparison figure --------
+            rlNatureImg = figure;  set(rlNatureImg,'visible','off'),
+            subplot(1,2,1)
+            imagesc(clip(natureI,1,0)); 
+            axis image off; colormap gray;
+            drawnow
+            subplot(1,2,2)
+            imagesc(clip(rl_dI,1,0)); 
+            axis image off; colormap gray;
+            drawnow
+            filename = sprintf('rlNatureImg_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            
+            % statitics 
+            % all frame errors
+            errs_allframes_rl = [errs_allframes_rl,errs_rlN(end)]; % gaussian 
+            rerrs_allframes_rl = [rerrs_allframes_rl,rerrs_rlN(end)]; % relative error, gaussian
+
+            % plots    
+            % -------- ground truth frame error figure --------
+            % for debug
+            figure(f_rl); subplot(121)
+            imagesc(clip(rl_dI,1,0)), axis image,colormap(gray)
+            title(sprintf('Richardson-Lucy - frame %d/%d',k,length(multiFrame)))
+            drawnow
+            subplot(122)   
+            hData = plot(1:length(errs_allframes_rl),errs_allframes_rl,'Color', ora);          
+            hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('frame %d/%d',k,numFrame));
+            thisFigure;   
+            drawnow
+            
+        end            
+            % -------- ground truth frame error figure --------
+            % for latex
+            % residual error
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(errs_allframes_rl),errs_allframes_rl,'Color', ora);          
+            hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_residualErrorAllFrame_rl');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            % relative error
+            figure;  set(gcf,'visible','off'),
+            hData = plot(1:length(rerrs_allframes_rl),rerrs_allframes_rl,'Color', ora);          
+            hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
+            hTitle = title(sprintf('%d frames', numFrame));
+            thisFigure;   
+            drawnow
+            filename = sprintf('mbd_relativeErrorAllFrame_rl');
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            
+        I = rl_dI;
     case 'gaussian'
-        startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
+%         startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
         f_gaussian = figure(112); clf(f_gaussian); set(f_gaussian,'visible','on')
         for k = 1 : numFrame
             % ##### special setup #####
@@ -422,6 +566,7 @@ switch option.method
 %             natureI4convmat   =   betterEdgeTaper(natureI,option);
 %             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
+            option.plotFlag = 1;
             [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame4estiKernel,iterK,natureK,startK,eta,option); % gaussian
             gaussian_kernel = preserveNorm(gaussian_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
@@ -434,6 +579,15 @@ switch option.method
             imagesc(clip(gaussian_kernel,1,0)); 
             axis image off; colormap gray;
             drawnow
+            filename = sprintf('gaussianKernelCom_%d',k);
+            filename = fullfile(figPath,filename);
+            print(gcf, '-depsc2', filename)
+            close gcf;
+            %            
+            gaussianKernelImg = figure; set(gaussianKernelImg,'visible','off'),
+            imagesc(clip(gaussian_kernel,1,0)); 
+            axis image off; colormap gray;
+            drawnow
             filename = sprintf('gaussianKernelImg_%d',k);
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
@@ -443,10 +597,11 @@ switch option.method
             % ##### estimate nature #####
             clear Kgaussian
             Kgaussian = conv2MatOp(im2double(gaussian_kernel),imagesize,shape);  % convMtx of kernel, gaussian
+            option.plotFlag = 0;
             if k == 1
-                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,start,eta); % gaussian
+                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,start,eta,option); % gaussian
             else
-                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,gaussian_dI,eta); % gaussian
+                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,gaussian_dI,eta,option); % gaussian
             end
             clear X
             X = conv2MatOp(im2double(gaussian_dI),fsize,shape);   % new guess of convMtx X
@@ -502,7 +657,7 @@ switch option.method
             close gcf;
             % relative error
             figure;  set(gcf,'visible','off'),
-            hData = plot(1:length(rerrs_allframes_gaussian),rerrs_allframes_gaussian,'Color', mpg);          
+            hData = plot(1:length(rerrs_allframes_gaussian),rerrs_allframes_gaussian,'Color', blu);          
             hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
             hTitle = title(sprintf('%d frames', numFrame));
@@ -515,7 +670,8 @@ switch option.method
             
         I = gaussian_dI;
     otherwise
-        print '[mbd.m]: option.method can be one of those: 'pncg', 'cg', 'rl', 'gaussian''
+        display '[mbd.m]: option.method can be one of those: 'pncg', 'cg', 'rl', 'gaussian''
+end
 end
     
 

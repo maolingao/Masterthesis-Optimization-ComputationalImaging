@@ -28,7 +28,8 @@ hText = text(10, 800, ...
 % gra = 0.5 * ones(3,1);
 
 %%
-if ~exist('color','var') && exist('hData','var')
+if exist('hData','var')
+% if ~exist('color','var') && exist('hData','var')
     hDataInfo = get(hData);
     color = hDataInfo.Color;
     linestyle = hDataInfo.LineStyle;

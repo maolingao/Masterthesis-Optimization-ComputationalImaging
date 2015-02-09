@@ -9,13 +9,14 @@ classdef hessianMatrix < handle
         delta       % difference btw corrected step error and back-calculated corrected step residual
         i           % iteration index
         Ginv0       % inverse of last Gramm matrix
-        
+        scale       % scale of diagonal element in H
     end
     
     methods
         function obj = hessianMatrix(H,s,y,delta,Ginv0,i)
             if nargin > 0
                 obj.H = H;
+                obj.scale = unique(diag(obj.H));
                 if exist('s','var')
                     obj.s = s;
                     obj.i = size(s,2) + 1;
@@ -51,7 +52,7 @@ classdef hessianMatrix < handle
             
                 epsl = 1e-30;
 %                 keyboard
-                % working version, using all diagonal terms to update H
+                % working version, using all terms to update H
                 %{
                 tail = 0; % (update)
                 for k = 1 : obj.i - 1
@@ -62,54 +63,56 @@ classdef hessianMatrix < handle
                 end
                 %}
                 % debug, using full H
+                %{%
+                if ~isempty(obj.s)
+                    if size(obj.s,2) == size(obj.Ginv0,1)
+                        Ginv = obj.Ginv0;
+                    elseif size(obj.s,2) < 2 
+%                         keyboard
+                        Ginv = 1/((obj.s)'*obj.y + epsl);
+                    else
+%                         keyboard
+                        Ginv = invGram(obj.Ginv0,obj.s,obj.y);
+                    end
+%                     SGinv = obj.s * Ginv;
+%                     SGinvDelta = SGinv * (obj.delta)';
+%                     tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
+%                     tail = tailM * vec(x);                    
+                    %----------------------------%
+%                     keyboard
+                    SX = (obj.s' * vec(x));
+                    GinvSX = Ginv * SX;
+                    SGinv = obj.s * Ginv;
+                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
+                    %----------------------------%
+                    obj.Ginv0 = Ginv;
+                else
+                    tail = 0;
+                end
+                %}                
                 %{
                 if ~isempty(obj.s)
                     if size(obj.s,2) == size(obj.Ginv0,1)
 %                         keyboard
                         Ginv = obj.Ginv0;
                     elseif size(obj.s,2) < 2 
-                        Ginv = 1/((obj.s)'*obj.y + epsl);
+                        Ginv = 1/((obj.s)'*obj.s + epsl);
                     else
 %                         keyboard
-                        Ginv = invGram(obj.Ginv0,obj.s,obj.y);
+                        M = (obj.s)'*obj.y;
+                        Ginv = (M'*M) \ eye(size(obj.s,2)) * M';
                     end
-                    %{
                     SGinv = obj.s * Ginv;
                     SGinvDelta = SGinv * (obj.delta)';
                     tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
                     tail = tailM * vec(x);
-                    %}
-                    %----------------------------%
-%                     keyboard
-                    SX = (obj.s' * vec(x));
-                    GinvSX = Ginv * SX;
-                    SGinv = obj.s * Ginv;
-                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
-                    %----------------------------%
                     obj.Ginv0 = Ginv;
                 else
                     tail = 0;
                 end
-                %}                     
-                % debug, using full H, pseudo-invers
-                %{%
-                if ~isempty(obj.s)
-                    G = obj.s'*obj.y;
-                    Ginv = pinv(G);
-                    %----------------------------%
-%                     keyboard
-                    SX = (obj.s' * vec(x));
-                    GinvSX = Ginv * SX;
-                    SGinv = obj.s * Ginv;
-                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
-                    %----------------------------%
-                    obj.Ginv0 = Ginv;
-                else
-                    tail = 0;
-                end
-                %}         
+                %}
                 % *** update form: H = H0 + tail ***
-                outp = vec(x) + tail;              % output = vec(I*x) + tail
+                outp = obj.scale * vec(x) + tail;              % output = vec(I*x) + tail
                 % ########################
                 
         end
