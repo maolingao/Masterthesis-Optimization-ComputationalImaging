@@ -28,7 +28,7 @@ hText = text(10, 800, ...
 % gra = 0.5 * ones(3,1);
 
 %%
-if exist('hData','var')
+if exist('hData','var') && ~isempty(hData)
 % if ~exist('color','var') && exist('hData','var')
     hDataInfo = get(hData);
     color = hDataInfo.Color;
@@ -41,7 +41,7 @@ if ~exist('location','var') && exist('hLegend','var')
 end
 %
 % set(gcf,'visible','on');
-if exist('hData', 'var')    
+if exist('hData', 'var')  && ~isempty(hData)
     % Adjust line properties (functional & aesthetics)
     set(hData, 'LineWidth', 1, 'LineStyle',linestyle, 'Color', color)
     % set(hData1, 'LineStyle', '-.', 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)

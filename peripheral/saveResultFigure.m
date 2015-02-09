@@ -32,6 +32,21 @@ hTitle = title(shape);
 hYLabel = ylabel ('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex');
 hXLabel = xlabel('$\#steps$','Interpreter','Latex');
 thisFigure;   
+%%
+if isfield(option,'mode')
+    switch option.mode
+        case 'compPerFrame'
+            counter = j;
+        case 'compAllFrame'
+            counter = inf;
+        otherwise
+            display('in [mbd.m]: option.mode can be either "compPerFrame" or "compAllFrame"');
+    end
+else
+    counter = inf;
+end
+    
+
 %% plot
 % for latex
 f10 = figure(10); set(f10,'visible','off'),
@@ -40,7 +55,7 @@ hTitle = title(shape);
 hYLabel = ylabel ('$\|Fx - y\| / pixel$','Interpreter','Latex');
 hXLabel = xlabel('$time/sec$','Interpreter','Latex');
 thisFigure;   
-filename = ['compClk_residual'];
+filename = sprintf('compClk_residual_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
 close gcf;
@@ -52,7 +67,7 @@ hYLabel = ylabel ('$\|x - \hat{x}\| / \|x\|$', 'Interpreter','Latex'); % set(gca
 % p=get(ylh,'position'); set(gca,'yaxislocation','left');  set(ylh,'position',p);
 hXLabel = xlabel('$time/sec$','Interpreter','Latex');
 thisFigure;   
-filename = ['compClk_relErr'];
+filename = sprintf('compClk_relErr_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
 close gcf;
@@ -63,7 +78,7 @@ hTitle = title(shape);
 hYLabel = ylabel ('$\|Fx - y\| / pixel$','Interpreter','Latex');
 hXLabel = xlabel('$\#steps$','Interpreter','Latex');
 thisFigure;   
-filename = ['compStp_residual'];
+filename = sprintf('compStp_residual_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
 close gcf;
@@ -75,7 +90,7 @@ hYLabel =  ylabel ('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex');  %set(gca
 % p=get(ylh,'position'); set(gca,'yaxislocation','left');  set(ylh,'position',p);
 hXLabel = xlabel('$\#steps$','Interpreter','Latex');
 thisFigure;   
-filename = ['compStp_relErr'];
+filename = sprintf('compStp_relErr_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
 close gcf;

@@ -41,6 +41,7 @@ end
 
 b = F'*im;
 imageSize = size(b);
+start = clip(start,inf,0);
 %##### Tikhonov #####
 l = [0 -1 0
      -1 4 -1

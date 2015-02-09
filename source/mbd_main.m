@@ -20,7 +20,7 @@ start        =   zeros(size(multiFrame{1}));     % avarage of those frames
 for k = 1 : numFrame4Start
     start    =   start + multiFrame{k};
 end
-start        =   start./numFrame4Start; 
+start        =   start./(numFrame4Start+eps); 
 multiFrame   =   multiFrame((numFrame4Start+1):end);
 multiFilt_ds =   multiFilt_ds((numFrame4Start+1):end);
 %
