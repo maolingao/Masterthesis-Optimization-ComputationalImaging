@@ -46,8 +46,12 @@ eta = 0;                                        % ### <--- regularization parame
 tolK = -inf;
 scaler = 1e0;
 HK                  =   hessianMatrix(eye(fsize)*scaler);
-start4convmat       =   betterEdgeTaper(start,option);                      % edge taper initial guess of g.t.
-X                   =   conv2MatOp(im2double(start4convmat),fsize,shape);   % initial guess of convMtx X
+% start4convmat       =   betterEdgeTaper(start,option);                      % edge taper initial guess of g.t.
+% X                   =   conv2MatOp(im2double(start4convmat),fsize,shape);   % initial guess of convMtx X
+% !!!!!!! non blind !!!!!!!!
+natureI4convmat     =   betterEdgeTaper(natureI,option);
+X                   =   conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
+%
 startK              =   X'*multiFrame{1} ;                                  % initial guess of kernel, b
 startK              =   startK./sum(vec(startK));
 % -------- ground truth comparison figure - start --------
@@ -73,7 +77,7 @@ close gcf;
 
 
 % nature estimating
-iterN = 10; % one step for estimating nature
+iterN = 1; % one step for estimating nature
 tolN = -inf;
 HN = hessianMatrix(eye(imagesize));
 % iteration
@@ -121,9 +125,9 @@ switch method
             % !!!!!!!! edge taper !!!!!!!!
             frame4estiKernel  =   betterEdgeTaper(frame,  option);
             % !!!!!!!! non blind !!!!!!!!
-            clear X
-            natureI4convmat   =   betterEdgeTaper(natureI,option);
-            X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
+%             clear X
+%             natureI4convmat   =   betterEdgeTaper(natureI,option);
+%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
             option.plotFlag = 1;
             [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
@@ -445,6 +449,7 @@ switch method
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;
+            %
             if exist('cg_dI','var')
                 I = cg_dI;
             else
@@ -474,7 +479,7 @@ switch method
 %             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
             option.plotFlag = 1;
-            [rl_kernel,errs_rl_kernel] = deconv_rl(X,frame4estiKernel,iterK,natureK,startK,eta,option); % gaussian
+            [rl_kernel,errs_rl_kernel] = deconv_rl(X,frame4estiKernel,iterK,natureK,startK,eta,option); % richardson-lucy
             rl_kernel = preserveNorm(rl_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
             rlKernelImg = figure; set(rlKernelImg,'visible','off'),
@@ -502,6 +507,7 @@ switch method
             
 %             keyboard
             % ##### estimate nature #####
+            %{
             clear Krl
             Krl = conv2MatOp(im2double(rl_kernel),imagesize,shape);  % convMtx of kernel, gaussian
             option.plotFlag = 0;
@@ -546,7 +552,7 @@ switch method
             hTitle = title(sprintf('frame %d/%d',k,numFrame));
             thisFigure;   
             drawnow
-            
+            %}
         end            
             % -------- ground truth frame error figure --------
             % for latex
@@ -574,8 +580,12 @@ switch method
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;
-            
-        I = rl_dI;
+            %
+            if exist('rl_dI','var')
+                I = rl_dI;
+            else
+                I = 'non-blind';
+            end
     case 'gaussian'
 %         startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
         f_gaussian = figure(112); clf(f_gaussian); set(f_gaussian,'visible','on')
@@ -628,6 +638,7 @@ switch method
             
 %             keyboard
             % ##### estimate nature #####
+            %{
             clear Kgaussian
             Kgaussian = conv2MatOp(im2double(gaussian_kernel),imagesize,shape);  % convMtx of kernel, gaussian
             option.plotFlag = 0;
@@ -672,7 +683,7 @@ switch method
             hTitle = title(sprintf('frame %d/%d',k,numFrame));
             thisFigure;   
             drawnow
-            
+            %}
         end            
             % -------- ground truth frame error figure --------
             % for latex
@@ -700,8 +711,12 @@ switch method
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;
-            
-        I = gaussian_dI;
+            %
+            if exist('gaussian_dI','var')
+                I = gaussian_dI;
+            else
+                I = 'non-blind';
+            end
     otherwise
         display '[mbd.m]: option.method can be one of those: 'pncg', 'cg', 'rl', 'gaussian''
 end
