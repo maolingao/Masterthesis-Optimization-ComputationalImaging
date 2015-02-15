@@ -46,14 +46,14 @@ eta = 0;                                        % ### <--- regularization parame
 tolK = -inf;
 scaler = 1e0;
 HK                  =   hessianMatrix(eye(fsize)*scaler);
-% start4convmat       =   betterEdgeTaper(start,option);                      % edge taper initial guess of g.t.
-% X                   =   conv2MatOp(im2double(start4convmat),fsize,shape);   % initial guess of convMtx X
+start4convmat       =   betterEdgeTaper(start,option);                      % edge taper initial guess of g.t.
+X                   =   conv2MatOp(im2double(start4convmat),fsize,shape);   % initial guess of convMtx X
 % !!!!!!! non blind !!!!!!!!
-natureI4convmat     =   betterEdgeTaper(natureI,option);
-X                   =   conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
+% natureI4convmat     =   betterEdgeTaper(natureI,option);
+% X                   =   conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
 %
-startK              =   X'*multiFrame{1} ;                                  % initial guess of kernel, b
-startK              =   startK./sum(vec(startK));
+% startK              =   X'*multiFrame{1} ;                                  % initial guess of kernel, b
+% startK              =   startK./sum(vec(startK));
 % -------- ground truth comparison figure - start --------
 startImg = figure;  set(startImg,'visible','off'),
 subplot(1,2,1)
@@ -129,7 +129,9 @@ switch method
 %             natureI4convmat   =   betterEdgeTaper(natureI,option);
 %             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
-            option.plotFlag = 1;
+            option.plotFlag     =   1;
+            startK              =   X'* frame ;                                  % initial guess of kernel, b
+            startK              =   startK./sum(vec(startK));
             [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel = preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             
@@ -167,7 +169,7 @@ switch method
             %}
 %             keyboard
             % ##### estimate nature #####
-            %{
+            %{%
             % comment out for non-blind deconvolution of kernel, known ground truth, and learning its inverse
             option.plotFlag = 1;
             % !!!!!!!! non blind !!!!!!!!
@@ -192,7 +194,7 @@ switch method
 %             end
 
             % ##### MEMLIM #####
-            %{%
+            %{
             MEMLIM = option.MEMLIM;% size(HK.s,2);
             lambda = option.memoryStrength;
 %             keyboard
@@ -202,7 +204,7 @@ switch method
             HN = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
 %             keyboard
 %             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
-            %%}
+            %}
             % ###################
             pncg_dI = clip(pncg_dI,inf,0);
             clear X
@@ -313,7 +315,9 @@ switch method
 %             natureI4convmat   =   betterEdgeTaper(natureI,option);
 %             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
             %
-            option.plotFlag = 1;
+            option.plotFlag     =   1;
+            startK              =   X'* frame ;                                  % initial guess of kernel, b
+            startK              =   startK./sum(vec(startK));
             [cg_kernel,errs_cg_kernel] = deconv_cg(X, frame4estiKernel, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel = preserveNorm(cg_kernel);            % preserve energy norm of PSF
             % -------- kernel comparison figure --------
@@ -339,18 +343,20 @@ switch method
             %}
 %             keyboard
             % ##### estimate nature #####
-            %{
+            %{%
             % comment out for non-blind deconvolution of kernel, known ground truth, and learning its inverse
             clear Kcg
-            Kcg = conv2MatOp(im2double(natureK),imagesize,shape);  % convMtx of kernel, cg
-%             Kcg = conv2MatOp(im2double(cg_kernel),imagesize,shape);  % convMtx of kernel, cg
+            % !!!!!!!! non blind !!!!!!!!
+%             Kcg = conv2MatOp(im2double(natureK),imagesize,shape);  % convMtx of kernel, cg
+            %
+            Kcg = conv2MatOp(im2double(cg_kernel),imagesize,shape);  % convMtx of kernel, cg
             option.plotFlag = 1;
-            [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
-%             if k == 1
-%                 [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
-%             else
-%                 [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
-%             end
+%             [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
+            if k == 1
+                [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, start, tolN, eta, option); % cg
+            else
+                [cg_dI, errs_cgN, ~, rerrs_cgN] = deconv_cg(Kcg, frame, natureI, iterN, cg_dI, tolN, eta, option); % cg
+            end
 %             if k == 1
 %                 [cg_dI,errs_cgN] = deconv_gaussian(Kcg,frame,iterN,natureI,start,eta); % gaussian
 %             else
@@ -386,7 +392,7 @@ switch method
             subplot(1,2,2)
             imagesc(clip(cg_dI,1,0)); 
             axis image off; colormap gray;
-            filename = sprintf('cgNatureImg_%d',k);
+            filename = sprintf('cgNatureCom_%d',k);
             filename = fullfile(figPath,filename);
             print(gcf, '-depsc2', filename)
             close gcf;

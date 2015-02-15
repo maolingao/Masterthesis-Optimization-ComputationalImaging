@@ -60,7 +60,12 @@ for i = 1: (iter + 1)  %numel(im)
     im_residual = Pim'*im_residual;
 %           im_residual = (cg_dI - double(nature)) ;
     % absolute error
-    errorabso = cg_dI - nature;
+    fixed = nature;                            % r.t. ground truth
+    moving = cg_dI;
+    subpixel = 0.1;
+    [cg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
+    %
+    errorabso = cg_dI_reg - nature;
     if unique(abs(kernelSize - size(cg_dI)) > abs(max(F.xsize, F.fsize) - size(cg_dI)))
 %         keyboard
 %         figure(5), imagesc(im_residual), colormap gray, axis image

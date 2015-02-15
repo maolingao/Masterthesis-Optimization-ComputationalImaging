@@ -71,7 +71,7 @@ switch option.version
         p = M*r0;
         color = mpg;
     otherwise
-        error('check option.version in pncg_Hmfd')
+        error('check option.version in deconv_pncg.m')
 end
 %}        
 epsl = 1e-30;
@@ -99,8 +99,9 @@ for k = 1 : (iter + 1)  %numel(im)
     % absolute error
     fixed = nature;                            % r.t. ground truth
     moving = pncg_dI;
-    subpixel = 1;
+    subpixel = 0.1;
     [pncg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
+    %
     errorabso = pncg_dI_reg - nature;
     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
 %         keyboard
@@ -157,6 +158,9 @@ for k = 1 : (iter + 1)  %numel(im)
         
         s = alpha*p;           % s_i <-- x_i+1 - x_i
         y = alpha*q;           % y_i <-- A*s_i
+                s_length = norm(s,'fro');
+                s = s ./ s_length;
+                y = y ./ s_length;
         
         switch option.version
             case 'FH'
@@ -164,29 +168,15 @@ for k = 1 : (iter + 1)  %numel(im)
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             otherwise
-                error('check option.version in pncg_Hmfd')
+                error('check option.version in deconv_pncg.m')
         end
              
-        x = x + s;              % x_i+1 <-- x_i - alpha*p_i
-        r = r + y;              % r_i+1 <-- r_i - A*alpa*p_i        
+        % x = x + s; % x_i+1 <-- x_i - alpha*p_i
+        % r = r + y; % r_i+1 <-- r_i - A*alpa*p_i
+                x = x + s_length*s; % x_i+1 <-- x_i - alpha*p_i
+                r = r + s_length*y; % r_i+1 <-- r_i - A*alpa*p_i    
        
         H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
-% % %         if s'*y > -1e-15
-% % %             if option.frame > inf
-% % %             % eliminate the component in new tuple [s,y,delta] which are
-% % %             % already contained in previous spanned Krylov subspace.
-% % %                 [S,Y,Delta] = purify(H,s,y,delta); 
-% % % %                 keyboard
-% % %                 clear H
-% % %                 H = hessianMatrix(M.H,S,Y,Delta,(M.i+1));
-% % %             else
-% % %                 H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
-% % %             end
-% % %         else
-% % %                     keyboard
-% % %             display 'direction changes too small.'
-% % %             break
-% % %         end
         
         p_1 = p;
         switch option.version
@@ -195,7 +185,7 @@ for k = 1 : (iter + 1)  %numel(im)
             case 'CG'
                 p = r + H.*r;
             otherwise
-                error('check option.version in pncg_Hmfd')
+                error('check option.version in deconv_pncg.m')
         end
         % ###################
         tElapsed = toc(tStart);
