@@ -122,11 +122,12 @@ else
 end
 x_pncg_1 = x_pncg;
 b_1 = b;
-% ################################
+% ########### MEMLIM #############
 %{%
 MEMLIM = option.MEMLIM ;% size(H_SU.s,2);
+lambda = option.memoryStrength;
 % keyboard
-[S,Y,Delta,GInv] = purify(H_SU.s,H_SU.y,H_SU.delta,H_SU.Ginv0,MEMLIM);
+[S,Y,Delta,GInv] = purify(H_SU.s,H_SU.y,H_SU.delta,H_SU.Ginv0,MEMLIM,lambda);
 % keyboard
 clear H_SU
 H_SU = hessianMatrix(eye(size(A)), S, Y, Delta, GInv, size(S,2)+1);
