@@ -181,6 +181,7 @@ for k = 1 : (iter + 1)  %numel(im)
         p_1 = p;
         switch option.version
             case 'FH'
+%                 keyboard
                 p = vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
             case 'CG'
                 p = r + H.*r;
