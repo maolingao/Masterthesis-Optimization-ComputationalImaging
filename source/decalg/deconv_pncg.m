@@ -63,8 +63,8 @@ switch option.version
 %         p = -r0;
         color = dre;
     case 'CG'
-        M = hessianMatrix(H.H); % preconditioner
-%         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
+%         M = hessianMatrix(H.H); % preconditioner
+        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
         x = start;
         r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
         r = r0;
@@ -88,20 +88,23 @@ errRelChange = nan;
 % keyboard
 for k = 1 : (iter + 1)  %numel(im)
     pncg_dI = reshape(x,imageSize);  
+    % -----------------------------------------------
+    % residual error
     im_residual = (F * pncg_dI - im); % 
-    % crop away edge
-%     keyboard
+    % -----------------------------------------------
+    % crop away edges
     kernelSize = min(F.xsize, F.fsize);
     corpMarginSize = kernelSize;
     Pim = patimat('same',size(im_residual),corpMarginSize,0);
     im_residual = Pim'*im_residual;
-%           im_residual = (cg_dI - double(nature)) ;
-    % absolute error
+    % -----------------------------------------------
+    % register images r.t. ground truth 
     fixed = nature;                            % r.t. ground truth
     moving = pncg_dI;
     subpixel = 0.1;
     [pncg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
-    %
+    % -----------------------------------------------
+    % absolute error
     errorabso = pncg_dI_reg - nature;
     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
 %         keyboard
@@ -112,6 +115,7 @@ for k = 1 : (iter + 1)  %numel(im)
         errorabso = errorabso;             % current solving f, NOT crop
         natureCrop = nature;
     end
+    % -----------------------------------------------
     % average residual & relative error of ground truth
     if norm(im_residual,'fro' )==0
         errs(k) = 1e-20;
@@ -120,37 +124,41 @@ for k = 1 : (iter + 1)  %numel(im)
         errs(k) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
         rerrs(k) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
-
+    % -----------------------------------------------
+    % plot 
     f4 = figure(4);
     subplot(121)
     imagesc(clip(pncg_dI,1,0)); axis image,colormap(gray)
     title(sprintf('my pncg - iteration %d/%d',k,iter + 1))
     drawnow          
-
     subplot(122)
     hData = loglog(errs,'Color',color,'LineStyle',linestyle);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
     drawnow 
-    %
-
+    % -----------------------------------------------
+    % stop creterien 1 : solution found
     if norm(im_residual,'fro') < numel(im_residual)*tol
         disp('==> solution found!')
         break
     else
-        % stop creterien ########
+    % -----------------------------------------------
+    % stop creterien 2 : error decreasing tiny or even increasing
         if k > 3
 %             keyboard
             errRelChange = errs(2:k) - errs(1:k-1);
             errRelChange = sum(errRelChange(k-3:k-1)) / sum(errs(k-3:k)) * 4/3 ;
         end
-        
+    % -----------------------------------------------
+    % stop creterien 3 : iteration number reached
         if k == (iter + 1) || errRelChange > -1e-3
 %             keyboard
             pncg_dI = clip(reshape(x,imageSize),1,0);
             break
         end
+    % -----------------------------------------------
+    % main calculation
         tStart = tic;
         % ###################
         q = vec((F'*(F*(reshape(p,imageSize)))  + eta*(L*reshape(p,imageSize)) + a*reshape(p,imageSize))); % A*p register
@@ -190,6 +198,9 @@ for k = 1 : (iter + 1)  %numel(im)
         end
         % ###################
         tElapsed = toc(tStart);
+        time     = [time; time(end)+tElapsed];
+    % -----------------------------------------------
+    % display orthogonality and conjugacy 
 %         keyboard
 %         buildH;
 % orthogonal      
@@ -197,16 +208,14 @@ for k = 1 : (iter + 1)  %numel(im)
         display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)))
 % conjugate
         conj = p_1'*vec(vec((F'*(F*reshape(p,imageSize))))  + vec(eta*(L*reshape(p,imageSize))) + a*p)
-        time = [time;time(end)+tElapsed];
     end
     
 end
-tDeconv = time(end);
-% keyboard
-pncg_dI = clip(pncg_dI,1,0);
+tDeconv = time(end);            % total time for current deconvolution task
+pncg_dI = clip(pncg_dI,1,0);    
 
-%
-%
+
+
 %##### figure #####
 %----- main curves -----
 errs = errs(~isnan(errs));
