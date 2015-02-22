@@ -63,8 +63,8 @@ switch option.version
 %         p = -r0;
         color = dre;
     case 'CG'
-%         M = hessianMatrix(H.H); % preconditioner
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
+        M = hessianMatrix(H.H); % preconditioner
+%         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
         x = start;
         r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
         r = r0;
@@ -90,7 +90,7 @@ for k = 1 : (iter + 1)  %numel(im)
     pncg_dI = reshape(x,imageSize);  
     % -----------------------------------------------
     % residual error
-    im_residual = (F * pncg_dI - im); % 
+    im_residual = betterMinus(F * pncg_dI, im); % 
     % -----------------------------------------------
     % crop away edges
     kernelSize = min(F.xsize, F.fsize);
