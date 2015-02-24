@@ -6,9 +6,9 @@ classdef conv2gradMat < handle
         shape        % boundary condition
         GX           % convolution matrix of gradient image in x and y (u,and v) direction, in a cell array
         flag         % flag for transpose
-        xsize       % size of image
-        fsize       % size of blur kernel
-        ysize       % size of convolved image, full case
+        xsize        % size of image
+        fsize        % size of blur kernel
+        ysize        % size of convolved image, full case
         
         
     end

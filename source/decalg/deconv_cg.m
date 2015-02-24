@@ -33,67 +33,69 @@ L = conv2MatOp(l,imageSize,'same');
 % eta = 0.01;
 
 %##### setup #####
-x = start;
-% x = double(nature);
-r = (F'*(F*x) + eta*((L*x)) + a*x) - b;
-p = -r(:);
-epsl = 1e-30; % numerical stable
-errs = nan(1,iter);
-rerrs = nan(1,iter);
-errRelChange = nan;
-
-time = 1e-2;
+x            =   start;
+r            =   (F'*(F*x) + eta*((L*x)) + a*x) - b;
+p            =   -r(:);
+epsl         =   1e-15; % numerical stable % ***********************************************
+errs         =   nan(1,iter);
+rerrs        =   nan(1,iter);
+errRelChange =   nan;
+time         =   1e-2;
 
 %##### iteration #####
 for i = 1: (iter + 1)  %numel(im)
-    cg_dI = reshape(x,imageSize);
+    cg_dI    =   reshape(x,imageSize);
+    % -----------------------------------------------
+    % if solving f, regularize kernel f
+    kernelSize = min(F.xsize, F.fsize);
+    if unique(abs(kernelSize - size(cg_dI)) > abs(max(F.xsize, F.fsize) - size(cg_dI)))
+        NOP;                                    % current solving x, BOP    
+    else
+%         cg_dI   =   lowerBound(cg_dI);          % current solving f, low bound f
+%         cg_dI   =   preserveNorm(cg_dI);        % preserve energy norm of f
+    end
     % -----------------------------------------------
     % residual error
 %         im_residual = F'*(F * cg_dI) - F'*im; % cg_dIdepad - nature; % 
-    im_residual = betterMinus(F * cg_dI, im); % cg_dIdepad - nature; % 
+    im_residual     =   betterMinus(F * cg_dI, im); % cg_dIdepad - nature; % 
     % -----------------------------------------------
     % crop away edges
-    kernelSize = min(F.xsize, F.fsize);
-    corpMarginSize = kernelSize;
-    Pim = patimat('same',size(im_residual),corpMarginSize,0);
-    im_residual = Pim'*im_residual;
+    corpMarginSize  =   kernelSize;
+    Pim             =   patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual     =   Pim'*im_residual;
     % -----------------------------------------------
     % register images r.t. ground truth 
-    fixed = nature;                            % r.t. ground truth
-    moving = cg_dI;
-    subpixel = 0.1;
-    [cg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
+    fixed       =   nature;                            % r.t. ground truth
+    moving      =   cg_dI;
+    subpixel    =   0.1;
+    [cg_dI_reg, output]     =   efficient_imregister(fixed, moving, subpixel);
     % -----------------------------------------------
     % absolute error
     errorabso = cg_dI_reg - nature;
     if unique(abs(kernelSize - size(cg_dI)) > abs(max(F.xsize, F.fsize) - size(cg_dI)))
-%         keyboard
-%         figure(5), imagesc(im_residual), colormap gray, axis image
-        errorabso = Pim'*errorabso;        % current solving x, crop    
-        natureCrop = Pim'*nature;
+        errorabso   =   Pim'*errorabso;        % current solving x, crop    
+        natureCrop  =   Pim'*nature;
     else
-        errorabso = errorabso;             % current solving f, NOT crop
-        natureCrop = nature;
+        errorabso   =   errorabso;             % current solving f, NOT crop
+        natureCrop  =   nature;
     end
     % -----------------------------------------------
     % average residual & relative error of ground truth
     if norm(im_residual ,'fro')==0
-        errs(i) = 1e-20;
-        rerrs(i) = 1e-20;
+        errs(i)     =   1e-20;
+        rerrs(i)    =   1e-20;
     else
-%         keyboard
-        errs(i) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
-        rerrs(i) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
+        errs(i)     =   (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
+        rerrs(i)    =   (norm(errorabso,'fro')   / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
     % -----------------------------------------------
     % plot 
-    f3 = figure(3);
-    subplot(121)
+    f3 = figure(3); subplot(121)
     imagesc(clip(cg_dI,1,0)); axis image, colormap(gray)
     title(sprintf('cg - iteration %d/%d',i,iter + 1))
     drawnow
     subplot(122)
-    hData = loglog(errs, 'Color', mpg);
+    hData   = loglog(errs, 'Color', mpg);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
@@ -108,37 +110,35 @@ for i = 1: (iter + 1)  %numel(im)
     % -----------------------------------------------
     % stop creterien 2 : error decreasing tiny or even increasing
         if i > 3
-%             keyboard
-            errRelChange = errs(2:i) - errs(1:i-1);
-            errRelChange = sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
+            errRelChange    =   errs(2:i) - errs(1:i-1);
+            errRelChange    =   sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
         end
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached        
         if i == (iter + 1) || errRelChange > -1e-3
-%             keyboard
-            cg_dI = clip(reshape(x,imageSize),1,0);
+            cg_dI   =   clip(reshape(x,imageSize),1,0);
             break
         end
     % -----------------------------------------------
     % main calculation
         tStart = tic; 
         % ###################
-        q = (F'*(F*(reshape(p,imageSize))) + eta*((L*(reshape(p,imageSize)))) + a*reshape(p,imageSize)); % A*p register
+        q       =   (F'*(F*(reshape(p,imageSize))) + eta*((L*(reshape(p,imageSize)))) + a*reshape(p,imageSize)); % A*p register
         
-        alpha = ((p'*q(:)) + epsl)\(r(:)'*r(:));
+        alpha   =   ((p'*q(:)) + epsl)\(r(:)'*r(:));
         
-        x = x(:) + alpha*p;
-        r_1 = r;
-        r = r_1 + alpha*q;
-        beta = ((r_1(:)'*r_1(:)) + epsl)\(r(:)'*r(:));
-        p_1 = p;
-        p = -r(:) + beta*p_1;
+        x       =   x(:) + alpha*p;
+        r_1     =   r;
+        r       =   r_1 + alpha*q;
+        beta    =   ((r_1(:)'*r_1(:)) + epsl)\(r(:)'*r(:));
+        p_1     =   p;
+        p       =   -r(:) + beta*p_1;
         % ###################
-        tElapsed = toc(tStart);
-        time = [time;time(end)+tElapsed];
+        tElapsed =  toc(tStart);
+        time     =  [time; time(end) + tElapsed];
     % -----------------------------------------------
     % display orthogonality and conjugacy 
-% conjugate
+    % conjugate
         conj = p_1'*vec((F'*(F*reshape(p,imageSize))) + eta*(L*(reshape(p,imageSize))) + a*reshape(p,imageSize))
     end
     
@@ -148,8 +148,8 @@ tDeconv = time(end);
 
 %##### figure #####
 %----- main curves -----
-errs = errs(~isnan(errs));
-rerrs = rerrs(~isnan(rerrs));
+errs    =   errs(~isnan(errs));
+rerrs   =   rerrs(~isnan(rerrs));
 if option.plotFlag == 1
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),

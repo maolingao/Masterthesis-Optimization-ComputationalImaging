@@ -2,9 +2,9 @@ function f = preserveNorm(f)
 % for PSF, 1. preserve energy norm;
 %          2.make sure all element in f be positive.
 %
-f = clip(f, 1, 0);              % clip btw [0,1]
-f = f/max(abs(vec(f)));         % scale down
-f = f ./ sum(vec(f));           % preserve energy norm
+f = clip(f, 1, 0);                      % clip btw [0,1]
+f = f/(max(abs(vec(f))) + eps);         % scale down
+f = f ./ (sum(vec(f)) + eps);           % preserve energy norm
 %
 end
 %

@@ -97,6 +97,11 @@ switch method
                 otherwise
                     display('in [mbd.m]: option.mode can be either "compPerFrame" or "compAllFrame"');
             end
+            if k > 5
+                iterK = 2;
+            else
+                iterK = 5;
+            end
             % ##### special setup #####
             frame       =   clip(multiFrame{k},inf,0);
             natureK     =   multiKernel{k};                 % for error calculation

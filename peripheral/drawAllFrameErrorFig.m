@@ -7,10 +7,10 @@ switch mode
         % residual error
         figure;  set(gcf,'visible','off'),
         hData   = plot(0:length(residualErrAllFrame)-1,residualErrAllFrame,'Color', color);          
-        hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+        hYLabel = ylabel('$\|f * x - y\| / pixel$', 'Interpreter','Latex');
         hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         hTitle  = title(sprintf('%d frames', numFrame));
-        set(gca,'XTick',0:length(residualErrAllFrame)-1)
+%         set(gca,'XTick',0:length(residualErrAllFrame)-1)
         thisFigure;   
         drawnow
         filename = sprintf(strcat('mbd_residualErrorAllFrame_',optimizerName));
@@ -23,7 +23,7 @@ switch mode
         hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
         hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         hTitle = title(sprintf('%d frames', numFrame));
-        set(gca,'XTick',0:length(relativeErrAllFrame)-1)
+%         set(gca,'XTick',0:length(relativeErrAllFrame)-1)
         thisFigure;   
         drawnow
         filename = sprintf(strcat('mbd_relativeErrorAllFrame_',optimizerName));
@@ -34,7 +34,7 @@ switch mode
         % for debug
         figure(fhandel); subplot(121)
         hData = plot(0:length(residualErrAllFrame)-1,residualErrAllFrame,'Color', color);          
-        hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+        hYLabel = ylabel('$\|f * x - y\| / pixel$', 'Interpreter','Latex');
         hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         hTitle = title(optimizerName);
         thisFigure;   
