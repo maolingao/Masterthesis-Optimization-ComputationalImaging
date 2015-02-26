@@ -43,7 +43,7 @@ for i = 1 : numFrame                            % register observation images
     %
     multiKernel{i} =  center(multiKernel{i});   % center all kernel, only for error analysis
 end
-eta = 0;                                        % ### <--- regularization parameter
+eta = option.eta;                                        % ### <--- regularization parameter
 % kernel estimating
 tolK   =  -inf;
 scaler =  1e0;
@@ -96,11 +96,6 @@ switch method
                     k = jj;
                 otherwise
                     display('in [mbd.m]: option.mode can be either "compPerFrame" or "compAllFrame"');
-            end
-            if k > 5
-                iterK = 2;
-            else
-                iterK = 5;
             end
             % ##### special setup #####
             frame       =   clip(multiFrame{k},inf,0);

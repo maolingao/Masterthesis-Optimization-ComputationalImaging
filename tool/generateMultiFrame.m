@@ -20,7 +20,6 @@ multiFrame  =   cell(1,numFrame);
 [nature,~]  =   initialize;
 xsize       =   size(nature);
 shape       =   'same';
-% figure(33), clf
 
 for i = 1:numFrame + 1
 

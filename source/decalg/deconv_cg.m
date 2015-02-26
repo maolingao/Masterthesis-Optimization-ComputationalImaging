@@ -36,7 +36,7 @@ L = conv2MatOp(l,imageSize,'same');
 x            =   start;
 r            =   (F'*(F*x) + eta*((L*x)) + a*x) - b;
 p            =   -r(:);
-epsl         =   1e-15; % numerical stable % ***********************************************
+epsl         =   1e-30; % numerical stable % ***********************************************
 errs         =   nan(1,iter);
 rerrs        =   nan(1,iter);
 errRelChange =   nan;
@@ -151,25 +151,26 @@ tDeconv = time(end);
 errs    =   errs(~isnan(errs));
 rerrs   =   rerrs(~isnan(rerrs));
 if option.plotFlag == 1
+color = mpg;
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
-subplot(121), hData = loglog(time ,errs,'Color',mpg); thisFigure; hold on
-subplot(122), hData = loglog(time,rerrs,'Color',mpg); thisFigure; hold on
+subplot(121), hData = loglog(time ,errs,'Color',color); thisFigure; hold on
+subplot(122), hData = loglog(time,rerrs,'Color',color); thisFigure; hold on
 fstp = figure(15); set(fstp,'visible','on'),
-subplot(121), hData = loglog( errs,'Color',mpg); thisFigure; hold on
-subplot(122), hData = loglog(rerrs,'Color',mpg); thisFigure; hold on
+subplot(121), hData = loglog( errs,'Color',color); thisFigure; hold on
+subplot(122), hData = loglog(rerrs,'Color',color); thisFigure; hold on
 % for latex
 f10=figure(10); set(f10,'visible','off');
-hData = loglog(time, errs,'Color',mpg); 
+hData = loglog(time, errs,'Color',color); 
 axis tight; thisFigure; hold on
 f12=figure(12); set(f12,'visible','off');
-hData = loglog(time,rerrs,'Color',mpg); 
+hData = loglog(time,rerrs,'Color',color); 
 axis tight; thisFigure; hold on
 f11=figure(11); set(f11,'visible','off');
-hData = loglog(errs, 'Color',mpg); 
+hData = loglog(errs, 'Color',color); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 f13=figure(13); set(f13,'visible','off');
-hData = loglog(rerrs,'Color',mpg); 
+hData = loglog(rerrs,'Color',color); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 end
 %

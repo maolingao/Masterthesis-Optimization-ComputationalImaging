@@ -8,7 +8,7 @@ localsetup;
 multiFilt    = betterImRead; % 100 speckle samples
 % sample psf
 numFrame     = option.numFrame;
-multiFilt_ds = multiFilt(ceil(100*rand(numFrame,1))); 
+multiFilt_ds = multiFilt(randperm(length(multiFilt),numFrame)); 
 % -------------- generate blurry frames -------------- %
 % generate multi frame with controlable noise
 [multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);

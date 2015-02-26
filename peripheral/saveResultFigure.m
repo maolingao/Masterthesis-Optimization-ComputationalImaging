@@ -58,7 +58,6 @@ thisFigure;
 filename = sprintf('compClk_residual_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-close gcf;
 %
 f12 = figure(12); set(f12,'visible','off'),
 hTitle = title(shape);
@@ -70,7 +69,6 @@ thisFigure;
 filename = sprintf('compClk_relErr_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-close gcf;
 %  
 f11 = figure(11); set(f11,'visible','off'),
 hTitle = title(shape);
@@ -81,7 +79,6 @@ thisFigure;
 filename = sprintf('compStp_residual_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-close gcf;
 %
 f13 = figure(13); set(f13,'visible','off'),
 hTitle = title(shape);
@@ -93,6 +90,5 @@ thisFigure;
 filename = sprintf('compStp_relErr_frame_%d',counter);
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-close gcf;
 % close all hidden figures
 % close all hidden

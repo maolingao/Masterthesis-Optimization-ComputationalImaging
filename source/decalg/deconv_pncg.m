@@ -221,25 +221,26 @@ pncg_dI = clip(pncg_dI,1,0);
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
 if option.plotFlag == 1
+color = dre;
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
-subplot(121), hData = loglog(time ,errs,'Color',dre); thisFigure; hold on
-subplot(122), hData = loglog(time,rerrs,'Color',dre); thisFigure; hold on
+subplot(121), hData = loglog(time ,errs,'Color',color); thisFigure; hold on
+subplot(122), hData = loglog(time,rerrs,'Color',color); thisFigure; hold on
 fstp = figure(15); set(fstp,'visible','on'),
-subplot(121), hData = loglog( errs,'Color',dre); thisFigure; hold on
-subplot(122), hData = loglog(rerrs,'Color',dre); thisFigure; hold on
+subplot(121), hData = loglog( errs,'Color',color); thisFigure; hold on
+subplot(122), hData = loglog(rerrs,'Color',color); thisFigure; hold on
 % for latex
 f10=figure(10); set(f10,'visible','off');
-hData = loglog(time, errs,'Color',dre); 
+hData = loglog(time, errs,'Color',color); 
 axis tight; thisFigure; hold on
 f12=figure(12); set(f12,'visible','off');
-hData = loglog(time,rerrs,'Color',dre); 
+hData = loglog(time,rerrs,'Color',color); 
 axis tight; thisFigure; hold on
 f11=figure(11); set(f11,'visible','off');
-hData = loglog(errs, 'Color',dre); 
+hData = loglog(errs, 'Color',color); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 f13=figure(13); set(f13,'visible','off');
-hData = loglog(rerrs,'Color',dre); 
+hData = loglog(rerrs,'Color',color); 
 set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
 end
 %
