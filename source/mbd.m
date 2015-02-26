@@ -50,6 +50,7 @@ scaler =  1e0;
 HK     =  hessianMatrix(eye(fsize)*scaler);
 start  =  clip(start,inf,0);
 start(start<1e-7) = 0;
+cutLine = nan;
 % start  =  start./max(vec(start)) * 1e-3;
 %%%%%%%%%%%%%
 fixed    =  natureI;                            % r.t. ground truth
@@ -150,13 +151,23 @@ switch method
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             
             % !!!!!!!! MEMLIM !!!!!!!!
+            %{%
             MEMLIM           =  option.MEMLIM;% size(HK.s,2);
             lambda           =  option.memoryStrength;
             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
             clear HK
             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
 %             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
+            %}
             % ------- END MEMLIM -------
+            % !!!!!!!! DISCARD old Observations !!!!!!!!
+            %{
+            [S,Y,Delta]      =  discardObs(HK.s,HK.y,HK.delta,cutLine);
+            clear HK
+            HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, nan, size(S,2)+1);
+            cutLine          =  size(S,2)+1;
+            %}
+            % ------- END DISCARD -------
             % -------- kernel comparison figure --------
             drawComparisonFig(natureK,pncg_kernel,k,'pncg','Kernel',figPath);
             %}

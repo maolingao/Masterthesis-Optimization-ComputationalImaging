@@ -51,7 +51,7 @@ for i = 1: (iter + 1)  %numel(im)
     if unique(abs(kernelSize - size(cg_dI)) > abs(max(F.xsize, F.fsize) - size(cg_dI)))
         NOP;                                    % current solving x, BOP    
     else
-%         cg_dI   =   lowerBound(cg_dI);          % current solving f, low bound f
+        cg_dI   =   lowerBound(cg_dI);          % current solving f, low bound f
 %         cg_dI   =   preserveNorm(cg_dI);        % preserve energy norm of f
     end
     % -----------------------------------------------
@@ -116,7 +116,7 @@ for i = 1: (iter + 1)  %numel(im)
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached        
         if i == (iter + 1) || errRelChange > -1e-3
-            cg_dI   =   clip(reshape(x,imageSize),1,0);
+%             cg_dI   =   clip(reshape(x,imageSize),1,0);
             break
         end
     % -----------------------------------------------

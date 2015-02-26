@@ -39,9 +39,9 @@ else
     linestyle = option.LineStyle;
 end
 
-b = F'*im;
-imageSize = size(b);
-start = clip(start,inf,0);
+b           =   F'*im;
+imageSize   =   size(b);
+start       =   clip(start,inf,0);
 %##### Tikhonov #####
 l = [0 -1 0
      -1 4 -1
@@ -54,80 +54,87 @@ L = conv2MatOp(l,imageSize,'same');
 switch option.version
     case 'FH'
 %         keyboard
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        x = start;
-        r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-        r = r0;
-%         keyboard
-        p = M*r0;
+        M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
+        x       =   start;
+        r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
+        r       =   r0;
+        p       =   M*r0;
 %         p = -r0;
-        color = dre;
+        color   =   dre;
     case 'CG'
-        M = hessianMatrix(H.H); % preconditioner
+        M   = hessianMatrix(H.H); % preconditioner
 %         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        x = start;
-        r0 = (F'*(F*x) +eta*((L*x)) + a*x) - b;
-        r = r0;
-        p = M*r0;
-        color = mpg;
+        x       =   start;
+        r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
+        r       =   r0;
+        p       =   M*r0;
+        color   =   mpg;
     otherwise
         error('check option.version in deconv_pncg.m')
 end
 %}        
-epsl = 1e-30;
-errs = nan(1,iter);
-rerrs = nan(1,iter);
-x = vec(x);
-r = vec(r);
-p = vec(p);
-time = 1e-2;
-residual = r;
-errRelChange = nan;
+epsl         =  1e-30;
+errs         =  nan(1,iter);
+rerrs        =  nan(1,iter);
+x            =  vec(x);
+r            =  vec(r);
+p            =  vec(p);
+time         =  1e-2;
+residual     =  r;
+errRelChange =  nan;
 
 %##### iteration #####
 % keyboard
 for k = 1 : (iter + 1)  %numel(im)
-    pncg_dI = reshape(x,imageSize);  
+    pncg_dI         =   reshape(x,imageSize);  
+    % -----------------------------------------------
+    % if solving f, regularize kernel f
+    kernelSize = min(F.xsize, F.fsize);
+    if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
+        NOP;                                    % current solving x, BOP    
+    else
+        pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f
+%         pncg_dI       =   preserveNorm(pncg_dI);        % preserve energy norm of f
+    end
     % -----------------------------------------------
     % residual error
-    im_residual = betterMinus(F * pncg_dI, im); % 
+    im_residual     =   betterMinus(F * pncg_dI, im); % 
     % -----------------------------------------------
     % crop away edges
-    kernelSize = min(F.xsize, F.fsize);
-    corpMarginSize = kernelSize;
-    Pim = patimat('same',size(im_residual),corpMarginSize,0);
-    im_residual = Pim'*im_residual;
+    kernelSize      =   min(F.xsize, F.fsize);
+    corpMarginSize  =   kernelSize;
+    Pim             =   patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual     =   Pim'*im_residual;
     % -----------------------------------------------
     % register images r.t. ground truth 
-    fixed = nature;                            % r.t. ground truth
-    moving = pncg_dI;
-    subpixel = 0.1;
+    fixed           =   nature;                            % r.t. ground truth
+    moving          =   pncg_dI;
+    subpixel        =   0.1;
     [pncg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
     % -----------------------------------------------
     % absolute error
-    errorabso = pncg_dI_reg - nature;
+    errorabso       =   pncg_dI_reg - nature;
     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
 %         keyboard
 %         figure(5), imagesc(im_residual), colormap gray, axis image
-        errorabso = Pim'*errorabso;        % current solving x, crop    
-        natureCrop = Pim'*nature;
+        errorabso   =   Pim'*errorabso;        % current solving x, crop    
+        natureCrop  =   Pim'*nature;
     else
-        errorabso = errorabso;             % current solving f, NOT crop
-        natureCrop = nature;
+        errorabso   =   errorabso;             % current solving f, NOT crop
+        natureCrop  =   nature;
     end
     % -----------------------------------------------
     % average residual & relative error of ground truth
     if norm(im_residual,'fro' )==0
-        errs(k) = 1e-20;
-        rerrs(k) = 1e-20;
+        errs(k)     =   1e-20;
+        rerrs(k)    =   1e-20;
     else            
-        errs(k) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
-        rerrs(k) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
+        errs(k)     =   (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
+        rerrs(k)    =   (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
     % -----------------------------------------------
     % plot 
-    f4 = figure(4);
-    subplot(121)
+    f4 = figure(4); subplot(121)
     imagesc(clip(pncg_dI,1,0)); axis image,colormap(gray)
     title(sprintf('my pncg - iteration %d/%d',k,iter + 1))
     drawnow          
@@ -147,52 +154,52 @@ for k = 1 : (iter + 1)  %numel(im)
     % stop creterien 2 : error decreasing tiny or even increasing
         if k > 3
 %             keyboard
-            errRelChange = errs(2:k) - errs(1:k-1);
-            errRelChange = sum(errRelChange(k-3:k-1)) / sum(errs(k-3:k)) * 4/3 ;
+            errRelChange    =   errs(2:k) - errs(1:k-1);
+            errRelChange    =   sum(errRelChange(k-3:k-1)) / sum(errs(k-3:k)) * 4/3 ;
         end
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached
-        if k == (iter + 1) || errRelChange > -1e-3
+        if k == (iter + 1) || errRelChange > inf %-1e-3
 %             keyboard
-            pncg_dI = clip(reshape(x,imageSize),1,0);
+%             pncg_dI     =   clip(reshape(x,imageSize),1,0);
             break
         end
     % -----------------------------------------------
     % main calculation
         tStart = tic;
         % ###################
-        q = vec((F'*(F*(reshape(p,imageSize)))  + eta*(L*reshape(p,imageSize)) + a*reshape(p,imageSize))); % A*p register
-        alpha = - (p'*q + epsl)\(p'*r);
+        q           =   vec((F'*(F*(reshape(p,imageSize)))  + eta*(L*reshape(p,imageSize)) + a*reshape(p,imageSize))); % A*p register
+        alpha       =   - (p'*q + epsl)\(p'*r);
         
-        s = alpha*p;           % s_i <-- x_i+1 - x_i
-        y = alpha*q;           % y_i <-- A*s_i
-                s_length = norm(s,'fro');
-                s = s ./ s_length;
-                y = y ./ s_length;
+        s           =   alpha*p;                % s_i <-- x_i+1 - x_i
+        y           =   alpha*q;                % y_i <-- A*s_i
+        s_length    =   norm(s,'fro');
+        s           =   s ./ s_length;          % for numerical stability, up scale s and y
+        y           =   y ./ s_length;
         
         switch option.version
             case 'FH'
-                delta = s - y;        % delta_i <-- s_i - H_i*y_i
+                delta   =   s - y;              % delta_i <-- s_i - H_i*y_i
             case 'CG'
-                delta = s - y;        % delta_i <-- s_i - H_i*y_i
+                delta   =   s - y;              % delta_i <-- s_i - H_i*y_i
             otherwise
                 error('check option.version in deconv_pncg.m')
         end
              
         % x = x + s; % x_i+1 <-- x_i - alpha*p_i
         % r = r + y; % r_i+1 <-- r_i - A*alpa*p_i
-                x = x + s_length*s; % x_i+1 <-- x_i - alpha*p_i
-                r = r + s_length*y; % r_i+1 <-- r_i - A*alpa*p_i    
+        x           =   x + s_length*s; % x_i+1 <-- x_i - alpha*p_i
+        r           =   r + s_length*y; % r_i+1 <-- r_i - A*alpa*p_i    
        
-        H = plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
+        H           =   plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
         
-        p_1 = p;
+        p_1         =   p;
         switch option.version
             case 'FH'
 %                 keyboard
-                p = vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
+                p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
             case 'CG'
-                p = r + H.*r;
+                p   =   r + H.*r;
             otherwise
                 error('check option.version in deconv_pncg.m')
         end
@@ -201,12 +208,10 @@ for k = 1 : (iter + 1)  %numel(im)
         time     = [time; time(end)+tElapsed];
     % -----------------------------------------------
     % display orthogonality and conjugacy 
-%         keyboard
-%         buildH;
-% orthogonal      
+    % orthogonal      
         residual = [residual,r]; 
         display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)))
-% conjugate
+    % conjugate
         conj = p_1'*vec(vec((F'*(F*reshape(p,imageSize))))  + vec(eta*(L*reshape(p,imageSize))) + a*p)
     end
     
