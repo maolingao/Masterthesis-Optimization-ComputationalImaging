@@ -30,6 +30,7 @@ end
 shape = F.shape;
 
 errs_allframes_pncg = []; rerrs_allframes_pncg = [];
+errs_allframes_pncgK = []; rerrs_allframes_pncgK = [];
 errs_allframes_cg = []; rerrs_allframes_cg = [];
 errs_allframes_gaussian = []; rerrs_allframes_gaussian = [];
 errs_allframes_rl = []; rerrs_allframes_rl = [];
@@ -147,11 +148,18 @@ switch method
             option.plotFlag     =   1;
 %             startK              =   startK./sum(vec(startK));
             startK              =   zeros(size(startK));
-            [pncg_kernel, HK, errs_pncg_kernel] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
+            [pncg_kernel, HK, errs_pncgK, ~, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
-            
+            % ----------- figure all S's -----------
+            imgSize = size(HK.H);
+            imgCells = cellImg(HK.s,imgSize);
+            imgCelly = cellImg(HK.y,imgSize);
+            tightSubplot(imgCells, [0,0], 'S', figPath, k)
+            tightSubplot(imgCelly, [0,0], 'Y', figPath, k)
+            % ----------- END all S's -----------
             % !!!!!!!! MEMLIM !!!!!!!!
             %{%
+%             keyboard
             MEMLIM           =  option.MEMLIM;% size(HK.s,2);
             lambda           =  option.memoryStrength;
             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
@@ -160,6 +168,13 @@ switch method
 %             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
             %}
             % ------- END MEMLIM -------
+            % ----------- figure all Stilde's Ytilde's-----------
+            imgSize = size(HK.H);
+            imgCells = cellImg(HK.s,imgSize);
+            imgCelly = cellImg(HK.y,imgSize);
+            tightSubplot(imgCells, [0,0], 'Stilde', figPath, k)
+            tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
+            % ----------- END all S's -----------
             % !!!!!!!! DISCARD old Observations !!!!!!!!
             %{
             [S,Y,Delta]      =  discardObs(HK.s,HK.y,HK.delta,cutLine);
@@ -220,6 +235,8 @@ switch method
             
             % statitics 
             % all frame errors 
+            errs_allframes_pncgK     = [errs_allframes_pncgK,  errs_pncgK];
+            rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, rerrs_pncgK];
             if k == 1
                 errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(1), errs_pncgN(end)]; % residual, cg 
                 rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(1),rerrs_pncgN(end)]; % relative error, cg
@@ -238,6 +255,10 @@ switch method
             % for latex
             % residual error & relative error
             drawAllFrameErrorFig(errs_allframes_pncg, rerrs_allframes_pncg, numFrame, numFrame, 'pncg', dre, figPath, 'latex');
+            % -------- kernel frame error figure --------
+            % for latex
+            % residual error & relative error
+            drawAllFrameErrorFig(errs_allframes_pncgK, rerrs_allframes_pncgK, numFrame, numFrame, 'pncg', dre, figPath, 'latex', f_pncg, 1);
             
             if exist('pncg_dI','var')
                 I = pncg_dI;

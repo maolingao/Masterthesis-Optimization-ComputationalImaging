@@ -1,5 +1,8 @@
-function drawAllFrameErrorFig(residualErrAllFrame, relativeErrAllFrame, numFrame, counter, optimizerName, color, figPath, mode, fhandel)
+function drawAllFrameErrorFig(residualErrAllFrame, relativeErrAllFrame, numFrame, counter, optimizerName, color, figPath, mode, fhandel, kernelerror)
 %
+if ~exist('kernelerror','var')
+    kernelerror = 0;
+end
 % -------- ground truth frame error figure --------
 switch mode
     case 'latex'
@@ -13,7 +16,12 @@ switch mode
 %         set(gca,'XTick',0:length(residualErrAllFrame)-1)
         thisFigure;   
         drawnow
-        filename = sprintf(strcat('mbd_residualErrorAllFrame_',optimizerName));
+        if kernelerror == 1  % residual error of kernel of all frames
+            filename = 'mbd_f_residualErrorAllFrame_';
+        else
+            filename = 'mbd_gt_residualErrorAllFrame_';
+        end
+        filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
         print(gcf, '-depsc2', filename)
         close gcf;
@@ -26,7 +34,12 @@ switch mode
 %         set(gca,'XTick',0:length(relativeErrAllFrame)-1)
         thisFigure;   
         drawnow
-        filename = sprintf(strcat('mbd_relativeErrorAllFrame_',optimizerName));
+        if kernelerror == 1  % relative error of kernel of all frames
+            filename = 'mbd_f_relativeErrorAllFrame_';
+        else
+            filename = 'mbd_gt_relativeErrorAllFrame_';
+        end
+        filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
         print(gcf, '-depsc2', filename)
         close gcf;
