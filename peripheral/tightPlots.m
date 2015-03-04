@@ -132,7 +132,7 @@ set(gcf, 'paperpositionmode', 'manual', 'paperposition', [0 0 w h]);
 % Build axes in figure space
 py = h-marg_h(2)-axh; 
 
-ha = zeros(Nh*Nw,1);
+ha = zeros(Nh*Nw+1,1);
 ii = 0;
 for ih = 1:Nh
     px = marg_w(1);

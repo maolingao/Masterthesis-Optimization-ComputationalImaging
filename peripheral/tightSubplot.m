@@ -23,9 +23,11 @@ for i = 1 : f
     axes(ha(i)); imagesc(imgCell{i}), % axis off % image
     caxis manual
     caxis([minPixel maxPixel]);
-    colormap gray
-%     colorbar;
+%     caxis([-0.25 0.25]);
+    colormap default
 end
+hb = colorbar('location','eastoutside');
+% keyboard
 set(gcf,'visible','off'),
 set(ha(1:f), 'fontname', 'Times', 'fontsize', 10)
 set(ha(1:f), 'xticklabel', '','xtick',[]);

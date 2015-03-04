@@ -95,6 +95,7 @@ classdef hessianMatrix < handle
                 %{%
                 if ~isempty(obj.s)
                     G = obj.s'*obj.y;
+                    G = 1/2 * ( G + G');
                     Ginv = pinv(G);
                     %----------------------------%
 %                     keyboard

@@ -14,13 +14,15 @@ switch mode
         hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         hTitle  = title(sprintf('%d frames', numFrame));
 %         set(gca,'XTick',0:length(residualErrAllFrame)-1)
-        thisFigure;   
-        drawnow
         if kernelerror == 1  % residual error of kernel of all frames
             filename = 'mbd_f_residualErrorAllFrame_';
+            hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
         else
             filename = 'mbd_gt_residualErrorAllFrame_';
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         end
+        thisFigure;   
+        drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
         print(gcf, '-depsc2', filename)
@@ -29,16 +31,17 @@ switch mode
         figure;  set(gcf,'visible','off'),
         hData = plot(0:length(relativeErrAllFrame)-1,relativeErrAllFrame,'Color', color);          
         hYLabel = ylabel('$relative\ error$', 'Interpreter','Latex');
-        hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         hTitle = title(sprintf('%d frames', numFrame));
 %         set(gca,'XTick',0:length(relativeErrAllFrame)-1)
-        thisFigure;   
-        drawnow
         if kernelerror == 1  % relative error of kernel of all frames
             filename = 'mbd_f_relativeErrorAllFrame_';
+            hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
         else
             filename = 'mbd_gt_relativeErrorAllFrame_';
+            hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         end
+        thisFigure;   
+        drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
         print(gcf, '-depsc2', filename)

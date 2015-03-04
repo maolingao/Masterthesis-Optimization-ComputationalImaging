@@ -150,12 +150,38 @@ switch method
             startK              =   zeros(size(startK));
             [pncg_kernel, HK, errs_pncgK, ~, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
-            % ----------- figure all S's -----------
-            imgSize = size(HK.H);
-            imgCells = cellImg(HK.s,imgSize);
-            imgCelly = cellImg(HK.y,imgSize);
+            % ----------- figure all V's of matrix H -----------
+%             keyboard
+            H_mtx = buildH(HK);
+            [V,U] = eig(H_mtx);
+            [U,idx] = sort(real(diag(U)),'descend');
+            V = V(:,idx);
+            idx = U > 1.1;
+            Uleading = U(idx);
+            Vleading = V(:,idx);
+            imgCellvl    =   cellImg(Vleading,fsize);
+            tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
+            % ----------- figure all V's of matrix G -----------
+%             %
+%             s = bsxfun(@rdivide,HK.s,sqrt(sum(HK.s.^2))+eps);
+%             y = bsxfun(@rdivide,HK.y,sqrt(sum(HK.y.^2))+eps);
+%             G = s'*y;
+%             figure(100), imagesc(log10(abs(G))), axis image 
+%             [V,U] = eig(G);
+%             sort(real(diag(U)),'descend')
+%             keyboard
+%             %
+            % ----------- figure all S's Y's-----------
+            [S,Y,Delta] =   discardObs(HK.s, HK.y, HK.delta, cutLine);
+            imgCells    =   cellImg(S,fsize);
+            imgCelly    =   cellImg(Y,fsize);
             tightSubplot(imgCells, [0,0], 'S', figPath, k)
             tightSubplot(imgCelly, [0,0], 'Y', figPath, k)
+%             if cutLine  >   option.MEMLIM
+%                 cutLine     =   option.MEMLIM + 1;
+%             else
+%                 cutLine     =   HK.i;
+%             end
             % ----------- END all S's -----------
             % !!!!!!!! MEMLIM !!!!!!!!
             %{%
@@ -169,12 +195,20 @@ switch method
             %}
             % ------- END MEMLIM -------
             % ----------- figure all Stilde's Ytilde's-----------
-            imgSize = size(HK.H);
-            imgCells = cellImg(HK.s,imgSize);
-            imgCelly = cellImg(HK.y,imgSize);
+%             s = bsxfun(@rdivide,HK.s,sqrt(sum(HK.s.^2))+eps);
+%             y = bsxfun(@rdivide,HK.y,sqrt(sum(HK.y.^2))+eps);
+%             G = s'*y;
+%             figure(100), imagesc(log10(abs(G))), axis image 
+%             [V,U] = eig(G);
+%             sort(real(diag(U)),'descend')
+%             keyboard
+            %
+            imgCells    =   cellImg(HK.s,fsize);
+            imgCelly    =   cellImg(HK.y,fsize);
             tightSubplot(imgCells, [0,0], 'Stilde', figPath, k)
             tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
-            % ----------- END all S's -----------
+            cutLine     =   HK.i;
+            % ----------- END all tilde's -----------
             % !!!!!!!! DISCARD old Observations !!!!!!!!
             %{
             [S,Y,Delta]      =  discardObs(HK.s,HK.y,HK.delta,cutLine);
@@ -222,14 +256,14 @@ switch method
 % % %             HN = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
 %             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
             % !!!!!!!! END non blind with MEMLIM!!!!!!!!
-            pncg_dI = clip(pncg_dI,inf,0);
+            pncg_dI     =   clip(pncg_dI,inf,0);
             %%%%%%%%%%%%%
-            fixed = natureI;                            % r.t. ground truth
-            moving = pncg_dI;
-            subpixel = 0.1;
-            [pncg_dI, output] =   efficient_imregister(fixed, moving, subpixel);
+            fixed       =   natureI;                            % r.t. ground truth
+            moving      =   pncg_dI;
+            subpixel    =   0.1;
+            [pncg_dI, output]   =   efficient_imregister(fixed, moving, subpixel);
             %%%%%%%%%%%%%
-            pncg_dI4convmat =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
+            pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
             % -------- ground truth comparison figure --------
             drawComparisonFig(natureI,pncg_dI,k,'pncg','Nature',figPath);
             
