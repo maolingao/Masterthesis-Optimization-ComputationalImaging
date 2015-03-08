@@ -183,7 +183,6 @@ switch method
 %                 cutLine     =   HK.i;
 %             end
             % ----------- END all S's -----------
-            [R,D] = purify_lowRank_obs(HK.s,HK.y,HK.delta,option.MEMLIM);
             % !!!!!!!! MEMLIM !!!!!!!!
             %{%
 %             keyboard
