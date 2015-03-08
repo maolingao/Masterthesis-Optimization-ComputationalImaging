@@ -9,31 +9,35 @@ classdef hessianMatrix < handle
         delta       % difference btw corrected step error and back-calculated corrected step residual
         i           % iteration index
         Ginv0       % inverse of last Gramm matrix
-        
+        R           % dominant eigenvectors
+        D           % dominant eigenvalues
     end
     
     methods
-        function obj = hessianMatrix(H,s,y,delta,Ginv0,i)
+        function obj = hessianMatrix(H,s,y,delta,R,D,Ginv0)
             if nargin > 0
                 obj.H = H;
-                if exist('s','var')
+                if exist('s','var') && ~isempty(s)
                     obj.s = s;
                     obj.i = size(s,2) + 1;
-                end
-                if exist('y','var')
-                    obj.y = y;
-                end
-                if exist('delta','var')
-                    obj.delta = delta;
-                end   
-                if exist('Ginv0','var')
-                    obj.Ginv0 = Ginv0;
-                end   
-                if exist('i','var')
-                    obj.i = i;
                 else
                     obj.i = 1;
-                end             
+                end
+                if exist('y','var')  && ~isempty(y)
+                    obj.y = y;
+                end
+                if exist('delta','var') && ~isempty(delta)
+                    obj.delta = delta;
+                end   
+                if exist('R','var')  && ~isempty(R)
+                    obj.R = R;
+                end
+                if exist('D','var')  && ~isempty(D)
+                    obj.D = D;
+                end
+                if exist('Ginv0','var') && ~isempty(Ginv0)
+                    obj.Ginv0 = Ginv0;
+                end
              end
             
         end
@@ -50,65 +54,28 @@ classdef hessianMatrix < handle
             % multiplication with matrix and vector
             
                 epsl = 1e-30;
-%                 keyboard
-                % working version, using all diagonal terms to update H
-                %{
-                tail = 0; % (update)
-                for k = 1 : obj.i - 1
-                    den = (obj.s(:,k)'*obj.y(:,k) );
-                    tail = tail + (den + epsl )\(obj.delta(:,k)*(obj.s(:,k)'*vec(x))  ) + ...
-                        (den + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*vec(x))  ) - ...
-                        (den^2 + epsl )\(obj.s(:,k)*(obj.delta(:,k)'*obj.y(:,k))*(obj.s(:,k)'*vec(x)) );
-                end
-                %}
-                % debug, using full H
-                %{
-                if ~isempty(obj.s)
-                    if size(obj.s,2) == size(obj.Ginv0,1)
-%                         keyboard
-                        Ginv = obj.Ginv0;
-                    elseif size(obj.s,2) < 2 
-                        Ginv = 1/((obj.s)'*obj.y + epsl);
-                    else
-%                         keyboard
-                        Ginv = invGram(obj.Ginv0,obj.s,obj.y);
-                    end
-                    %{
-                    SGinv = obj.s * Ginv;
-                    SGinvDelta = SGinv * (obj.delta)';
-                    tailM = SGinvDelta + SGinvDelta' - SGinv * obj.y' * SGinvDelta';
-                    tail = tailM * vec(x);
-                    %}
-                    %----------------------------%
-%                     keyboard
-                    SX = (obj.s' * vec(x));
-                    GinvSX = Ginv * SX;
-                    SGinv = obj.s * Ginv;
-                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
-                    %----------------------------%
-                    obj.Ginv0 = Ginv;
-                else
+                % debug, using full H, pseudo-invers
+                % the part of previous observations, storage limited
+                if ~isempty(obj.R) && ~isempty(obj.D)
+                    tail = obj.R * (obj.D * (obj.R' * vec(x)));
+                else 
                     tail = 0;
                 end
-                %}                     
-                % debug, using full H, pseudo-invers
-                %{%
+                % the part of current observations
                 if ~isempty(obj.s)
                     G = obj.s'*obj.y;
                     G = 1/2 * ( G + G');
                     Ginv = pinv(G);
                     %----------------------------%
-%                     keyboard
                     SX = (obj.s' * vec(x));
                     GinvSX = Ginv * SX;
                     SGinv = obj.s * Ginv;
-                    tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
+                    tail = tail + obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
                     %----------------------------%
                     obj.Ginv0 = Ginv;
                 else
-                    tail = 0;
+                    tail = tail + 0;
                 end
-                %}         
                 % *** update form: H = H0 + tail ***
                 outp = vec(x) + tail;              % output = vec(I*x) + tail
                 % ########################
@@ -121,21 +88,12 @@ classdef hessianMatrix < handle
                 tail = 0; % (update)
                 % only use the last term of s, y and Delta to update H
                 % aim : speed up
-                % prob : residual after step from Ax=b to Ax'=b' not any more conjugate with all old search directions
-%                 endInd = obj.i - 1;
-%                 if endInd > 0
-%                 tail = tail + (obj.s(:,end)'*obj.y(:,end) + epsl )\(obj.delta(:,end)*(obj.s(:,end)'*vec(x)) + epsl ) + ...
-%                     (obj.s(:,end)'*obj.y(:,end) + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*vec(x)) + epsl ) - ...
-%                     ((obj.s(:,end)'*obj.y(:,end))^2 + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*obj.y(:,end))*(obj.s(:,end)'*vec(x)) + epsl );
-
                     den = (obj.s(:,end)'*obj.y(:,end) );
                     tail = tail + (den + epsl )\(obj.delta(:,end)*(obj.s(:,end)'*vec(x)) ) + ...
                         (den + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*vec(x)) ) - ...
                         (den^2 + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*obj.y(:,end))*(obj.s(:,end)'*vec(x))  );
-%                 end
 
                 outp = tail; % output = tail(last term)
-%                 outp = vec(obj.H*x) + tail; % H_i+1 <-- H_i + (update)
                 
         end
     end

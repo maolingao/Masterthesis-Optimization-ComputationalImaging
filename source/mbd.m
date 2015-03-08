@@ -187,27 +187,20 @@ switch method
             %{%
 %             keyboard
             MEMLIM           =  option.MEMLIM;% size(HK.s,2);
-            lambda           =  option.memoryStrength;
-            [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
+%             lambda           =  option.memoryStrength;
+%             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
+%             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , [], GInv);
+            [R,D] = purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
             clear HK
-            HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
-%             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
+            HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
             %}
             % ------- END MEMLIM -------
             % ----------- figure all Stilde's Ytilde's-----------
-%             s = bsxfun(@rdivide,HK.s,sqrt(sum(HK.s.^2))+eps);
-%             y = bsxfun(@rdivide,HK.y,sqrt(sum(HK.y.^2))+eps);
-%             G = s'*y;
-%             figure(100), imagesc(log10(abs(G))), axis image 
-%             [V,U] = eig(G);
-%             sort(real(diag(U)),'descend')
-%             keyboard
-            %
-            imgCells    =   cellImg(HK.s,fsize);
-            imgCelly    =   cellImg(HK.y,fsize);
-            tightSubplot(imgCells, [0,0], 'Stilde', figPath, k)
-            tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
-            cutLine     =   HK.i;
+%             imgCells    =   cellImg(HK.s,fsize);
+%             imgCelly    =   cellImg(HK.y,fsize);
+%             tightSubplot(imgCells, [0,0], 'Stilde', figPath, k)
+%             tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
+%             cutLine     =   HK.i;
             % ----------- END all tilde's -----------
             % !!!!!!!! DISCARD old Observations !!!!!!!!
             %{

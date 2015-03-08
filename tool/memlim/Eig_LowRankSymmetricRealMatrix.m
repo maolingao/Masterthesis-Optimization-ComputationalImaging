@@ -52,6 +52,7 @@ if nargin > 2          % remove small eigenvalues below cutoff
         R       = R(:,d > cutoff * max(d));
         d       = d(d > cutoff * max(d));
     elseif round(cutoff) - cutoff == 0
+        cutoff = min([cutoff, length(d)]);
         R       = R(:,1:cutoff);
         d       = d(1:cutoff);
     else error('malformed input cutoff. Must be float < 1, or integer > 1.')
