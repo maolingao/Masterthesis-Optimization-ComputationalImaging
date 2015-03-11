@@ -152,14 +152,14 @@ switch method
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ----------- figure all V's of matrix H -----------
 %             keyboard
-            H_mtx = buildH(HK);
-            [V,U] = eig(H_mtx);
-            [U,idx] = sort(real(diag(U)),'descend');
-            V = V(:,idx);
-            idx = U > 1.1;
-            Uleading = U(idx);
-            Vleading = V(:,idx);
-            imgCellvl    =   cellImg(Vleading,fsize);
+            H_mtx        =  buildH(HK);
+            [V,U]        =  eig(H_mtx);
+            [U,idx]      =  sort(real(diag(U)),'descend');
+            V            =  V(:,idx);
+            idx          =  U > 1.1;
+            Uleading     =  U(idx);
+            Vleading     =  V(:,idx);
+            imgCellvl    =  cellImg(Vleading,fsize);
             tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
             % ----------- figure all V's of matrix G -----------
 %             %
