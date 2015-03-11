@@ -20,6 +20,7 @@ function [R,D] = Eig_LowRankSymmetricRealMatrix(U,e,cutoff)
 % 
 %
 % (c) 2014, Philipp Hennig
+% 2015 modified, Maolin Gao
 
 if any(~isreal(U(:))) || any(~isreal(e(:)))
     error ('this operation only works for real-valued matrices');
