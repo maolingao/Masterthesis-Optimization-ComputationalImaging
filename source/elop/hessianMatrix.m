@@ -70,6 +70,8 @@ classdef hessianMatrix < handle
                     SX = (obj.s' * vec(x));
                     GinvSX = Ginv * SX;
                     SGinv = obj.s * Ginv;
+%                     SGinv = obj.s / G;
+%                     GinvSX = SGinv' * vec(x);
                     tail = tail + obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
                     %----------------------------%
                     obj.Ginv0 = Ginv;
