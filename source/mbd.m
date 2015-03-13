@@ -160,7 +160,9 @@ switch method
             Uleading     =  U(idx);
             Vleading     =  V(:,idx);
             imgCellvl    =  cellImg(Vleading,fsize);
-            tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
+            if ~isempty(imgCellvl)
+                tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
+            end
             % ----------- figure all V's of matrix G -----------
 %             %
 %             s = bsxfun(@rdivide,HK.s,sqrt(sum(HK.s.^2))+eps);
