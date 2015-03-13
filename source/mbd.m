@@ -196,18 +196,18 @@ switch method
                 R1 = HK.R;
                 D1 = HK.D;
             end
-            [R2,D2]            =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
-            R2'*R2
-            R = R2; D = D2;
-            keyboard
-%             if k > 1                % prior H for next coming frame
-%                 [R,D]          =  driftH(R1,D1,R2,D2,MEMLIM,alpha);
-%             else
-%                 R1 = R2; D1 = D2;
-%                 R  = []; D  = [];
-%             end
-            clear HK
-            HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
+% % % %             [R2,D2]            =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
+% % % %             R2'*R2
+% % % %             R = R2; D = D2;
+% % % %             keyboard
+% % % % %             if k > 1                % prior H for next coming frame
+% % % % %                 [R,D]          =  driftH(R1,D1,R2,D2,MEMLIM,alpha);
+% % % % %             else
+% % % % %                 R1 = R2; D1 = D2;
+% % % % %                 R  = []; D  = [];
+% % % % %             end
+% % % %             clear HK
+% % % %             HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
             %}
             % ------- END MEMLIM -------
             % ----------- figure all Stilde's Ytilde's-----------

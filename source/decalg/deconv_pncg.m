@@ -54,7 +54,8 @@ L = conv2MatOp(l,imageSize,'same');
 switch option.version
     case 'FH'
 %         keyboard
-        M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
+%         M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0); % preconditioner
+        M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D,H.Ginv0); % preconditioner
         x       =   start;
         r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
         r       =   r0;
@@ -63,7 +64,6 @@ switch option.version
         color   =   dre;
     case 'CG'
         M   = hessianMatrix(H.H); % preconditioner
-%         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
         x       =   start;
         r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
         r       =   r0;
