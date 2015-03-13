@@ -94,7 +94,7 @@ classdef hessianMatrix < handle
                 % debug, using full H, pseudo-invers
                 %{%
                 if ~isempty(obj.s)
-                    G = obj.s'*obj.y;
+                    G = obj.s' * obj.y;
                     Ginv = pinv(G);
                     %----------------------------%
 %                     keyboard

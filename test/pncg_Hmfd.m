@@ -39,12 +39,10 @@ if nargin < 6
 end
 switch option.version
     case 'FH'
-%         keyboard
         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
-%         keyboard
         m = M*r0;
         p = m;
 %         p = -r0;

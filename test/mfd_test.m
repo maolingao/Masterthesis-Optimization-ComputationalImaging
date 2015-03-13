@@ -114,6 +114,7 @@ end
 option.frame = i;
 % keyboard
 [x_pncg,H_SU,~,residual_pncg]= pncg_Hmfd(A,b_orth,H_SU,x_start,tol,iter,option);
+keyboard
 residual_pncg_allframe = [residual_pncg_allframe,residual_pncg];
 if i == 1
     NOP;
