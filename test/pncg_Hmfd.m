@@ -39,7 +39,7 @@ if nargin < 6
 end
 switch option.version
     case 'FH'
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
+        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D,H.Ginv0); % preconditioner
         x = x_start;
         r0 = A*(x) - b;
         r = r0;
@@ -74,31 +74,6 @@ switch option.version
         p = m;
         color = mpg;
         err=[];
-    case 'SU'
-        M = hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0,H.i); % preconditioner
-        H_crt = hessianMatrix(H.H);                     % hessian matrix for current frame
-        x = x_start;
-        r0 = A*(x) - b;
-        r = r0;
-        m = M*r0;
-%         p = m;  % -(H*r);  % #### DEBUG
-        p = -r0;
-        color = ora;
-        % ----DEBUG----
-        err=[];
-        if isempty(H.s) && isempty(H.l) 
-            NOP;
-        else            
-            err = norm(r0);
-            q = A*p;
-            alpha = - (p'*q + 1e-30)\(p'*r);
-            x = x_start + alpha * p;
-            r0 = A * x - b;
-            p0 = M * r0;
-            r = r0;
-            p = p0;
-        end
-        % ----DEBUG----
     otherwise
         error('check option.version in pncg_Hmfd')
 end
@@ -114,7 +89,8 @@ for k = 1:numel(b)
     x_stack = [x_stack, x];
     %
     err = [err,norm(r)];
-    figure(2), plot(err,'Color',color), drawnow, hold on, set(gca,'Yscale','log')
+    figure(2), hData = plot(0:length(err)-1,err,'Color',color); drawnow, hold on, set(gca,'Yscale','log')
+    thisFigure;
     if k == iter + 1
         break
     end
@@ -136,16 +112,6 @@ for k = 1:numel(b)
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
-            case 'SU'
-                delta = s - H_crt*y;        % delta_i <-- s_i - H_i*y_i
-% % %                 H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                if abs(s'*y) > 1e-15
-                    H_crt = plus(H_crt,s,y,delta); % H_i+1 <-- H_i + (update)
-                else
-                    keyboard
-                    display 'direction changes too small.'
-                    break
-                end
             otherwise
                 error('check option.version in pncg_Hmfd')
         end
@@ -179,15 +145,15 @@ for k = 1:numel(b)
                 p = H*r;               % p = H_i+1 * r_i+1
             case 'CG'
                 p = r + H.*r;
-            case 'SU'
-                p = H_crt*r;                    
             otherwise
                 error('check option.version in pncg_Hmfd')
         end
 %         keyboard
         buildH;
-        diffz = [diffz, norm(H_mtx - A_inv)/numel(H.H)];
-        figure(997); hold on, plot(diffz), drawnow, xlabel('#steps'),ylabel('norm( H - A^{-1} ) / pixel')
+        diffz = [diffz, norm(H_mtx - A_inv) / numel(H.H)];
+        figure(997); hold on, 
+        hData = plot(diffz,'b'); drawnow, hXLabel = xlabel('$\#steps$'); hYLabel = ylabel('$\| H - B^{-1} \| / pixel$');
+        thisFigure;
 % orthogonal      
         residual = [residual,r]; 
         display(sprintf('orth residual: %d', residual(:,end-1)'*residual(:,end)))
@@ -198,8 +164,8 @@ for k = 1:numel(b)
     end
     
 end
-figure(22), set(gcf,'visible','off'), plot(err,'Color',color), drawnow,hold on, set(gca,'Yscale','log')
-% keyboard
+figure(22), set(gcf,'visible','off'), 
+hData = plot(0:length(err)-1,err,'Color',color); drawnow,hold on, set(gca,'Yscale','log')
+thisFigure;
 
-clear H_crt
 end

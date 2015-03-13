@@ -42,7 +42,8 @@ err= [];
 
 for k = 1:numel(b)
     err = [err,norm(r)];
-    figure(2), plot(err,'Color',blu), drawnow,hold on, set(gca,'Yscale','log');
+    figure(2), hData = plot(0:length(err)-1,err,'Color',blu); drawnow,hold on, set(gca,'Yscale','log'); 
+    thisFigure;
     if k == iter + 1
         break
     end
@@ -63,7 +64,9 @@ for k = 1:numel(b)
     
 end
 
-figure(22), set(gcf,'visible','off'), plot(err,'Color',blu), drawnow,hold on, set(gca,'Yscale','log')
+figure(22), set(gcf,'visible','off'), 
+hData = plot(0:length(err)-1,err,'Color',blu); drawnow,hold on, set(gca,'Yscale','log')
+thisFigure;
 
 
 end

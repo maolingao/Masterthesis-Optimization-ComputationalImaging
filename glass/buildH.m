@@ -6,14 +6,14 @@ for k = 1 : H.i - 1
 
     if ~isempty(H.s)
         if size(H.s,2) == size(H.Ginv0,1)
-%                         keyboard
             Ginv = H.Ginv0;
         elseif size(H.s,2) < 2 
             Ginv = 1/((H.s)'*H.s + epsll);
         else
-            keyboard
-            Ginv = invGram(obj.Ginv0,obj.s,obj.y);
-%             Ginv = ((obj.s)'*obj.y) \ eye(size(obj.s,2));
+%             Ginv = invGram(obj.Ginv0,obj.s,obj.y);
+%             Ginv = ((H.s)'*H.y) \ eye(size(H.s,2));
+                    G = H.s' * H.y;
+                    Ginv = pinv(G);
         end
         SGinv = H.s * Ginv;
         SGinvDelta = SGinv * (H.delta)';
@@ -23,7 +23,6 @@ for k = 1 : H.i - 1
     else
         tailM = 0;
     end
-    
 end
 
 % ########################
