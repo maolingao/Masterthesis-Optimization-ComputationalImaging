@@ -109,7 +109,8 @@ for k = 1:numel(b)
                 y = y ./ s_length;
         switch option.version
             case 'FH'
-                delta = s - y;        % delta_i <-- s_i - H_i*y_i
+%                 keyboard
+                delta = s - M*y;        % delta_i <-- s_i - H_i*y_i
             case 'CG'
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
             otherwise
