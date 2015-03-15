@@ -9,8 +9,9 @@ figPath = option.figPath;
 %
 n = 60;
 % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
-u = rand(n,1);  u = clip((u*10),10,0); 
-step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
+u = rand(n,1);  
+% u = clip((u*10),10,0); 
+% step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
 Q = RandomRotation(n); 
 D = diag(u);
 A = Q*D*Q';
@@ -36,7 +37,7 @@ end
 option.frame = i;
 [x_pncg,H,~,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 % ########### MEMLIM #############
-%{%
+%{
 MEMLIM = option.MEMLIM ;% size(H.s,2);
 lambda = option.memoryStrength;
 % keyboard
