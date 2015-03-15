@@ -64,7 +64,7 @@ classdef hessianMatrix < handle
                 % the part of current observations
                 if ~isempty(obj.s)
 %                     G = obj.s'*obj.y;
-                    G = obj.y' * obj.y;
+                    G = obj.s' * obj.y;
                     G = 1/2 * ( G + G');
                     Ginv = pinv(G);
                     %----------------------------%

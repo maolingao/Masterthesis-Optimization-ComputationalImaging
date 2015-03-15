@@ -159,7 +159,7 @@ for k = 1 : (iter + 1)  %numel(im)
         end
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached
-        if k == (iter + 1) || errRelChange > -1e-3 %  inf %
+        if k == (iter + 1) || errRelChange >  inf % -1e-3 % 
 %             keyboard
 %             pncg_dI     =   clip(reshape(x,imageSize),1,0);
             break

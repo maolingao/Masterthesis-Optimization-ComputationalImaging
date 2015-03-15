@@ -28,7 +28,6 @@ else
     fsize = F.xsize;
 end
 shape = F.shape;
-
 errs_allframes_pncg = []; rerrs_allframes_pncg = [];
 errs_allframes_pncgK = []; rerrs_allframes_pncgK = [];
 errs_allframes_cg = []; rerrs_allframes_cg = [];
@@ -46,7 +45,7 @@ for i = 1 : numFrame                            % register observation images
 end
 eta = option.eta;                                        % ### <--- regularization parameter
 % kernel estimating
-tolK   =  -inf;
+tolK   =  option.tolK;
 scaler =  1e0;
 HK     =  hessianMatrix(eye(fsize)*scaler);
 start  =  clip(start,inf,0);
@@ -103,7 +102,7 @@ switch method
             frame       =   clip(multiFrame{k},inf,0);
             natureK     =   multiKernel{k};                 % for error calculation
             
-            % ##### estimate kernel #####
+            % ################################# estimate kernel #################################
             %{%
             % comment out for non-blind deconvolution of ground truth, known PSFs, and learning theirs inverse
             % !!!!!!!! edge taper !!!!!!!!
@@ -151,7 +150,6 @@ switch method
             [pncg_kernel, HK, errs_pncgK, ~, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ----------- figure all V's of matrix H -----------
-%             keyboard
             H_mtx        =  buildH(HK);
             [V,U]        =  eig(H_mtx);
             [U,idx]      =  sort(real(diag(U)),'descend');
@@ -163,16 +161,6 @@ switch method
             if ~isempty(imgCellvl)
                 tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
             end
-            % ----------- figure all V's of matrix G -----------
-%             %
-%             s = bsxfun(@rdivide,HK.s,sqrt(sum(HK.s.^2))+eps);
-%             y = bsxfun(@rdivide,HK.y,sqrt(sum(HK.y.^2))+eps);
-%             G = s'*y;
-%             figure(100), imagesc(log10(abs(G))), axis image 
-%             [V,U] = eig(G);
-%             sort(real(diag(U)),'descend')
-%             keyboard
-%             %
             % ----------- figure all S's Y's-----------
             [S,Y,Delta] =   discardObs(HK.s, HK.y, HK.delta, cutLine);
             imgCells    =   cellImg(S,fsize);
@@ -187,29 +175,27 @@ switch method
             % ----------- END all S's -----------
             % !!!!!!!! MEMLIM !!!!!!!!
             %{%
-%             keyboard
-            MEMLIM           =  option.MEMLIM;% size(HK.s,2);
-%             lambda           =  option.memoryStrength;
+            MEMLIM           =  option.MEMLIM;
+            lambda           =  option.MEMSTR;
+            alpha            =  option.EXPOSTR;
+            % ################################# %
 %             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
+%             clear HK
 %             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , [], GInv);
-            alpha = option.memoryStrength;
-%             keyboard
-            if k ~= 2
-                R1 = HK.R;
-                D1 = HK.D;
-            end
-% % % %             [R2,D2]            =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
-% % % %             R2'*R2
-% % % %             R = R2; D = D2;
-% % % %             keyboard
-% % % % %             if k > 1                % prior H for next coming frame
-% % % % %                 [R,D]          =  driftH(R1,D1,R2,D2,MEMLIM,alpha);
-% % % % %             else
-% % % % %                 R1 = R2; D1 = D2;
-% % % % %                 R  = []; D  = [];
-% % % % %             end
-% % % %             clear HK
-% % % %             HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
+            % ################################# %
+% %             if k ~= 2
+% %                 R1 = HK.R;
+% %                 D1 = HK.D;
+% %             end
+% %             [R2,D2]          =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
+% %             if k > 1                % prior H for next coming frame
+% %                 [R,D]        =  driftH(R1,D1,R2,D2,MEMLIM,alpha,lambda);
+% %             else
+% %                 R1 = R2; D1 = D2;
+% %                 R  = []; D  = [];
+% %             end
+% %             clear HK
+% %             HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
             %}
             % ------- END MEMLIM -------
             % ----------- figure all Stilde's Ytilde's-----------
@@ -219,81 +205,72 @@ switch method
 %             tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
 %             cutLine     =   HK.i;
             % ----------- END all tilde's -----------
-            % !!!!!!!! DISCARD old Observations !!!!!!!!
-            %{
-            [S,Y,Delta]      =  discardObs(HK.s,HK.y,HK.delta,cutLine);
-            clear HK
-            HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, nan, size(S,2)+1);
-            cutLine          =  size(S,2)+1;
-            %}
-            % ------- END DISCARD -------
             % -------- kernel comparison figure --------
             drawComparisonFig(natureK,pncg_kernel,k,'pncg','Kernel',figPath);
             %}
-            % ##### estimate nature #####
+            % ################################# estimate nature #################################
             if isfield(option,'blind') && strcmp(option.blind ,'b')
-            % comment out for non-blind deconvolution of kernel, known ground truth, and learning its inverse
-            option.plotFlag = 0;
-            
-            % !!!!!!!! blind !!!!!!!!
-            clear Kpncg    
-            Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
-            clear HN
-            HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
-            % --------- pncg step ---------
-            if k == 1
-                [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
-            else
-                [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
-            end
-            % --------- gaussian step ---------
-%             if k == 1
-%                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
-%             else
-%                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
-%             end
-            %
-            % !!!!!!!! non blind with MEMLIM!!!!!!!!
-% % %             option.plotFlag = 1;
-% % %             clear Kpncg
-% % %             Kpncg = conv2MatOp(im2double(natureK),imagesize,shape);  % convMtx of kernel, pncg
-% % %             [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, 10, start, tolN, eta, option); % pncg
-% % %             % ##### MEMLIM #####
-% % %             MEMLIM = option.MEMLIM;% size(HK.s,2);
-% % %             lambda = option.memoryStrength;
-% % %             [S,Y,Delta,GInv] = purify(HN.s,HN.y,HN.delta,HN.Ginv0,MEMLIM,lambda);
-% % %             clear HN
-% % %             HN = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
-%             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
-            % !!!!!!!! END non blind with MEMLIM!!!!!!!!
-            pncg_dI     =   clip(pncg_dI,inf,0);
-            %%%%%%%%%%%%%
-            fixed       =   natureI;                            % r.t. ground truth
-            moving      =   pncg_dI;
-            subpixel    =   0.1;
-            [pncg_dI, output]   =   efficient_imregister(fixed, moving, subpixel);
-            %%%%%%%%%%%%%
-            pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
-            % -------- ground truth comparison figure --------
-            drawComparisonFig(natureI,pncg_dI,k,'pncg','Nature',figPath);
-            
+                % comment out for non-blind deconvolution of kernel, known ground truth, and learning its inverse
+                option.plotFlag = 0;
+
+                % !!!!!!!! blind !!!!!!!!
+                clear Kpncg    
+                Kpncg = conv2MatOp(im2double(pncg_kernel),imagesize,shape);  % convMtx of kernel, pncg
+                clear HN
+                HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
+                % --------- pncg step ---------
+                if k == 1
+                    [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
+                else
+                    [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
+                end
+                % --------- gaussian step ---------
+    %             if k == 1
+    %                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
+    %             else
+    %                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
+    %             end
+                %
+                % !!!!!!!! non blind with MEMLIM!!!!!!!!
+    % % %             option.plotFlag = 1;
+    % % %             clear Kpncg
+    % % %             Kpncg = conv2MatOp(im2double(natureK),imagesize,shape);  % convMtx of kernel, pncg
+    % % %             [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, 10, start, tolN, eta, option); % pncg
+    % % %             % ##### MEMLIM #####
+    % % %             MEMLIM = option.MEMLIM;% size(HK.s,2);
+    % % %             lambda = option.memoryStrength;
+    % % %             [S,Y,Delta,GInv] = purify(HN.s,HN.y,HN.delta,HN.Ginv0,MEMLIM,lambda);
+    % % %             clear HN
+    % % %             HN = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
+    %             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
+                % !!!!!!!! END non blind with MEMLIM!!!!!!!!
+                pncg_dI     =   clip(pncg_dI,inf,0);
+                %%%%%%%%%%%%%
+                fixed       =   natureI;                            % r.t. ground truth
+                moving      =   pncg_dI;
+                subpixel    =   0.1;
+                [pncg_dI, output]   =   efficient_imregister(fixed, moving, subpixel);
+                %%%%%%%%%%%%%
+                pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
+                % -------- ground truth comparison figure --------
+                drawComparisonFig(natureI,pncg_dI,k,'pncg','Nature',figPath);
+                % statitics 
+                % all frame errors - ground truth
+                if k == 1
+                    errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(1), errs_pncgN(end)]; % residual, pncg 
+                    rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(1),rerrs_pncgN(end)]; % relative error, pncg
+                else                
+                    errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(end)]; % residual, pncg 
+                    rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(end)]; % relative error, pncg
+                end
+                % -------- ground truth frame error figure --------
+                % for debug
+                drawAllFrameErrorFig(errs_allframes_pncg, rerrs_allframes_pncg, numFrame, k, 'pncg', dre, figPath, 'debug', f_pncg)
+            end            
             % statitics 
-            % all frame errors 
+            % all frame errors - kernel
             errs_allframes_pncgK     = [errs_allframes_pncgK,  errs_pncgK];
             rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, rerrs_pncgK];
-            if k == 1
-                errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(1), errs_pncgN(end)]; % residual, cg 
-                rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(1),rerrs_pncgN(end)]; % relative error, cg
-            else                
-                errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(end)]; % residual, cg 
-                rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(end)]; % relative error, cg
-            end
-
-            % plots    
-            % -------- ground truth frame error figure --------
-            % for debug
-            drawAllFrameErrorFig(errs_allframes_pncg, rerrs_allframes_pncg, numFrame, k, 'pncg', dre, figPath, 'debug', f_pncg)
-            end
         end
             % -------- ground truth frame error figure --------
             % for latex
