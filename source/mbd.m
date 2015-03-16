@@ -146,7 +146,9 @@ switch method
             %
             option.plotFlag     =   1;
 %             startK              =   startK./sum(vec(startK));
-            startK              =   zeros(size(startK));
+%             startK              =   zeros(size(startK));
+keyboard
+            kernel_coarse = fast_kernel_estimate(X, pncg_dI4convmat, frameEdgeTaperred, option);
             [pncg_kernel, HK, errs_pncgK, ~, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ----------- figure all V's of matrix H -----------
