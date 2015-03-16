@@ -179,9 +179,9 @@ switch method
             lambda           =  option.MEMSTR;
             alpha            =  option.EXPOSTR;
             % ################################# %
-%             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
-%             clear HK
-%             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , [], GInv);
+            [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,HK.Ginv0,MEMLIM,lambda);
+            clear HK
+            HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , [], GInv);
             % ################################# %
 % %             if k ~= 2
 % %                 R1 = HK.R;
