@@ -17,38 +17,40 @@ D = diag(u);
 A = Q*D*Q';
 tol = 1e-14;
 iter = option.iter;
-%% precondition
+%% CG & PCG
 H = hessianMatrix(eye(size(A)));
 for i = 1: option.numFrame
 
 x = rand(n,1);
 b = A*x;
-% b = b./ max(u);
-x_start =   zeros(size(b)); %b; %
-
+x_start =   zeros(size(b)); 
+% cg solver
 [x_cg] = cg(A,b,x_start,tol,iter);
-%
-if i == 1
-    option.flag = 0;
-else
-    option.flag = 1;
-end
+% pcg solver
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 % ########### MEMLIM #############
-%{
-MEMLIM = option.MEMLIM ;% size(H.s,2);
-lambda = option.memoryStrength;
-% keyboard
-[S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,H.Ginv0,MEMLIM,lambda);
-% keyboard
+%{%
+MEMLIM = option.MEMLIM;
+lambda = option.MEMSTR;
+alpha  = option.EXPOSTR;
+% ------------------------------ %
+% ### evd
+% [S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,MEMLIM,lambda);
+% clear H
+% H = hessianMatrix(eye(size(A)), S, Y, Delta, [],[], GInv);
+% ------------------------------ %
+% ### low rank evd
+keyboard
+[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D);
 clear H
-H = hessianMatrix(eye(size(A)), S, Y, Delta, [],[], GInv);
+H = hessianMatrix(eye(size(A)), [], [], [], R, D);
 %}
 % ################################
 
 % ########### FIGURE #############
 % Gram matrix
-figure(101), imagesc(log10(abs((H.s'*H.y)))), colormap gray,  axis image off
+figure(101), set(gcf,'visible','off')
+imagesc(log10(abs((H.s'*H.y)))), colormap gray,  axis image off
 colorbar('southoutside')
 figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);
