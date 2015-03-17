@@ -57,19 +57,19 @@ methods
         end
         % the part of current observations
         if ~isempty(obj.s)
-            G = obj.s' * obj.y;
+            G = obj.y' * obj.y;
             %----------------------------%
             % pseudo-inverse
             Ginv = pinv(G);
-            SX = (obj.s' * vec(x));
-            GinvSX = Ginv * SX;
-            SGinv = obj.s * Ginv;
+            YX = (obj.y' * vec(x));
+            GinvYX = Ginv * YX;
+            YGinv = obj.y * Ginv;
             %----------------------------%
             % backslash
-%             SGinv   =  (G \ obj.s')';
-%             GinvSX  =  SGinv' * vec(x);
+%             YGinv   =  (G \ obj.s')';
+%             GinvYX  =  YGinv' * vec(x);
             %----------------------------%
-            tail = tail + obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
+            tail = tail + obj.delta * GinvYX + YGinv * (obj.delta' * vec(x)) - YGinv * (obj.delta' * obj.y) * GinvYX;
         else
             NOP;
         end

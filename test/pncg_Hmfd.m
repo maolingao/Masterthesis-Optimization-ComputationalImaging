@@ -83,7 +83,7 @@ for k = 1:numel(b)
         s = alpha*p;           % s_i <-- x_i+1 - x_i
         y = alpha*q;           % y_i <-- A*s_i
         
-        s_length = norm(s,'fro');
+        s_length = norm(s);
         s = s ./ s_length;
         y = y ./ s_length;
         
@@ -94,8 +94,8 @@ for k = 1:numel(b)
                 delta = s - y;        % delta_i <-- s_i - H_i*y_i
         end
         
-        x = x +  s_length*s;              % x_i+1 <-- x_i - alpha*p_i
-        r = r +  s_length*y;              % r_i+1 <-- r_i - A*alpa*p_i        
+        x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
+        r = r +  alpha*q;              % r_i+1 <-- r_i - A*alpa*p_i       
        
         if abs(s'*y) > 1e-15
             H = plus(H,s,y,delta);        % H_i+1 <-- H_i + (update)

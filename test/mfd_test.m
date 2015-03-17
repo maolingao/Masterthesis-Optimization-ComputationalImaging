@@ -7,29 +7,35 @@ figure(22), set(gcf,'visible','off'),clf
 localsetup;
 figPath = option.figPath;
 %
+rng(1234);
 n = 60;
+Q = RandomRotation(n); 
 % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
 u = rand(n,1);  
-% u = clip((u*10),10,0); 
-% step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
-Q = RandomRotation(n); 
+u = clip((u*10),10,0); 
+step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
+
+% u = rand(n,1) + 1;
 D = diag(u);
 A = Q*D*Q';
+b = randn(n,1);
+H_true = Q* diag(1./u)*Q';
+x = H_true * b;
 tol = 1e-14;
 iter = option.iter;
 %% CG & PCG
 H = hessianMatrix(eye(size(A)));
 for i = 1: option.numFrame
 
-x = rand(n,1);
-b = A*x;
+% x = rand(n,1);
+% b = A*x;
 x_start =   zeros(size(b)); 
 % cg solver
 [x_cg] = cg(A,b,x_start,tol,iter);
 % pcg solver
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 % ########### MEMLIM #############
-%{%
+%{
 MEMLIM = option.MEMLIM;
 lambda = option.MEMSTR;
 alpha  = option.EXPOSTR;
