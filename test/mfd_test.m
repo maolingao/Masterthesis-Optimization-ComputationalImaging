@@ -14,7 +14,7 @@ Q = RandomRotation(n);
 u = rand(n,1);  
 u = clip((u*10),10,0); 
 step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
-
+u = sort(u,'descend');
 % u = rand(n,1) + 1;
 D = diag(u);
 A = Q*D*Q';
@@ -23,8 +23,33 @@ H_true = Q* diag(1./u)*Q';
 x = H_true * b;
 tol = 1e-14;
 iter = option.iter;
-%% CG & PCG
-H = hessianMatrix(eye(size(A)));
+% Identity + H_true
+% option.H0fun = @(x) eye(length(x))*x;
+% option.Wfun = @(x) H_true*x;
+
+% Identity + Identity
+% option.H0fun = @(x) eye(length(x))*x;
+% option.Wfun = @(x) eye(length(x))*x;
+
+% rank 50 approximation of H_true + Identity
+step = 20;
+H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
+option.H0fun = @(x) H_approx*x;
+option.Wfun = @(x) eye(length(x))*x;
+
+% rank 50 approximation of H_true + H_ture
+% step = 5;
+% H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
+% option.H0fun = @(x) H_approx*x;
+% option.Wfun = @(x) H_true*x;
+
+% rank 50 approximation of H_true * 2
+% step = 5;
+% H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
+% option.H0fun = @(x) H_approx*x;
+% option.Wfun = @(x) H_approx*x;
+%% CG & PCGoption.H0fun
+H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
 for i = 1: option.numFrame
 
 % x = rand(n,1);
@@ -47,9 +72,11 @@ alpha  = option.EXPOSTR;
 % ------------------------------ %
 % ### low rank evd
 keyboard
-[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D);
+option.data.R = H.R;
+option.data.D = H.D;
+[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D,option);
 clear H
-H = hessianMatrix(eye(size(A)), [], [], [], R, D);
+H = hessianMatrix(eye(size(A)), [], [], [], R, D,option.Wfun);
 %}
 % ################################
 
