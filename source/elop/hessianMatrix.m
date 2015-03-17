@@ -7,12 +7,12 @@ properties
         y           % corrected step residual
         delta       % difference btw corrected step error and back-calculated corrected step residual
         i           % iteration index
-        Ginv0       % inverse of last Gramm matrix
+        Wfun        % W prior covariance function
         R           % dominant eigenvectors
         D           % dominant eigenvalues
 end
 methods
-    function obj = hessianMatrix(H,s,y,delta,R,D,Ginv0)
+    function obj = hessianMatrix(H,s,y,delta,R,D,Wfun)
         if nargin > 0
             obj.H = H;
             if exist('s','var') && ~isempty(s)
@@ -33,8 +33,8 @@ methods
             if exist('D','var') && ~isempty(D)
                 obj.D = D;
             end
-            if exist('Ginv0','var') && ~isempty(Ginv0)
-                obj.Ginv0 = Ginv0;
+            if exist('Wfun','var') && ~isempty(Wfun)
+                obj.Wfun = Wfun;
             end
         end
     end
@@ -57,19 +57,35 @@ methods
         end
         % the part of current observations
         if ~isempty(obj.s)
-            G = obj.s' * obj.y;
+            % compute W*y via handle
+            if isa(obj.Wfun,'function_handle')
+                z = obj.Wfun(obj.y);
+            elseif isa(obj.Wfun,'char') && strcmp(obj.Wfun,'BFGS')
+            % implicit W=H function:
+                z = obj.s;
+            elseif isa(obj.Wfun,'char') && strcmp(obj.Wfun,'GS')
+            % explicitly W=H0 function:
+                if ~isempty(obj.R) && ~isempty(obj.D)
+                    z = obj.R * obj.D * (obj.R' * obj.y);
+                else
+                    z = obj.y;
+                end
+            else
+                error('malformed covariance function')
+            end
+            G = z' * obj.y;
             %----------------------------%
             % pseudo-inverse
             Ginv = pinv(G);
-            SX = (obj.s' * vec(x));
-            GinvSX = Ginv * SX;
-            SGinv = obj.s * Ginv;
+            ZX = (z' * vec(x));
+            GinvZX = Ginv * ZX;
+            ZGinv = z * Ginv;
             %----------------------------%
             % backslash
-%             SGinv   =  (G \ obj.s')';
-%             GinvSX  =  SGinv' * vec(x);
+%             ZGinv   =  (G \ z')';
+%             GinvZX  =  ZGinv' * vec(x);
             %----------------------------%
-            tail = tail + obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
+            tail = tail + obj.delta * GinvZX + ZGinv * (obj.delta' * vec(x)) - (ZGinv * (obj.delta' * obj.y)) * GinvZX;
         else
             NOP;
         end

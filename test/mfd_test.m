@@ -18,7 +18,7 @@ A = Q*D*Q';
 tol = 1e-14;
 iter = option.iter;
 %% CG & PCG
-H = hessianMatrix(eye(size(A)));
+H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun);
 for i = 1: option.numFrame
 
 x = rand(n,1);
@@ -41,9 +41,11 @@ alpha  = option.EXPOSTR;
 % ------------------------------ %
 % ### low rank evd
 keyboard
-[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D);
+option.data.R = H.R;
+option.data.D = H.D;
+[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D,option);
 clear H
-H = hessianMatrix(eye(size(A)), [], [], [], R, D);
+H = hessianMatrix(eye(size(A)), [], [], [], R, D,option.Wfun);
 %}
 % ################################
 
