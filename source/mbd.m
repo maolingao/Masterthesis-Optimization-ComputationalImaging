@@ -51,6 +51,7 @@ HK     =  hessianMatrix(eye(fsize)*scaler);
 start  =  clip(start,inf,0);
 start(start<1e-7) = 0;
 cutLine = nan;
+timeK = 0;
 % start  =  start./max(vec(start)) * 1e-3;
 %%%%%%%%%%%%%
 fixed    =  natureI;                            % r.t. ground truth
@@ -147,7 +148,7 @@ switch method
             option.plotFlag     =   1;
 %             startK              =   startK./sum(vec(startK));
 %             startK              =   zeros(size(startK));.
-            [pncg_kernel, HK, errs_pncgK, ~, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
+            [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ----------- figure all V's of matrix H -----------
 % % %             H_mtx        =  buildH(HK);
@@ -269,6 +270,7 @@ switch method
             end            
             % statitics 
             % all frame errors - kernel
+            timeK                    = timeLabel(timeK, clkK);
             errs_allframes_pncgK     = [errs_allframes_pncgK,  errs_pncgK];
             rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, rerrs_pncgK];
         end
@@ -279,8 +281,7 @@ switch method
             % -------- kernel frame error figure --------
             % for latex
             % residual error & relative error
-            drawAllFrameErrorFig(errs_allframes_pncgK, rerrs_allframes_pncgK, numFrame, numFrame, 'pncg', dre, figPath, 'latex', f_pncg, 1);
-            
+            drawAllFrameErrorFigKernel(errs_allframes_pncgK, rerrs_allframes_pncgK, timeK, numFrame, numFrame, 'pncg', dre, figPath,  'latex')
             if exist('pncg_dI','var')
                 I = pncg_dI;
             else

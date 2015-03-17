@@ -1,4 +1,4 @@
-function [pncg_dI, H, errs, tDeconv, rerrs] = deconv_pncg(F, im, nature, H, iter, start, tol, eta, option)
+function [pncg_dI, H, errs, time, rerrs] = deconv_pncg(F, im, nature, H, iter, start, tol, eta, option)
 % probabilistic solver, conjugate gradient
 % written for mfd_test script, to verify idea of multi-frame deconv(update of H with class hessianMatrix)
 
@@ -79,7 +79,7 @@ rerrs        =  nan(1,iter);
 x            =  vec(x);
 r            =  vec(r);
 p            =  vec(p);
-time         =  1e-2;
+time         =  1e-10;
 residual     =  r;
 errRelChange =  nan;
 
@@ -205,7 +205,7 @@ for k = 1 : (iter + 1)  %numel(im)
         end
         % ###################
         tElapsed = toc(tStart);
-        time     = [time; time(end)+tElapsed];
+        time     = [time, time(end)+tElapsed];
     % -----------------------------------------------
     % display orthogonality and conjugacy 
     % orthogonal      
