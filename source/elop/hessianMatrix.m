@@ -45,10 +45,10 @@ methods
         obj.delta(:,obj.i) = vec(delta);
         obj.i = obj.i + 1;
     end
+    
     function outp = mtimes(obj,x)
     % multiplication with matrix and vector
         epsl = 1e-30;
-        % debug, using full H, pseudo-invers
         % the part of previous observations, storage limited
         if ~isempty(obj.R) && ~isempty(obj.D)
             tail = obj.R * (obj.D * (obj.R' * vec(x)));
@@ -58,31 +58,30 @@ methods
         % the part of current observations
         if ~isempty(obj.s)
             G = obj.s' * obj.y;
-    %                     Ginv = pinv(G);
             %----------------------------%
-    %                     keyboard
-    %                     SX = (obj.s' * vec(x));
-    %                     GinvSX = Ginv * SX;
-    %                     SGinv = obj.s * Ginv;
-    %                     tail = obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
-            SGinv   =  (G \ obj.s')';
-            GinvSX  =  SGinv' * vec(x);
+            % pseudo-inverse
+            Ginv = pinv(G);
+            SX = (obj.s' * vec(x));
+            GinvSX = Ginv * SX;
+            SGinv = obj.s * Ginv;
+            %----------------------------%
+            % backslash
+%             SGinv   =  (G \ obj.s')';
+%             GinvSX  =  SGinv' * vec(x);
+            %----------------------------%
             tail = tail + obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
-            %----------------------------%
-    %                     obj.Ginv0 = Ginv;
         else
-            tail = tail + 0;
+            NOP;
         end
         % *** update form: H = H0 + tail ***
-        outp = vec(x) + tail; % output = vec(I*x) + tail
-        % ########################
+        outp = vec(x) + tail;   % output = vec(I*x) + tail
     end
+    
     function outp = times(obj,x)
     % multiplication with matrix and vector(last term of H)
         epsl = 1e-30;
         tail = 0; % (update)
         % only use the last term of s, y and Delta to update H
-        % aim : speed up
         den = (obj.s(:,end)'*obj.y(:,end) );
         tail = tail + (den + epsl )\(obj.delta(:,end)*(obj.s(:,end)'*vec(x)) ) + ...
         (den + epsl )\(obj.s(:,end)*(obj.delta(:,end)'*vec(x)) ) - ...

@@ -10,10 +10,13 @@ for k = 1 : H.i - 1
         elseif size(H.s,2) < 2 
             Ginv = 1/((H.s)'*H.s + epsll);
         else
-%             Ginv = invGram(obj.Ginv0,obj.s,obj.y);
-%             Ginv = ((H.s)'*H.y) \ eye(size(H.s,2));
-                    G = H.s' * H.y;
-                    Ginv = pinv(G);
+            G = H.s' * H.y;
+            %----------------------------%
+            % pseudo-inverse
+            Ginv = pinv(G);
+            %----------------------------%
+            % backslash
+%             Ginv = G \ eye(size(H.s,2));
         end
         SGinv = H.s * Ginv;
         SGinvDelta = SGinv * (H.delta)';
@@ -25,20 +28,6 @@ for k = 1 : H.i - 1
     end
 end
 
-% ########################
-% check, update fasion of H
-%{
-% *** update form: H = H0 + l*r' + tail ***
-if ~isempty(H.l)
-%     keyboard
-    lrt = H.l * H.r';
-    H_mtx = H.H + lrt + tail;        % output = I + l*r' + tail
-else
-    % H_mtx = tail + kron(H.H,H.H);
-    H_mtx =  H.H + tail;            % output = I + tail
-end
-%}
 % *** update form: H = H0 + tail ***
 H_mtx = tailM + H.H;
-% ########################
 

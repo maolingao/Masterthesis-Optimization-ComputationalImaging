@@ -15,7 +15,6 @@ u = rand(n,1);
 Q = RandomRotation(n); 
 D = diag(u);
 A = Q*D*Q';
-A_ori= A;
 tol = 1e-14;
 iter = option.iter;
 %% precondition
@@ -23,7 +22,7 @@ H = hessianMatrix(eye(size(A)));
 for i = 1: option.numFrame
 
 x = rand(n,1);
-b = A_ori*x;
+b = A*x;
 % b = b./ max(u);
 x_start =   zeros(size(b)); %b; %
 
@@ -34,8 +33,7 @@ if i == 1
 else
     option.flag = 1;
 end
-option.frame = i;
-[x_pncg,H,~,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
+[x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 % ########### MEMLIM #############
 %{
 MEMLIM = option.MEMLIM ;% size(H.s,2);
@@ -48,6 +46,7 @@ H = hessianMatrix(eye(size(A)), S, Y, Delta, [],[], GInv);
 %}
 % ################################
 
+% ########### FIGURE #############
 % Gram matrix
 figure(101), imagesc(log10(abs((H.s'*H.y)))), colormap gray,  axis image off
 colorbar('southoutside')
@@ -55,20 +54,14 @@ figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);
 print('-depsc2', figname);
 
-% #########
-% A*H_mtx -> asymptotic identity matrix
-buildH;
-figure(1), imagesc(log10(abs(A*H_mtx))), colormap gray, axis image off 
-colorbar('southoutside')
-figname = strcat('HA_toy_',option.version,'_', num2str(i), 'frames.eps');
-figname = fullfile(figPath,figname);
-print('-depsc2',figname);
 end
 
+% H_mtx -> A^{-1}
 figure(997)
 figname = strcat('H_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);
 print('-depsc2',figname)
+
 % residual
 figure(22),set(gcf,'visible','off'); 
 hLegend = legend('classic','probabilistic');
