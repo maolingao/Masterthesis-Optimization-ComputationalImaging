@@ -8,6 +8,12 @@ localsetup;
 % generate psf
 path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
 videoFrame    = betterImRead(path); 
+% frame amount
+if option.numFrame ~= inf
+    videoFrame = videoFrame(1:option.numFrame);
+else
+    option.numFrame = length(videoFrame);
+end
 % extract color channel
 videoFrameMono = selectColorChannel(videoFrame, 1);
 % scale images
@@ -26,4 +32,7 @@ videoFrameMono   =   videoFrameMono((numFrame4Start+1):end);
 %
 %
 iter =  option.iter;
-I    =  mbd(videoFrameMono, F, start, iter, nature, multiFilt_ds, option);
+nature = videoFrameMono{1};  % for register all frames
+PSFs = cell(option.numFrame - numFrame4Start,1);
+PSFs = cellfun(@(x) eye(option.F.fsize), PSFs, 'UniformOutput', false);
+I    =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);

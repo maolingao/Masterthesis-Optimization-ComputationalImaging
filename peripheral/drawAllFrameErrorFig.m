@@ -22,10 +22,10 @@ switch mode
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         end
         thisFigure;  
-        if ~isempty(residualErrAllFrame)
-            ylim([0, max(residualErrAllFrame)]);
-%             xlim([0, 48]);
-        end
+%         if ~isempty(residualErrAllFrame)
+%             ylim([0, max(residualErrAllFrame)]);
+% %             xlim([0, 48]);
+%         end
         drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
@@ -45,10 +45,10 @@ switch mode
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         end
         thisFigure;   
-        if ~isempty(residualErrAllFrame)
-            ylim([0, 1]);
-%             xlim([0, 48]);
-        end
+%         if ~isempty(residualErrAllFrame)
+%             ylim([0, 1]);
+% %             xlim([0, 48]);
+%         end
         drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);

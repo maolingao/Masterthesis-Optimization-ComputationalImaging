@@ -150,23 +150,23 @@ switch method
             [pncg_kernel, HK, errs_pncgK, ~, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ----------- figure all V's of matrix H -----------
-            H_mtx        =  buildH(HK);
-            [V,U]        =  eig(H_mtx);
-            [U,idx]      =  sort(real(diag(U)),'descend');
-            V            =  V(:,idx);
-            idx          =  U > 1.1;
-            Uleading     =  U(idx);
-            Vleading     =  V(:,idx);
-            imgCellvl    =  cellImg(Vleading,fsize);
-            if ~isempty(imgCellvl)
-                tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
-            end
+% % %             H_mtx        =  buildH(HK);
+% % %             [V,U]        =  eig(H_mtx);
+% % %             [U,idx]      =  sort(real(diag(U)),'descend');
+% % %             V            =  V(:,idx);
+% % %             idx          =  U > 1.1;
+% % %             Uleading     =  U(idx);
+% % %             Vleading     =  V(:,idx);
+% % %             imgCellvl    =  cellImg(Vleading,fsize);
+% % %             if ~isempty(imgCellvl)
+% % %                 tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
+% % %             end
             % ----------- figure all S's Y's-----------
-            [S,Y,Delta] =   discardObs(HK.s, HK.y, HK.delta, cutLine);
-            imgCells    =   cellImg(S,fsize);
-            imgCelly    =   cellImg(Y,fsize);
-            tightSubplot(imgCells, [0,0], 'S', figPath, k)
-            tightSubplot(imgCelly, [0,0], 'Y', figPath, k)
+% % %             [S,Y,Delta] =   discardObs(HK.s, HK.y, HK.delta, cutLine);
+% % %             imgCells    =   cellImg(S,fsize);
+% % %             imgCelly    =   cellImg(Y,fsize);
+% % %             tightSubplot(imgCells, [0,0], 'S', figPath, k)
+% % %             tightSubplot(imgCelly, [0,0], 'Y', figPath, k)
 %             if cutLine  >   option.MEMLIM
 %                 cutLine     =   option.MEMLIM + 1;
 %             else
@@ -253,7 +253,7 @@ switch method
                 %%%%%%%%%%%%%
                 pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
                 % -------- ground truth comparison figure --------
-                drawComparisonFig(natureI,pncg_dI,k,'pncg','Nature',figPath);
+                drawComparisonFig(frame,pncg_dI,k,'pncg','Nature',figPath);
                 % statitics 
                 % all frame errors - ground truth
                 if k == 1
