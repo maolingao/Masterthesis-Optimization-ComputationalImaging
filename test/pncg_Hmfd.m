@@ -105,7 +105,7 @@ for k = 1:numel(b)
         x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
         r = r +  alpha*q;              % r_i+1 <-- r_i - A*alpa*p_i   
        
-        if abs(s'*y) > 1e-15
+        if abs(s'*y) > 1e-15            
             H = plus(H,s,y,delta);        % H_i+1 <-- H_i + (update)
         else
             disp('==> update changes too small!')

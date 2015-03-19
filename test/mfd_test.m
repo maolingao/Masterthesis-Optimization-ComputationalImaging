@@ -10,10 +10,8 @@ figPath = option.figPath;
 rng(1234);
 n = 60;
 Q = RandomRotation(n); 
-% u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
-u = rand(n,1);  
-u = clip((u*10),10,0); 
-step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end)./10;
+u = rand(n,1) + 0.8;
+step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end);
 u = sort(u,'descend');
 % u = rand(n,1) + 1;
 D = diag(u);
@@ -24,27 +22,28 @@ x = H_true * b;
 tol = 1e-14;
 iter = option.iter;
 % Identity + H_true
-% option.H0fun = @(x) eye(length(x))*x;
+% option.H0fun = @(x) eye(size(x,1))*x;
 % option.Wfun = @(x) H_true*x;
 
 % Identity + Identity
-% option.H0fun = @(x) eye(length(x))*x;
-% option.Wfun = @(x) eye(length(x))*x;
+% option.H0fun = @(x) eye(size(x,1))*x;
+% option.Wfun = @(x) eye(size(x,1))*x;
 
-% rank 50 approximation of H_true + Identity
+% rank 20 approximation of H_true + H_ture
 step = 20;
 H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
 option.H0fun = @(x) H_approx*x;
-option.Wfun = @(x) eye(length(x))*x;
+option.Wfun = @(x) H_true*x;
 
-% rank 50 approximation of H_true + H_ture
-% step = 5;
+% rank 20 approximation of H_true + Identity
+% step = 20;
 % H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
 % option.H0fun = @(x) H_approx*x;
-% option.Wfun = @(x) H_true*x;
+% option.Wfun = @(x)  eye(size(x,1))*x;
 
-% rank 50 approximation of H_true * 2
-% step = 5;
+
+% rank 20 approximation of H_true * 2
+% step = 20;
 % H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
 % option.H0fun = @(x) H_approx*x;
 % option.Wfun = @(x) H_approx*x;

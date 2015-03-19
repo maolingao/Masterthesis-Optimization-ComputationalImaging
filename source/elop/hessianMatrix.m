@@ -61,7 +61,6 @@ methods
         end
         % the part of current observations
         if ~isempty(obj.s)
-            
            % compute W*y via handle
             if isa(obj.Wfun,'function_handle')
                 z = obj.Wfun(obj.y);
@@ -78,7 +77,7 @@ methods
             else
                 error('malformed covariance function')
             end
-            G = z' * obj.y;
+            G = obj.y' * z;
             %----------------------------%
             % pseudo-inverse
             Ginv = pinv(G);
@@ -90,7 +89,7 @@ methods
 %             ZGinv   =  (G \ z')';
 %             GinvZX  =  ZGinv' * vec(x);
             %----------------------------%
-            tail = tail + obj.delta * GinvZX + ZGinv * (obj.delta' * vec(x)) - (ZGinv * (obj.delta' * obj.y)) * GinvZX;
+            tail = tail + obj.delta * GinvZX + ZGinv * (obj.delta' * vec(x)) - (ZGinv * (obj.y' * obj.delta)) * GinvZX;
         else
             NOP;
         end
