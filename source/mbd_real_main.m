@@ -7,7 +7,15 @@ localsetup;
 % -------------------- readin video frames -------------------- %
 % generate psf
 path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
-videoFrame    = betterImRead(path); 
+% path = '/is/ei/mgao/Documents/thesis/Astro/real_data/copernicus';
+
+% videoFrame    = betterImRead(path); 
+videoFrame    = mfbd_load_wrap; % copernicus
+% --- setting for real data ---
+option.F.xsize = size(videoFrame{1});
+option.F.fsize = [30,   30];
+option.F.shape = 'same';
+
 % frame amount
 if option.numFrame ~= inf
     videoFrame = videoFrame(1:option.numFrame);
