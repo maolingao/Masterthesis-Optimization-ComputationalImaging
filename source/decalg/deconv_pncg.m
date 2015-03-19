@@ -264,6 +264,7 @@ title('pncg')
 filename = 'deconv_pncg';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
+close gcf
 %----- relative error -----
 % figure(34), set(gcf,'visible','on');
 % plot(rerrs,'Color',color,'LineStyle',linestyle), hold on;

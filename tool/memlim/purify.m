@@ -10,10 +10,7 @@ if nargin < 6
 lambda = 0;
 end
 
-    G       =   s'*y;
-    [U,D]   =   eig(G);
-% keyboard
-%     disp(sprintf('max(vec(G^T - G)) = %d', max(vec(G' - G)))) 
+%     disp(sprintf('max(vec(G^T - G)) = %d', max(vec(G' - G))))
 %     diag(real(D))
 %     real(U)'*real(U)
 % keyboard

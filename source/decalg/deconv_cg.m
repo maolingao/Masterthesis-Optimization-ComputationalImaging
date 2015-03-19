@@ -181,7 +181,7 @@ f3 = figure(3); set(f3,'visible','on')
 filename = 'deconv_cg_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-% keyboard
+
 %----- cg deconved image -----
 f_cg = figure; set(f_cg,'visible','off');
 imagesc(clip(cg_dI,1,0)); axis image off, colormap(gray)

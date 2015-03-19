@@ -150,6 +150,11 @@ switch method
 %             startK              =   zeros(size(startK));.
             [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
+%             figure, subplot(1,2,1),imagesc(pncg_kernel),colormap gray, axis image off
+%             pncg_kernel         =   center(pncg_kernel);
+%             gcf,  subplot(1,2,2),imagesc(pncg_kernel),colormap gray, axis image off
+%             keyboard
+%             close(gcf)
             % ----------- figure all V's of matrix H -----------
 % % %             H_mtx        =  buildH(HK);
 % % %             [V,U]        =  eig(H_mtx);
@@ -220,17 +225,17 @@ switch method
                 clear HN
                 HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
                 % --------- pncg step ---------
-                if k == 1
-                    [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
-                else
-                    [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
-                end
+%                 if k == 1
+%                     [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
+%                 else
+%                     [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
+%                 end
                 % --------- gaussian step ---------
-    %             if k == 1
-    %                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
-    %             else
-    %                 [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
-    %             end
+                if k == 1
+                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
+                else
+                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
+                end
                 %
                 % !!!!!!!! non blind with MEMLIM!!!!!!!!
     % % %             option.plotFlag = 1;
@@ -388,7 +393,7 @@ switch method
 %             cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
             %--------------- END  ---------------%
             % -------- ground truth comparison figure --------
-            drawComparisonFig(natureI,cg_dI,k,'cg','Nature',figPath);
+            drawComparisonFig(frame,cg_dI,k,'cg','Nature',figPath);
 
             % statitics 
             % all frame errors 
