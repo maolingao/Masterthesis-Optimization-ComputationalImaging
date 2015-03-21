@@ -133,21 +133,21 @@ switch method
                         case 'normal'
                             % !!!!!!!! normal image !!!!!!!!
                             X                   =   conv2MatOp(im2double(pncg_dI4convmat),fsize,shape);              % initial guess of convMtx X
-                            startK              =   X'* frame ;                                                    % initial guess of kernel, b
+                            startK              =   X'* frame ;                                                      % initial guess of kernel, b
                             frame4estiKernel    =   frameEdgeTaperred;
                         case 'gradient'
                             % !!!!!!!! gradient image !!!!!!!!
                             X                           =   conv2gradMat(im2double(pncg_dI4convmat),fsize,shape);    % initial guess of gradConvMtx X
                             frameGrad                   =   cell(1,2);
                             [frameGrad{1},frameGrad{2}] =   gradient(frameEdgeTaperred);
-                            startK                      =   X'* frameGrad;                                         % initial guess of kernel, b
+                            startK                      =   X'* frameGrad;                                           % initial guess of kernel, b
                             frame4estiKernel            =   frameGrad;
                     end
             end
             %
             option.plotFlag     =   1;
 %             startK              =   startK./sum(vec(startK));
-%             startK              =   zeros(size(startK));.
+%             startK              =   zeros(size(startK));
             [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
 %             figure, subplot(1,2,1),imagesc(pncg_kernel),colormap gray, axis image off

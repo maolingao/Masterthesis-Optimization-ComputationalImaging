@@ -8,7 +8,8 @@ localsetup;
 % generate psf
 % path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
 % videoFrame    = betterImRead(path); 
-videoFrame    = mfbd_load_wrap; % copernicus
+aux.start     = [1346, 1:100];
+videoFrame    = mfbd_load_wrap(aux); % copernicus
 
 % frame amount
 if option.numFrame ~= inf
@@ -27,9 +28,9 @@ option.F.fsize = [30,   30];
 option.F.shape = 'same';
 option.edgeTaper = 'duplicateImage';
 % taper edge
-videoFrameMono = padIm_wrap(videoFrameMono,option);
+% videoFrameMono = padIm_wrap(videoFrameMono,option);
 % videoFrameMono = cellfun(@(x)imresize(x,2),videoFrameMono, 'UniformOutput', false);
-option.F.xsize = size(videoFrameMono{1});
+% option.F.xsize = size(videoFrameMono{1});
 
 % --------------------   mbd     -------------------- %
 % mbd framework
