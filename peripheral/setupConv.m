@@ -15,7 +15,7 @@ figure(13),  set(gcf,'visible','off'), clf
 %----- nature -----
 fnature = figure; set(fnature,'visible','off')
 imagesc(nature), colormap gray, axis image off, box off
-title('ground truth')
+% title('ground truth')
 filename = 'natureIm';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
@@ -24,7 +24,7 @@ close gcf
 %----- kernel -----
 fkernel = figure; set(fkernel,'visible','off')
 imagesc(kernel), colormap gray, axis image off, box off
-title('kernel')
+% title('kernel')
 filename = 'kernelIm';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
@@ -36,7 +36,7 @@ imagesc(convIm), colormap(gray), axis image off, box off
 if exist('SNR','var')
     title(sprintf('SNR = %ddB',SNR))
 else
-    title(sprintf('blurry image'))
+%     title(sprintf('blurry image'))
 end
 filename = 'noiseIm';
 filename = fullfile(figPath,filename);

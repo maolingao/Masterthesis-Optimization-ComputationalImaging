@@ -79,7 +79,7 @@ rerrs        =  nan(1,iter);
 x            =  vec(x);
 r            =  vec(r);
 p            =  vec(p);
-time         =  1e-10;
+time         =  1e-2;
 residual     =  r;
 errRelChange =  nan;
 
@@ -159,7 +159,7 @@ for k = 1 : (iter + 1)  %numel(im)
         end
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached
-        if k == (iter + 1) || errRelChange >  -1e-3 % inf % 
+        if k == (iter + 1) || errRelChange >   inf % -1e-3 %
 %             keyboard
 %             pncg_dI     =   clip(reshape(x,imageSize),1,0);
             break

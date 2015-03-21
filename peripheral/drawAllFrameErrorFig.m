@@ -45,7 +45,7 @@ switch mode
             hXLabel = xlabel('$\#frames$', 'Interpreter','Latex');
         end
         thisFigure;   
-%         if ~isempty(residualErrAllFrame)
+%         if ~isempty(relativeErrAllFrame)
 %             ylim([0, 1]);
 % %             xlim([0, 48]);
 %         end

@@ -15,6 +15,10 @@ switch mode
         filename = 'mbd_f_residualErrorAllFrame_';
         hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
         thisFigure;  
+%         if ~isempty(residualErrAllFrame)
+%             ylim([0, max(residualErrAllFrame)]);
+% %             xlim([0, 48]);
+%         end
         drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
@@ -28,6 +32,10 @@ switch mode
         filename = 'mbd_f_relativeErrorAllFrame_';
         hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
         thisFigure;
+%         if ~isempty(relativeErrAllFrame)
+%             ylim([0, 1]);
+% %             xlim([0, 48]);
+%         end
         drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
@@ -44,6 +52,10 @@ switch mode
         filename = 'mbd_f_residualErrorAllFrame_clk_';
         hXLabel = xlabel('$time(sec)$', 'Interpreter','Latex');
         thisFigure;  
+%         if ~isempty(residualErrAllFrame)
+%             ylim([0, max(residualErrAllFrame)]);
+% %             xlim([0, 48]);
+%         end
         drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);
@@ -57,6 +69,10 @@ switch mode
         filename = 'mbd_f_relativeErrorAllFrame_clk_';
         hXLabel = xlabel('$time(sec)$', 'Interpreter','Latex');
         thisFigure;
+%         if ~isempty(relativeErrAllFrame)
+%             ylim([0, 1]);
+% %             xlim([0, 48]);
+%         end
         drawnow
         filename = sprintf(strcat(filename,optimizerName));
         filename = fullfile(figPath,filename);

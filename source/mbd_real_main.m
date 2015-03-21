@@ -27,9 +27,8 @@ option.F.fsize = [30,   30];
 option.F.shape = 'same';
 option.edgeTaper = 'duplicateImage';
 % taper edge
-keyboard
-% videoFrameMono = padIm_wrap(videoFrameMono,option);
-videoFrameMono = cellfun(@(x)imresize(x,2),videoFrameMono, 'UniformOutput', false);
+videoFrameMono = padIm_wrap(videoFrameMono,option);
+% videoFrameMono = cellfun(@(x)imresize(x,2),videoFrameMono, 'UniformOutput', false);
 option.F.xsize = size(videoFrameMono{1});
 
 % --------------------   mbd     -------------------- %
