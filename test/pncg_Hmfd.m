@@ -103,7 +103,8 @@ for k = 1:numel(b)
                 delta = s - y;
         end
         
-        x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
+%         x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
+        x = H * b;
         r = r +  alpha*q;              % r_i+1 <-- r_i - A*alpa*p_i   
        
         if abs(s'*y) > 1e-15            
@@ -116,7 +117,9 @@ for k = 1:numel(b)
         p_1 = p;
         switch option.version
             case 'FH'
-                p = H*r;               % p = H_i+1 * r_i+1
+%                 p = H*r;               % p = H_i+1 * r_i+1
+                g = pinv(H.s'*H.y);
+                p = r - H.s * g * (H.y' * r);
             case 'CG'
                 p = r + H.*r;
         end
