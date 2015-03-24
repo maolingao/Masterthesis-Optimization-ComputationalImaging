@@ -10,7 +10,7 @@ figPath = option.figPath;
 rng(1234);
 n = 60;
 Q = RandomRotation(n); 
-u = rand(n,1) + 0.8;
+u = rand(n,1) + 1;
 step = 10; u(1:step) = 10*u(1:step); u(step+1:end) = u(step+1:end);
 u = sort(u,'descend');
 % u = rand(n,1) + 1;
@@ -22,18 +22,18 @@ x = H_true * b;
 tol = 1e-14;
 iter = option.iter;
 % Identity + H_true
-% option.H0fun = @(x) eye(size(x,1))*x;
-% option.Wfun = @(x) H_true*x;
+option.H0fun = @(x) eye(size(x,1))*x;
+option.Wfun = @(x) H_true*x;
 
 % Identity + Identity
 % option.H0fun = @(x) eye(size(x,1))*x;
 % option.Wfun = @(x) eye(size(x,1))*x;
 
 % rank 20 approximation of H_true + H_ture
-step = 20;
-H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
-option.H0fun = @(x) H_approx*x;
-option.Wfun = @(x) H_true*x;
+% step = 20;
+% H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
+% option.H0fun = @(x) H_approx*x;
+% option.Wfun = @(x) H_true*x;
 
 % rank 20 approximation of H_true + Identity
 % step = 20;
@@ -43,10 +43,10 @@ option.Wfun = @(x) H_true*x;
 
 
 % rank 20 approximation of H_true * 2
-% step = 20;
-% H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
-% option.H0fun = @(x) H_approx*x;
-% option.Wfun = @(x) H_approx*x;
+step = 20;
+H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
+option.H0fun = @(x) H_approx*x;
+option.Wfun = @(x) H_approx*x;
 %% CG & PCGoption.H0fun
 H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
 for i = 1: option.numFrame
@@ -82,7 +82,7 @@ H = hessianMatrix(eye(size(A)), [], [], [], R, D,option.Wfun);
 % ########### FIGURE #############
 % Gram matrix
 figure(101), set(gcf,'visible','off')
-imagesc(log10(abs((H.s'*H.y)))), colormap gray,  axis image off
+imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image off
 colorbar('southoutside')
 figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 figname = fullfile(figPath,figname);

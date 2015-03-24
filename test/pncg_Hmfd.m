@@ -77,6 +77,7 @@ for k = 1:numel(b)
         break
     else
 % ########### MAIN PART #############
+        p = p ./ norm(p);
         q = A*p;
         alpha = - (p'*q + epsl)\(p'*r);
         
