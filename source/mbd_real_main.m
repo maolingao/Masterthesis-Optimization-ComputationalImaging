@@ -7,8 +7,9 @@ localsetup;
 % -------------------- readin video frames -------------------- %
 % generate psf
 % path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
-% videoFrame    = betterImRead(path); 
-aux.start     = [1346, 1:100];
+% videoFrame    = betterImRead(path);  % epsilon-lyrae
+aux.start     = [1346, 1:option.numFrame];
+aux.shift     = [0, 0];
 videoFrame    = mfbd_load_wrap(aux); % copernicus
 
 % frame amount
