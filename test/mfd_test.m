@@ -43,10 +43,10 @@ option.Wfun = @(x) H_true*x;
 
 
 % rank 20 approximation of H_true * 2
-step = 20;
-H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
-option.H0fun = @(x) H_approx*x;
-option.Wfun = @(x) H_approx*x;
+% step = 20;
+% H_approx = Q(:,step:end)* diag(1./u(step:end))*Q(:,step:end)';
+% option.H0fun = @(x) H_approx*x;
+% option.Wfun = @(x) H_approx*x;
 %% CG & PCGoption.H0fun
 H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
 for i = 1: option.numFrame
