@@ -22,12 +22,12 @@ x = H_true * b;
 tol = 1e-14;
 iter = option.iter;
 % Identity + H_true
-option.H0fun = @(x) eye(size(x,1))*x;
-option.Wfun = @(x) H_true*x;
+% option.H0fun = @(x) eye(size(x,1))*x;
+% option.Wfun = @(x) H_true*x;
 
 % Identity + Identity
-% option.H0fun = @(x) eye(size(x,1))*x;
-% option.Wfun = @(x) eye(size(x,1))*x;
+option.H0fun = @(x) eye(size(x,1))*x;
+option.Wfun = @(x) eye(size(x,1))*x;
 
 % rank 20 approximation of H_true + H_ture
 % step = 20;
@@ -58,6 +58,8 @@ x_start =   zeros(size(b));
 [x_cg] = cg(A,b,x_start,tol,iter);
 % pcg solver
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
+keyboard
+option.H0fun = @(x)H*x;
 % ########### MEMLIM #############
 %{
 MEMLIM = option.MEMLIM;
