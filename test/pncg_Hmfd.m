@@ -45,6 +45,12 @@ switch option.version
         r = A*(x) - b;
         p = M*r;
         color = dre;
+%                 if isempty(H.s)
+%                     p = -r;
+%                 else
+%                 g = pinv(H.s'*H.y);
+%                 p = r - H.s * g * (H.y' * r);
+%                 end
         
     case 'CG'
         M = eye(size(A));
@@ -103,12 +109,16 @@ for k = 1:numel(b)
                 delta = s - y;
         end
         
-%         x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
-        x = H * b;
-        r = r +  alpha*q;              % r_i+1 <-- r_i - A*alpa*p_i   
+        x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
+        r = r +  alpha*q;              % r_i+1 <-- r_i - A*alpa*p_i 
+%         x = H * b;  
+%         r = A * x - b;
        
         if abs(s'*y) > 1e-15            
             H = plus(H,s,y,delta);        % H_i+1 <-- H_i + (update)
+            figure(1)    , clf
+imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image 
+%             keyboard
         else
             disp('==> update changes too small!')
             break
