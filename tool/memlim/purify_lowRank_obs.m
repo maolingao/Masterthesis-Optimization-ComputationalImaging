@@ -5,7 +5,7 @@ function [R,D] = purify_lowRank_obs(s,y,delta,MEMLIM,option)
 
 % compute W*y via handle
 if isa(option.Wfun,'function_handle')
-    z = option.Wfun(obj.y);
+    z = option.Wfun(y);
 elseif isa(option.Wfun,'char') && strcmp(option.Wfun,'BFGS')
 % implicit W=H function:
     z =  s;

@@ -43,14 +43,17 @@ switch option.version
         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D,H.Wfun,H.H0fun);
         x = x_start;
         r = A*(x) - b;
-        p = M*r;
+%         p = M*r;
         color = dre;
-%                 if isempty(H.s)
-%                     p = -r;
-%                 else
+%         keyboard
+                if isempty(H.s) && isempty(H.R)
+                    p = -r;
+                else
 %                 g = pinv(H.s'*H.y);
 %                 p = r - H.s * g * (H.y' * r);
-%                 end
+%                     p = M.s;
+                    p = H.Wfun(M.R);
+                end
         
     case 'CG'
         M = eye(size(A));
@@ -83,12 +86,13 @@ for k = 1:numel(b)
         break
     else
 % ########### MAIN PART #############
-        p = p ./ norm(p);
+%         p = p ./ norm(p);
+        p = bsxfun(@rdivide,p,sqrt(sum(p.^2)));     % normalize every direction, columnwise
         q = A*p;
         alpha = - (p'*q + epsl)\(p'*r);
         
-        s = alpha*p;           % s_i <-- x_i+1 - x_i
-        y = alpha*q;           % y_i <-- A*s_i
+        s = p*alpha;           % s_i <-- x_i+1 - x_i
+        y = q*alpha;           % y_i <-- A*s_i
         
         s_length = norm(s);
         s = s ./ s_length;
@@ -96,11 +100,11 @@ for k = 1:numel(b)
         
         switch option.version
             case 'FH'            % delta_i <-- s_i - H_i*y_i 
-                if isa(option.H0fun, 'function_handle')
-                    delta = s - option.H0fun(y);     
-                elseif strcmp(option.H0fun,'BFGS')
+                if isa(H.H0fun, 'function_handle')
+                    delta = s - H.H0fun(y);     
+                elseif strcmp(H.H0fun,'BFGS')
                     delta = s - y;
-                elseif strcmp(option.H0fun,'GS')
+                elseif strcmp(H.H0fun,'GS')
                     delta = s - M*y;
                 else
                     error('malformed covariance function')
@@ -109,8 +113,8 @@ for k = 1:numel(b)
                 delta = s - y;
         end
         
-        x = x +  alpha*p;              % x_i+1 <-- x_i - alpha*p_i
-        r = r +  alpha*q;              % r_i+1 <-- r_i - A*alpa*p_i 
+        x = x +  p*alpha;              % x_i+1 <-- x_i - alpha*p_i
+        r = r +  q*alpha;              % r_i+1 <-- r_i - A*alpa*p_i 
 %         x = H * b;  
 %         r = A * x - b;
        
