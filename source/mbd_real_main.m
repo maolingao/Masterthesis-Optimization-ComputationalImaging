@@ -46,7 +46,7 @@ videoFrameMono   =   videoFrameMono((numFrame4Start+1):end);
 %
 %
 iter =  option.iter;
-nature = videoFrameMono{1};  % for register all frames
+nature = start;  % for register all frames
 PSFs = cell(option.numFrame - numFrame4Start,1);
 PSFs = cellfun(@(x) eye(option.F.fsize), PSFs, 'UniformOutput', false);
 I    =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);

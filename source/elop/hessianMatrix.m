@@ -8,13 +8,12 @@ classdef hessianMatrix < handle
         y           % corrected step residual
         delta       % difference btw corrected step error and back-calculated corrected step residual
         i           % iteration index
-        Ginv0       % inverse of last Gramm matrix
         R           % dominant eigenvectors
         D           % dominant eigenvalues
     end
     
     methods
-        function obj = hessianMatrix(H,s,y,delta,R,D,Ginv0)
+        function obj = hessianMatrix(H,s,y,delta,R,D)
             if nargin > 0
                 obj.H = H;
                 if exist('s','var') && ~isempty(s)
@@ -34,9 +33,6 @@ classdef hessianMatrix < handle
                 end
                 if exist('D','var')  && ~isempty(D)
                     obj.D = D;
-                end
-                if exist('Ginv0','var') && ~isempty(Ginv0)
-                    obj.Ginv0 = Ginv0;
                 end
              end
             
@@ -75,7 +71,6 @@ classdef hessianMatrix < handle
 %                     GinvSX = SGinv' * vec(x);
                     tail = tail + obj.delta * GinvSX + SGinv * (obj.delta' * vec(x)) - SGinv * (obj.delta' * obj.y) * GinvSX;
                     %----------------------------%
-                    obj.Ginv0 = Ginv;
                 else
                     tail = tail + 0;
                 end

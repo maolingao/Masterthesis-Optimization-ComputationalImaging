@@ -1,19 +1,18 @@
-function [S,Y,Delta,GInv] = purify(s,y,delta,Ginv,MEMLIM,lambda)
+function [S,Y,Delta,GInv] = purify(s,y,delta,MEMLIM,lambda)
 % eliminate the component in new tuple [s,y,delta] which are
 % already contained in previous spanned Krylov subspace.
 %
 %
-if nargin < 5
+if nargin < 4
 MEMLIM = 10;
 end
-if nargin < 6
+if nargin < 5
 lambda = 0;
 end
 
 %     disp(sprintf('max(vec(G^T - G)) = %d', max(vec(G' - G))))
 %     diag(real(D))
 %     real(U)'*real(U)
-% keyboard
 if MEMLIM > size(s,2) % MEMLIM > observations --> guarentee s and y are conjugate by eig-decomp
     G       =   s'*y;
     [U,D]   =   eig(G);

@@ -53,14 +53,18 @@ L = conv2MatOp(l,imageSize,'same');
 %{%
 switch option.version
     case 'FH'
-%         keyboard
-%         M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.Ginv0); % preconditioner
-        M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D,H.Ginv0); % preconditioner
+%         M       =   hessianMatrix(H.H,H.s,H.y,H.delta); % preconditioner
+        M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D); % preconditioner
         x       =   start;
         r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
         r       =   r0;
-        p       =   M*r0;
-%         p = -r0;
+%         p       =   M*r0;
+        assert(isprop(H,'s') && isprop(H,'R'));
+        if isempty(H.s) && isempty(H.R)
+            p = -vec(r);
+        else
+            p = M.s;                % correct error in searched space
+        end
         color   =   dre;
     case 'CG'
         M   = hessianMatrix(H.H); % preconditioner
@@ -78,13 +82,11 @@ errs         =  nan(1,iter);
 rerrs        =  nan(1,iter);
 x            =  vec(x);
 r            =  vec(r);
-p            =  vec(p);
 time         =  1e-2;
 residual     =  r;
 errRelChange =  nan;
 
 %##### iteration #####
-% keyboard
 for k = 1 : (iter + 1)  %numel(im)
     pncg_dI         =   reshape(x,imageSize);  
     % -----------------------------------------------
@@ -115,8 +117,6 @@ for k = 1 : (iter + 1)  %numel(im)
     % absolute error
     errorabso       =   pncg_dI_reg - nature;
     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
-%         keyboard
-%         figure(5), imagesc(im_residual), colormap gray, axis image
         errorabso   =   Pim'*errorabso;        % current solving x, crop    
         natureCrop  =   Pim'*nature;
     else
@@ -153,27 +153,29 @@ for k = 1 : (iter + 1)  %numel(im)
     % -----------------------------------------------
     % stop creterien 2 : error decreasing tiny or even increasing
         if k > 3
-%             keyboard
             errRelChange    =   errs(2:k) - errs(1:k-1);
             errRelChange    =   sum(errRelChange(k-3:k-1)) / sum(errs(k-3:k)) * 4/3 ;
         end
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached
         if k == (iter + 1) || errRelChange >   inf % -1e-3 %
-%             keyboard
-%             pncg_dI     =   clip(reshape(x,imageSize),1,0);
             break
         end
     % -----------------------------------------------
     % main calculation
+        p = bsxfun(@rdivide,p,sqrt(sum(p.^2)));     % normalize every direction, columnwise, this helps stabilize
         tStart = tic;
         % ###################
-        q           =   vec((F'*(F*(reshape(p,imageSize)))  + eta*(L*reshape(p,imageSize)) + a*reshape(p,imageSize))); % A*p register
-        alpha       =   - (p'*q + epsl)\(p'*r);
+        q           =   nan(size(p));
+        for i = 1 : size(p,2)
+            q(:,i)  =   vec((F'*(F*(reshape(p(:,i),imageSize)))  + eta*(L*reshape(p(:,i),imageSize)) + a*reshape(p(:,i),imageSize))); % A*p register
+        end
+%         alpha       =   - (p'*q + epsl)\(p'*r);
+        alpha       =   - pinv(p'*q) * (p'*r);
         
-        s           =   alpha*p;                % s_i <-- x_i+1 - x_i
-        y           =   alpha*q;                % y_i <-- A*s_i
-        s_length    =   norm(s,'fro');
+        s           =   p*alpha;                % s_i <-- x_i+1 - x_i
+        y           =   q*alpha;                % y_i <-- A*s_i
+        s_length    =   norm(s);
         s           =   s ./ s_length;          % for numerical stability, up scale s and y
         y           =   y ./ s_length;
         
@@ -186,18 +188,17 @@ for k = 1 : (iter + 1)  %numel(im)
                 error('check option.version in deconv_pncg.m')
         end
              
-        % x = x + s; % x_i+1 <-- x_i - alpha*p_i
-        % r = r + y; % r_i+1 <-- r_i - A*alpa*p_i
-        x           =   x + s_length*s; % x_i+1 <-- x_i - alpha*p_i
-        r           =   r + s_length*y; % r_i+1 <-- r_i - A*alpa*p_i    
+        x           =   x + p*alpha; % x_i+1 <-- x_i - alpha*p_i  =  x + s;
+        r           =   r + q*alpha; % r_i+1 <-- r_i - A*alpa*p_i  =  r + y;
        
         H           =   plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
         
         p_1         =   p;
         switch option.version
             case 'FH'
-%                 keyboard
-                p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
+%                 p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
+                g   =   pinv(H.s'*H.y);
+                p   =   r - H.s * g * (H.y' * r); % this ensure conjugacy
             case 'CG'
                 p   =   r + H.*r;
             otherwise

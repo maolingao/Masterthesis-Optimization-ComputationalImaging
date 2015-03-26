@@ -79,13 +79,11 @@ for i = 1 : (iter + 1)
     hData = loglog(errs, 'Color', blu);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
-    thisFigure;   
-%     keyboard
+    thisFigure; 
     drawnow 
         
     % stop creterien ########
     if i > 3
-%             keyboard
         errRelChange = errs(2:i) - errs(1:i-1);
         errRelChange = sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
     end
