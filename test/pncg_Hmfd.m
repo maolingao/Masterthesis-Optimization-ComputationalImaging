@@ -44,17 +44,12 @@ switch option.version
         x = x_start;
         r = A*(x) - b;
 %         p = M*r;
-        color = dre;
-%         keyboard
-                if isempty(H.s) && isempty(H.R)
-                    p = -r;
-                else
-%                 g = pinv(H.s'*H.y);
-%                 p = r - H.s * g * (H.y' * r);
-%                     p = M.s;
-                    p = H.Wfun(M.R);
-                end
-        
+        if isempty(H.s) && isempty(H.R) && ~isfield(option,'Rb')
+            p = -r;
+        else
+            p = M.s;
+        end
+        color = dre;        
     case 'CG'
         M = eye(size(A));
         x = x_start;
@@ -114,15 +109,10 @@ for k = 1:numel(b)
         end
         
         x = x +  p*alpha;              % x_i+1 <-- x_i - alpha*p_i
-        r = r +  q*alpha;              % r_i+1 <-- r_i - A*alpa*p_i 
-%         x = H * b;  
-%         r = A * x - b;
+        r = r +  q*alpha;              % r_i+1 <-- r_i - A*alpa*p_i
        
         if abs(s'*y) > 1e-15            
             H = plus(H,s,y,delta);        % H_i+1 <-- H_i + (update)
-            figure(1)    , clf
-imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image 
-%             keyboard
         else
             disp('==> update changes too small!')
             break
@@ -131,9 +121,8 @@ imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image
         p_1 = p;
         switch option.version
             case 'FH'
-%                 p = H*r;               % p = H_i+1 * r_i+1
-                g = pinv(H.s'*H.y);
-                p = r - H.s * g * (H.y' * r);
+                g = pinv(H.s'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
+                p = r - H.s * g * (H.y' * r);       % this ensure conjugacy
             case 'CG'
                 p = r + H.*r;
         end
