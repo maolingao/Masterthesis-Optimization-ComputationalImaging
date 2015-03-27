@@ -38,6 +38,11 @@ if ~isfield(option,'LineStyle')
 else
     linestyle = option.LineStyle;
 end
+if ~isfield(option,'LineWidth')
+    linestyle = 2;
+else
+    linewidth = option.LineWidth;
+end
 
 b           =   F'*im;
 imageSize   =   size(b);
@@ -65,7 +70,9 @@ switch option.version
         else
             p = M.s;                % correct error in searched space
         end
-        color   =   dre;
+        if ~isfield(option,'color')
+            color = dre;
+        end
     case 'CG'
         M   = hessianMatrix(H.H); % preconditioner
         x       =   start;
@@ -139,7 +146,7 @@ for k = 1 : (iter + 1)  %numel(im)
     title(sprintf('my pncg - iteration %d/%d',k,iter + 1))
     drawnow          
     subplot(122)
-    hData = loglog(errs,'Color',color,'LineStyle',linestyle);
+    hData = loglog(errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
@@ -226,28 +233,63 @@ pncg_dI = clip(pncg_dI,1,0);
 %----- main curves -----
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
+% rerrs = rerrs./max(rerrs); % normalize rel. error
 if option.plotFlag == 1
-color = dre;
+    
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
-subplot(121), hData = loglog(time ,errs,'Color',color); thisFigure; hold on
-subplot(122), hData = loglog(time,rerrs,'Color',color); thisFigure; hold on
+subplot(121), hData = loglog(time ,errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); thisFigure; hold on
+subplot(122), hData = loglog(time,rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); thisFigure; hold on
 fstp = figure(15); set(fstp,'visible','on'),
-subplot(121), hData = loglog( errs,'Color',color); thisFigure; hold on
-subplot(122), hData = loglog(rerrs,'Color',color); thisFigure; hold on
+subplot(121), hData = loglog( errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); thisFigure; hold on
+subplot(122), hData = loglog(rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); thisFigure; hold on
 % for latex
+
+    etaVec = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e0];
+    SNRVec = 10:10:60;
+    switch option.mode
+        case 'SNR'
+            trgVec = SNRVec;
+            for k = 1 : length(trgVec)
+                content{k} = strcat('SNR', sprintf(' %gdB',trgVec(k)));
+            end
+        case 'eta'
+            trgVec = etaVec;
+            for k = 1 : length(trgVec)
+                content{k} = strcat('$\eta$', sprintf(' %g',trgVec(k)));
+            end
+    end
+
 f10=figure(10); set(f10,'visible','off');
-hData = loglog(time, errs,'Color',color); 
+hData = plot(time, errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+    hLegend = legend(content); 
+    set(hLegend,'Interpreter','Latex','Location','northeast');
+    hXLabel = xlabel('$time(sec)$');
+    hYLabel = ylabel('$residual\ error$');
 axis tight; thisFigure; hold on
 f12=figure(12); set(f12,'visible','off');
-hData = loglog(time,rerrs,'Color',color); 
+hData = plot(time,rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+    hLegend = legend(content); 
+    set(hLegend,'Interpreter','Latex','Location','northwest');
+    hXLabel = xlabel('$time(sec)$');
+    hYLabel = ylabel('$relative\ error$');
 axis tight; thisFigure; hold on
 f11=figure(11); set(f11,'visible','off');
-hData = loglog(errs, 'Color',color); 
-set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
+hData = plot(errs, 'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+    hLegend = legend(content); 
+    set(hLegend,'Interpreter','Latex','Location','northeast');
+    hXLabel = xlabel('$\#steps$');
+    hYLabel = ylabel('$residual\ error$');
+% set(gca,'Yscale','log'), 
+axis tight; thisFigure; hold on 
 f13=figure(13); set(f13,'visible','off');
-hData = loglog(rerrs,'Color',color); 
-set(gca,'Yscale','log'), axis tight; thisFigure; hold on 
+hData = plot(rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+    hLegend = legend(content); 
+    set(hLegend,'Interpreter','Latex','Location','northwest');
+    hXLabel = xlabel('$\#steps$');
+    hYLabel = ylabel('$relative\ error$');
+% set(gca,'Yscale','log'), 
+axis tight; thisFigure; hold on 
 end
 %
 %----- image evolution and residual curve -----
@@ -257,7 +299,7 @@ f4 = figure(4); set(f4,'visible','on')
 filename = 'deconv_pncg_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-% keyboard
+
 %----- pncg deconved image -----
 f_pncg = figure; set(f_pncg,'visible','off');
 imagesc(clip(pncg_dI,1,0)); axis image off, colormap(gray)

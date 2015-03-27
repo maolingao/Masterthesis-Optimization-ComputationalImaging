@@ -33,6 +33,7 @@ if exist('hData','var') && ~isempty(hData)
     hDataInfo = get(hData);
     color = hDataInfo.Color;
     linestyle = hDataInfo.LineStyle;
+    linewidth = hDataInfo.LineWidth;
 end
 
 if ~exist('location','var') && exist('hLegend','var')
@@ -43,7 +44,7 @@ end
 % set(gcf,'visible','on');
 if exist('hData', 'var')  && ~isempty(hData)
     % Adjust line properties (functional & aesthetics)
-    set(hData, 'LineWidth', 1, 'LineStyle',linestyle, 'Color', color)
+    set(hData, 'LineWidth', linewidth, 'LineStyle',linestyle, 'Color', color)
     % set(hData1, 'LineStyle', '-.', 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)
     % set(hData2, 'LineStyle', ':' , 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)
     % set(hData3, 'LineStyle', '--', 'Marker', '.', 'LineWidth', 2, 'LineStyle',linestyle, 'Color', color)
@@ -74,7 +75,7 @@ set(gca, 'Box', 'off', 'TickDir', 'out', 'TickLength', [.02 .02], ...
     'XColor', [.3 .3 .3], 'YColor', [.3 .3 .3], ...
     'LineWidth', 1)
 %%
-clear hData hYLabel hXlabel hTitle hLegend
+clear hData hYLabel hXlabel hTitle hLegend location
 %% additional options
 % Adjust line properties (aesthetics)
 %{
