@@ -43,11 +43,11 @@ switch option.version
         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D,H.Wfun,H.H0fun);
         x = x_start;
         r = A*(x) - b;
-%         p = M*r;
-        if isempty(H.s) && isempty(H.R) && ~isfield(option,'Rb')
+%         p = M.H0fun(r);
+        if isempty(H.s) && isempty(H.R)
             p = -r;
         else
-            p = M.s;
+            p = M.R;
         end
         color = dre;        
     case 'CG'
@@ -84,7 +84,7 @@ for k = 1:numel(b)
 %         p = p ./ norm(p);
         p = bsxfun(@rdivide,p,sqrt(sum(p.^2)));     % normalize every direction, columnwise
         q = A*p;
-        alpha = - (p'*q + epsl)\(p'*r);
+        alpha = - pinv(p'*q + epsl)*(p'*r);
         
         s = p*alpha;           % s_i <-- x_i+1 - x_i
         y = q*alpha;           % y_i <-- A*s_i
@@ -108,7 +108,8 @@ for k = 1:numel(b)
                 delta = s - y;
         end
         
-        x = x +  p*alpha;              % x_i+1 <-- x_i - alpha*p_i
+        x = x +  p*alpha;              % x_i+1 <-- x_i - alpha*p_ix
+%         x = H * b;
         r = r +  q*alpha;              % r_i+1 <-- r_i - A*alpa*p_i
        
         if abs(s'*y) > 1e-15            

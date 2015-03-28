@@ -36,9 +36,17 @@ methods
             end
             if exist('Wfun','var') && ~isempty(Wfun)
                 obj.Wfun = Wfun;
+            elseif exist('R','var') && ~isempty(R)
+                obj.Wfun = @(x) R * (D * (R' * x));
+            else
+                obj.Wfun = @(x) x;
             end
             if exist('H0fun','var') && ~isempty(H0fun)
                 obj.H0fun = H0fun;
+            elseif exist('R','var') && ~isempty(R)
+                obj.H0fun = @(x) R * (D * (R' * x));
+            else
+                obj.H0fun = @(x) x;
             end
         end
     end
@@ -53,27 +61,13 @@ methods
     function outp = mtimes(obj,x)
     % multiplication with matrix and vector
         epsl = 1e-30;
-        % the part of previous observations, storage limited
-        if ~isempty(obj.R) && ~isempty(obj.D)
-            tail = obj.R * (obj.D * (obj.R' * vec(x)));
-        else
-            tail = 0;
-        end
+        xresp = reshape(x,[size(obj.H,1),numel(x)./size(obj.H,1)]);
+        
         % the part of current observations
         if ~isempty(obj.s)
            % compute W*y via handle
             if isa(obj.Wfun,'function_handle')
                 z = obj.Wfun(obj.y);
-            elseif isa(obj.Wfun,'char') && strcmp(obj.Wfun,'BFGS')
-            % implicit W=H function:
-                z = obj.s;
-            elseif isa(obj.Wfun,'char') && strcmp(obj.Wfun,'GS')
-            % explicitly W=H0 function:
-                if ~isempty(obj.R) && ~isempty(obj.D)
-                    z = obj.R * obj.D * (obj.R' * obj.y);
-                else
-                    z = obj.y;
-                end
             else
                 error('malformed covariance function')
             end
@@ -81,20 +75,20 @@ methods
             %----------------------------%
             % pseudo-inverse
             Ginv = pinv(G);
-            ZX = (z' * vec(x));
+            ZX = (z' * xresp);
             GinvZX = Ginv * ZX;
             ZGinv = z * Ginv;
             %----------------------------%
             % backslash
 %             ZGinv   =  (G \ z')';
-%             GinvZX  =  ZGinv' * vec(x);
+%             GinvZX  =  ZGinv' * xresp;
             %----------------------------%
-            tail = tail + obj.delta * GinvZX + ZGinv * (obj.delta' * vec(x)) - (ZGinv * (obj.y' * obj.delta)) * GinvZX;
+            tail = obj.delta * GinvZX + ZGinv * (obj.delta' * xresp) - (ZGinv * (obj.y' * obj.delta)) * GinvZX;
         else
-            NOP;
+            tail = 0;
         end
         % *** update form: H = H0 + tail ***
-        outp = obj.H0fun(vec(x)) + tail;   % output = vec(I*x) + tail
+        outp = obj.H0fun(xresp) + tail;   % output = vec(I*x) + tail
     end
     
     function outp = times(obj,x)
