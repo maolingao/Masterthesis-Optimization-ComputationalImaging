@@ -37,14 +37,14 @@ methods
             if exist('Wfun','var') && ~isempty(Wfun)
                 obj.Wfun = Wfun;
             elseif exist('R','var') && ~isempty(R)
-                obj.Wfun = @(x) R * (D * (R' * x));
+                obj.Wfun = @(x) x + R * (D * (R' * x));
             else
                 obj.Wfun = @(x) x;
             end
             if exist('H0fun','var') && ~isempty(H0fun)
                 obj.H0fun = H0fun;
             elseif exist('R','var') && ~isempty(R)
-                obj.H0fun = @(x) R * (D * (R' * x));
+                obj.H0fun = @(x) x + R * (D * (R' * x));
             else
                 obj.H0fun = @(x) x;
             end

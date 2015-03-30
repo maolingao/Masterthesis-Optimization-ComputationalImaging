@@ -37,7 +37,6 @@ if nargin < 7
     option.version = 'FH';
     option.frame = 1;
 end
-
 switch option.version
     case 'FH'
         M = hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D,H.Wfun,H.H0fun);
@@ -47,9 +46,14 @@ switch option.version
         if isempty(H.s) && isempty(H.R)
             p = -r;
         else
-            p = M.R;
+            p = M*r;
         end
-        color = dre;        
+        if isfield(option,'colorIdx')
+            clr = jet;
+            color = clr(option.colorIdx,:);
+        else
+            color = dre;
+        end
     case 'CG'
         M = eye(size(A));
         x = x_start;
@@ -81,7 +85,7 @@ for k = 1:numel(b)
         break
     else
 % ########### MAIN PART #############
-%         p = p ./ norm(p);
+
         p = bsxfun(@rdivide,p,sqrt(sum(p.^2)));     % normalize every direction, columnwise
         q = A*p;
         alpha = - pinv(p'*q + epsl)*(p'*r);
@@ -96,11 +100,7 @@ for k = 1:numel(b)
         switch option.version
             case 'FH'            % delta_i <-- s_i - H_i*y_i 
                 if isa(H.H0fun, 'function_handle')
-                    delta = s - H.H0fun(y);     
-                elseif strcmp(H.H0fun,'BFGS')
-                    delta = s - y;
-                elseif strcmp(H.H0fun,'GS')
-                    delta = s - M*y;
+                    delta = s - H.H0fun(y);
                 else
                     error('malformed covariance function')
                 end
@@ -124,6 +124,7 @@ for k = 1:numel(b)
             case 'FH'
                 g = pinv(H.s'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
                 p = r - H.s * g * (H.y' * r);       % this ensure conjugacy
+%                 p = H*r;
             case 'CG'
                 p = r + H.*r;
         end

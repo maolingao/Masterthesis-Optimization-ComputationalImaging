@@ -9,16 +9,17 @@ figPath = option.figPath;
 %
 n = 60;
 Q = RandomRotation(n); 
-u = rand(n,1) + 1;
-step = 10; u(1:step) = 1e-3*u(1:step); u(step+1:end) = u(step+1:end);
-u = sort(u,'descend');
+u = rand(n,1) ;
+u = clip(u,0.9,0.1);
+u = sort(u,'ascend');
+% step = 10; u(1:step) = 1e-1*u(1:step); u(step+1:end) = u(step+1:end);
 % u = rand(n,1) + 1;
 D = diag(u);
 A = Q*D*Q';
 H_true = Q* diag(1./u)*Q';
 % b = randn(n,1);
 % x = H_true * b;
-tol = 1e-12;
+tol = 1e-8;
 iter = option.iter;
 % Identity + H_true
 % option.H0fun = @(x) eye(size(x,1))*x;
@@ -47,22 +48,25 @@ iter = option.iter;
 % option.H0fun = @(x) H_approx*x;
 % option.Wfun = @(x) H_approx*x;
 %% CG & PCGoption.H0fun
-step = 50;
-R0 = Q(:,step:end);
-D0 = diag(1./u(step:end));
-H = hessianMatrix(eye(size(A)),[],[],[],R0,D0); % ,option.Wfun,option.H0fun);
-for i = 1: option.numFrame
+for k = 0:10:60
+option.colorIdx = k + 1; % for plot color in legend
+step =  1:k;
+R0 = Q(:,step);
+D0 = diag(1./u(step) - 1);
+H = hessianMatrix(eye(size(A)),[],[],[],R0,D0); %,option.Wfun,option.H0fun);
 
+% for i = 1: option.numFrame
 b = rand(n,1);
 x_start =   zeros(size(b)); 
 % cg solver
-[x_cg] = cg(A,b,x_start,tol,iter);
+% [x_cg] = cg(A,b,x_start,tol,iter);
 % pcg solver
-H
-keyboard
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
+H
+clear H
+keyboard
 % ########### MEMLIM #############
-%{%
+%{
 MEMLIM = option.MEMLIM;
 lambda = option.MEMSTR;
 alpha  = option.EXPOSTR;
@@ -94,7 +98,6 @@ H = hessianMatrix(eye(size(A)), [], [], [], R, D); % ,option.Wfun,option.H0fun);
 % figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 % figname = fullfile(figPath,figname);
 % print('-depsc2', figname);
-
 end
 
 % H_mtx -> A^{-1}
@@ -105,7 +108,9 @@ print('-depsc2',figname)
 
 % residual
 figure(22),set(gcf,'visible','off'); 
-hLegend = legend('classic','probabilistic');
+% hLegend = legend('classic','probabilistic');
+hLegend = legend('classic','rank10','rank20','rank30','rank40','rank50','rank60');
+set(hLegend,'Location','southeast')
 hYLabel = ylabel('$\|Bx - b\| / pixel$');
 hXLabel = xlabel('$\#steps$');
 thisFigure;
