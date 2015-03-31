@@ -43,11 +43,12 @@ switch option.version
         x = x_start;
         r = A*(x) - b;
 %         p = M.H0fun(r);
-        if isempty(H.s) && isempty(H.R)
+        if isempty(H.R) && isempty(H.s) 
             p = -r;
+        elseif ~isempty(H.R) 
+            p = M.R;        % principle axes --> if knowing all eigenvectors, then solve in one step
         else
-%             p = M*r;        % low rank approx --> if H_true, then solve in one step
-            p = M.R;        % principle axes --> if knowing all eigenvector, then solve in one step
+            p = M*r;        % low rank approx --> if H_true, then solve in one step
         end
         if isfield(option,'colorIdx')
             clr = jet;
@@ -123,9 +124,9 @@ for k = 1:numel(b)
         p_1 = p;
         switch option.version
             case 'FH'
-                g = pinv(H.s'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
-                p = r - H.s * g * (H.y' * r);       % this ensure conjugacy
-%                 p = H*r;
+%                 g = pinv(H.s'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
+%                 p = r - H.s * g * (H.y' * r);       % this ensure conjugacy
+                p = H*r;
             case 'CG'
                 p = r + H.*r;
         end

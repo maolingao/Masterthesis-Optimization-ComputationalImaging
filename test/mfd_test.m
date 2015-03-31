@@ -48,23 +48,22 @@ iter = option.iter;
 % option.H0fun = @(x) H_approx*x;
 % option.Wfun = @(x) H_approx*x;
 %% CG & PCGoption.H0fun
-for k = 0:10:60
-option.colorIdx = k + 1; % for plot color in legend
-step =  1:k;
+
+step =  1:10;
 R0 = Q(:,step);
 D0 = diag(1./u(step) - 1);
 H = hessianMatrix(eye(size(A)),[],[],[],R0,D0); %,option.Wfun,option.H0fun);
 
-% for i = 1: option.numFrame
+for i = 1: option.numFrame
 b = rand(n,1);
 x_start =   zeros(size(b)); 
 % cg solver
 % [x_cg] = cg(A,b,x_start,tol,iter);
 % pcg solver
+option.colorIdx = i*6;
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 H
-clear H
-keyboard
+% keyboard
 % ########### MEMLIM #############
 %{
 MEMLIM = option.MEMLIM;
@@ -109,7 +108,8 @@ print('-depsc2',figname)
 % residual
 figure(22),set(gcf,'visible','off'); 
 % hLegend = legend('classic','probabilistic');
-hLegend = legend('classic','rank10','rank20','rank30','rank40','rank50','rank60');
+% hLegend = legend('classic','rank10','rank20','rank30','rank40','rank50','rank60');
+hLegend = legend('frame 1','frame 2','frame 2','frame 4','frame 5','frame 6','frame 7','frame 8','frame 9','frame 10');
 set(hLegend,'Location','southeast')
 hYLabel = ylabel('$\|Bx - b\| / pixel$');
 hXLabel = xlabel('$\#steps$');
