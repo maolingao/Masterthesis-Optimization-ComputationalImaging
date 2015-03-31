@@ -39,7 +39,7 @@ else
     linestyle = option.LineStyle;
 end
 if ~isfield(option,'LineWidth')
-    linestyle = 2;
+    linewidth = 2;
 else
     linewidth = option.LineWidth;
 end
