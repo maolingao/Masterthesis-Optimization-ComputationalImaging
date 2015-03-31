@@ -46,7 +46,8 @@ switch option.version
         if isempty(H.s) && isempty(H.R)
             p = -r;
         else
-            p = M*r;
+%             p = M*r;        % low rank approx --> if H_true, then solve in one step
+            p = M.R;        % principle axes --> if knowing all eigenvector, then solve in one step
         end
         if isfield(option,'colorIdx')
             clr = jet;
