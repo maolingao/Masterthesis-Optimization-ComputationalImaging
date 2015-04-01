@@ -6,11 +6,11 @@ localsetup;
 
 % -------------------- readin video frames -------------------- %
 % generate psf
-% path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
-% videoFrame    = betterImRead(path);  % epsilon-lyrae
-aux.start     = [1346, 1:option.numFrame];
-aux.shift     = [0, 0];
-videoFrame    = mfbd_load_wrap(aux); % copernicus
+path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
+videoFrame    = betterImRead(path);  % epsilon-lyrae
+% aux.start     = [1346, 1:option.numFrame];
+% aux.shift     = [0, 0];
+% videoFrame    = mfbd_load_wrap(aux); % copernicus
 
 % frame amount
 if option.numFrame ~= inf
@@ -20,8 +20,20 @@ else
 end
 % extract color channel
 videoFrameMono = selectColorChannel(videoFrame, 1);
+%^^^^^^^^
+% saturateMap_videoFrameMono = cellfun(@(x)x>254, videoFrameMono, 'UniformOutput', false);
+% for k = 1:length(saturateMap_videoFrameMono)
+%     figure, set(gcf,'visible','off');
+%     imagesc(saturateMap_videoFrameMono{1});
+%     axis image off; colormap gray;
+%     filename = sprintf('saturateMap_%d',k);
+%     filename = fullfile(option.figPath,filename);
+%     print(gcf, '-depsc2', filename)
+%     close gcf;
+% end
+%^^^^^^^^
 % scale images
-[videoFrameMono] = scaling(videoFrameMono, 1e-3);
+[videoFrameMono] = scaling(videoFrameMono, 1.35e-3);
 
 % --- setting for real data ---
 option.F.xsize = size(videoFrameMono{1});

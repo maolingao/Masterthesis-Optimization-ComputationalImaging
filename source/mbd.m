@@ -58,6 +58,7 @@ fixed    =  natureI;                            % r.t. ground truth
 moving   =  start;
 subpixel =  0.1;
 [start_reg, output] =   efficient_imregister(fixed, moving, subpixel);
+tau = 0.3;   m      =   mask(start_reg, tau);
 start4convmat       =   betterEdgeTaper(start_reg,option);                      % edge taper initial guess of g.t.
 pncg_dI4convmat     =   start4convmat;
 cg_dI4convmat       =   start4convmat;
@@ -129,6 +130,18 @@ switch method
                     
                 case 'b'  % blind
                     clear X
+                    % ^^^^^^^^^^^
+                    % rmap mask
+                    if ~isfield(option,'flagMask') || option.flagMask == 0                       
+                        m = ones(size(m));
+                    end
+                    figure, set(gcf,'visible','off')
+                    imagesc(m), title('m'); colormap gray, axis image off
+                    filename = sprintf('mask_%d',k);
+                    filename = fullfile(figPath,filename);
+                    print(gcf, '-depsc2', filename)
+                    close gcf;
+                    % ^^^^^^^^^^^
                     switch option.img
                         case 'normal'
                             % !!!!!!!! normal image !!!!!!!!
@@ -137,9 +150,25 @@ switch method
                             frame4estiKernel    =   frameEdgeTaperred;
                         case 'gradient'
                             % !!!!!!!! gradient image !!!!!!!!
-                            X                           =   conv2gradMat(im2double(pncg_dI4convmat),fsize,shape);    % initial guess of gradConvMtx X
+                            X                           =   conv2gradMat(im2double(pncg_dI4convmat),fsize,shape,m);    % initial guess of gradConvMtx X
                             frameGrad                   =   cell(1,2);
                             [frameGrad{1},frameGrad{2}] =   gradient(frameEdgeTaperred);
+                            frameGrad                   =   cellfun(@(x)m.*x, frameGrad, 'UniformOutput', false);
+                            %^^^^^^^
+                            % gradImg for deconvolve psf
+                            [gx,gy]   = gradient(pncg_dI4convmat);                  % gradient of x
+                            gx        = m .* gx;
+                            gy        = m .* gy;                
+                            figure, set(gcf,'visible','off');
+                            subplot(2,2,1), imagesc(gx),colormap gray, axis image off, title('X_u')
+                            subplot(2,2,3), imagesc(gy),colormap gray, axis image off, title('X_v')
+                            subplot(2,2,2), imagesc(frameGrad{1}),colormap gray, axis image off, title('y_u')
+                            subplot(2,2,4), imagesc(frameGrad{2}),colormap gray, axis image off, title('y_v')
+                            filename = sprintf('gradImg4deconvPSF_%d',k);
+                            filename = fullfile(figPath,filename);
+                            print(gcf, '-depsc2', filename)
+                            close gcf;
+                            %^^^^^^^
                             startK                      =   X'* frameGrad;                                           % initial guess of kernel, b
                             frame4estiKernel            =   frameGrad;
                     end
@@ -257,6 +286,9 @@ switch method
                 subpixel    =   0.1;
                 [pncg_dI, output]   =   efficient_imregister(fixed, moving, subpixel);
                 %%%%%%%%%%%%%
+                %^^^^^^^^^^^^^
+                m = mask(pncg_dI,tau);
+                %^^^^^^^^^^^^^
                 pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
                 % -------- ground truth comparison figure --------
                 drawComparisonFig(frame,pncg_dI,k,'pncg','Nature',figPath);

@@ -63,7 +63,7 @@ switch option.version
         if isempty(H.s) && isempty(H.R)
             p = -vec(r);
         else
-            p = M.s;                % correct error in searched space
+            p = M.s;                % all pseudo-search directions
         end
         color   =   dre;
     case 'CG'
@@ -100,7 +100,7 @@ for k = 1 : (iter + 1)  %numel(im)
     end
     % -----------------------------------------------
     % residual error
-    im_residual     =   betterMinus(F * pncg_dI, im); % 
+    im_residual     =   betterMinus(F * pncg_dI, im);
     % -----------------------------------------------
     % crop away edges
     kernelSize      =   min(F.xsize, F.fsize);
@@ -158,7 +158,7 @@ for k = 1 : (iter + 1)  %numel(im)
         end
     % -----------------------------------------------
     % stop creterien 3 : iteration number reached
-        if k == (iter + 1) || errRelChange >   inf % -1e-3 %
+        if k == (iter + 1) || errRelChange >   -1e-3 %inf % 
             break
         end
     % -----------------------------------------------
@@ -170,8 +170,7 @@ for k = 1 : (iter + 1)  %numel(im)
         for i = 1 : size(p,2)
             q(:,i)  =   vec((F'*(F*(reshape(p(:,i),imageSize)))  + eta*(L*reshape(p(:,i),imageSize)) + a*reshape(p(:,i),imageSize))); % A*p register
         end
-%         alpha       =   - (p'*q + epsl)\(p'*r);
-        alpha       =   - pinv(p'*q) * (p'*r);
+        alpha       =   - pinv(p'*q) * (p'*r);  % - (p'*q + epsl)\(p'*r);
         
         s           =   p*alpha;                % s_i <-- x_i+1 - x_i
         y           =   q*alpha;                % y_i <-- A*s_i
@@ -188,17 +187,17 @@ for k = 1 : (iter + 1)  %numel(im)
                 error('check option.version in deconv_pncg.m')
         end
              
-        x           =   x + p*alpha; % x_i+1 <-- x_i - alpha*p_i  =  x + s;
-        r           =   r + q*alpha; % r_i+1 <-- r_i - A*alpa*p_i  =  r + y;
+        x           =   x + p*alpha;            % x_i+1 <-- x_i - alpha*p_i  =  x + s;
+        r           =   r + q*alpha;            % r_i+1 <-- r_i - A*alpa*p_i  =  r + y;
        
-        H           =   plus(H,s,y,delta); % H_i+1 <-- H_i + (update)
+        H           =   plus(H,s,y,delta);      % H_i+1 <-- H_i + (update)
         
         p_1         =   p;
         switch option.version
             case 'FH'
 %                 p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
                 g   =   pinv(H.s'*H.y);
-                p   =   r - H.s * g * (H.y' * r); % this ensure conjugacy
+                p   =   r - H.s * g * (H.y' * r);       % this ensure conjugacy
             case 'CG'
                 p   =   r + H.*r;
             otherwise

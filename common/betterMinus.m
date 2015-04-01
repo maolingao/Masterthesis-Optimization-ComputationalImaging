@@ -6,12 +6,13 @@ if iscell(cellArray1) && iscell(cellArray2)
    % cellarrays
    if numel(unique([length(cellArray1), length(cellArray2)]))
        cellNum = length(cellArray1);
+       sumDiff = zeros(size(cellArray1{1}));
    else
        disp('[betterMinus.m] : two cell arrays to minus must have the same length.')
    end
    %
    for i = 1 : cellNum
-       sumDiff = cellArray1{i} - cellArray2{i};
+       sumDiff = sumDiff + ( cellArray1{i} - cellArray2{i} );
    end
 elseif ismatrix(cellArray1) && ismatrix(cellArray2)
     % matrices

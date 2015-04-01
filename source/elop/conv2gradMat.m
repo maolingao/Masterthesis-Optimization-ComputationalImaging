@@ -16,7 +16,7 @@ classdef conv2gradMat < handle
     methods
         % methods, including the constructor are defined in this block
         
-        function obj = conv2gradMat(x,fsize,shape)
+        function obj = conv2gradMat(x,fsize,shape,mask)
             % class constructor
             if(nargin > 0)
                 if (nargin < 3)
@@ -25,6 +25,13 @@ classdef conv2gradMat < handle
                     obj.shape = shape;
                 end
                 [gx,gy]   = gradient(x);                  % gradient of x
+                % ^^^^^^^
+                % masked gradImg
+                if exist('mask','var')
+                    gx        = mask .* gx;
+                    gy        = mask .* gy;   
+                end
+                % ^^^^^^^
                 GXu       = conv2MatOp(gx, fsize, shape);     % convmtx of gx
                 GXv       = conv2MatOp(gy, fsize, shape);     % convmtx of gy
                 obj.GX    = cell(1,2);                     % cell array of convmtxs
