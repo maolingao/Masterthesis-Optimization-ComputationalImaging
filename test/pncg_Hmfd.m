@@ -44,10 +44,12 @@ switch option.version
         r = A*(x) - b;
 %         p = M.H0fun(r);
         if isempty(H.R) && isempty(H.s) 
-            p = -r;
+%             p = - M.H0fun(r);
+            p = - (M*r);
         elseif ~isempty(H.R) 
             p = M.R;        % principle axes --> if knowing all eigenvectors, then solve in one step
         else
+            keyboard
             p = M*r;        % low rank approx --> if H_true, then solve in one step
         end
         if isfield(option,'colorIdx')
@@ -56,6 +58,7 @@ switch option.version
         else
             color = dre;
         end
+        
     case 'CG'
         M = eye(size(A));
         x = x_start;
@@ -74,8 +77,10 @@ residual = r;
 
 for k = 1:numel(b)
     
-    err = [err,norm(r)];
-    figure(2), hData = plot(0:length(err)-1,err,'Color',color); drawnow, hold on, set(gca,'Yscale','log')
+    err = [err,norm(r)]; 
+    figure(2), hData = plot(0:length(err)-1,err,'Color',color); 
+    set(hData,'LineStyle',option.linestyle);
+    drawnow, hold on, set(gca,'Yscale','log')
     thisFigure;
     
     if k == iter + 1
@@ -111,7 +116,7 @@ for k = 1:numel(b)
         end
         
         x = x +  p*alpha;              % x_i+1 <-- x_i - alpha*p_ix
-%         x = H * b;
+%         x = H * b;                     % inference algorithm : residual doesnot decrease until full H_ture learned.
         r = r +  q*alpha;              % r_i+1 <-- r_i - A*alpa*p_i
        
         if abs(s'*y) > 1e-15            
@@ -124,8 +129,8 @@ for k = 1:numel(b)
         p_1 = p;
         switch option.version
             case 'FH'
-%                 g = pinv(H.s'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
-%                 p = r - H.s * g * (H.y' * r);       % this ensure conjugacy
+%                 g = pinv(H.Wfun(H.y)'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
+%                 p = H.H0fun(r) - H.s * g * (H.y' * r);       % this ensure conjugacy
                 p = H*r;
             case 'CG'
                 p = r + H.*r;
@@ -149,7 +154,7 @@ for k = 1:numel(b)
 end
 % residual curve for latex
 figure(22), set(gcf,'visible','off'), 
-hData = plot(0:length(err)-1,err,'Color',color); 
+hData = plot(0:length(err)-1,err,'Color',color); set(hData,'LineStyle',option.linestyle);
 drawnow, hold on;
 set(gca,'Yscale','log');
 thisFigure;
