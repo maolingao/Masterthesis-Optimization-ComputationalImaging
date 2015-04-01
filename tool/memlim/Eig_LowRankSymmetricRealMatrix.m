@@ -55,7 +55,7 @@ d = d(idx);
 R = R(:,idx);
 
 if nargin > 2          % remove small eigenvalues below cutoff    
-    if cutoff < 1
+    if cutoff < 1 && cutoff > 0
         R       = R(:,d > cutoff * max(d));
         d       = d(d > cutoff * max(d));
     elseif round(cutoff) - cutoff == 0

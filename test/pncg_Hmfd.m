@@ -47,9 +47,16 @@ switch option.version
 %             p = - M.H0fun(r);
             p = - (M*r);
         elseif ~isempty(H.R) 
-            p = M.R;        % principle axes --> if knowing all eigenvectors, then solve in one step
+            switch option.flag_pa
+                case 1      % 'pa'
+                    p = M.R;        % principle axes --> if knowing all eigenvectors, then solve in one step
+                case 0      %'qn'
+                    p = M*r;        % low rank approx --> if H_true, then solve in one step
+                otherwise
+                    error('malformed option.flag_pa')
+            end
+                    
         else
-            keyboard
             p = M*r;        % low rank approx --> if H_true, then solve in one step
         end
         if isfield(option,'colorIdx')
