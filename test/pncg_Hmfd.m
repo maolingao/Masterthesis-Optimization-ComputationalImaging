@@ -130,7 +130,7 @@ for k = 1:numel(b)
         switch option.version
             case 'FH'
 %                 g = pinv(H.Wfun(H.y)'*H.y);                 % p = H*r; % p = H_i+1 * r_i+1
-%                 p = H.H0fun(r) - H.s * g * (H.y' * r);       % this ensure conjugacy
+%                 p = H.H0fun(r) - H.s * g * (H.H0fun(H.y)' * r);       % this ensure conjugacy
                 p = H*r;
             case 'CG'
                 p = r + H.*r;

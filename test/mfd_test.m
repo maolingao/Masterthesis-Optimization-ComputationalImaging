@@ -31,7 +31,7 @@ iter = option.iter;
 
 %% CG & PCG
 for k = 1:2
-    option.solverMode = 'Greenstadt';
+    option.solverMode = 'CG';
     if k == 1
         option.flag_pa = 0;
     else
@@ -47,19 +47,19 @@ switch option.solverMode
         option.Wfun = option.H0fun;
         if option.flag_pa == 0 || ~isfield(option,'flag_pa')
             option.linestyle = '-';
-            H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
+            H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun); % qn
         else
             option.linestyle = '-.';
-            H = hessianMatrix(eye(size(A)),[],[],[],R0,D0);
+            H = hessianMatrix(eye(size(A)),[],[],[],R0,D0); % pa
         end
     case 'CG'
         option.Wfun = @(x) H_true*x;
         if option.flag_pa == 0 || ~isfield(option,'flag_pa')
             option.linestyle = '-';
-            H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
+            H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun); % qn
         else
             option.linestyle = '-.';
-            H = hessianMatrix(eye(size(A)),[],[],[],R0,D0,option.Wfun);
+            H = hessianMatrix(eye(size(A)),[],[],[],R0,D0,option.Wfun); % pa
         end
     otherwise
         error('malformed option.solverMode.s')
