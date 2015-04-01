@@ -31,10 +31,11 @@ iter = option.iter;
 
 %% CG & PCG
 for k = 1:2
+    option.solverMode = 'Greenstadt';
     if k == 1
-        option.solverMode = 'CG';
+        option.flag_pa = 0;
     else
-        option.solverMode = 'Greenstadt';
+        option.flag_pa = 1;
     end
 for i = 1: 7
 step = 1:10*(i-1);
@@ -44,14 +45,25 @@ option.H0fun = @(x) x + H_approx*x;
 switch option.solverMode
     case 'Greenstadt'
         option.Wfun = option.H0fun;
-        option.linestyle = '-.';
+        if option.flag_pa == 0 || ~isfield(option,'flag_pa')
+            option.linestyle = '-';
+            H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
+        else
+            option.linestyle = '-.';
+            H = hessianMatrix(eye(size(A)),[],[],[],R0,D0);
+        end
     case 'CG'
         option.Wfun = @(x) H_true*x;
-        option.linestyle = '-';
+        if option.flag_pa == 0 || ~isfield(option,'flag_pa')
+            option.linestyle = '-';
+            H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
+        else
+            option.linestyle = '-.';
+            H = hessianMatrix(eye(size(A)),[],[],[],R0,D0,option.Wfun);
+        end
     otherwise
         error('malformed option.solverMode.s')
 end
-H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun);
 
 % for i = 1: option.numFrame
 b = rand(n,1);
