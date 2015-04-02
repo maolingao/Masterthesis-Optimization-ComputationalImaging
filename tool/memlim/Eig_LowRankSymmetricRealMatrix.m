@@ -25,17 +25,24 @@ function [R,D] = Eig_LowRankSymmetricRealMatrix(U,e,cutoff)
 if any(~isreal(U(:))) || any(~isreal(e(:)))
     error ('this operation only works for real-valued matrices');
 end
-assert(size(U,1) > size(U,2)); assert(isvector(e))
-if isrow(e); e = e'; end
 
-[V,D] = eig(bsxfun(@times,e,(U' * U)));   % eigendecomposition of complement
+% assert(size(U,1) > size(U,2)); assert(isvector(e))
+if (size(U,1) > size(U,2))
+    if isrow(e); e = e'; end
 
-% if any(~isreal(diag(D)))
-%     warning('Found complex eigenvalues of a symmetric real matrix. This indicates the operation is not stable. Imaginary parts will be dropped at end of calculation.')
-% end
+    [V,D] = eig(bsxfun(@times,e,(U' * U)));   % eigendecomposition of complement
 
-R     = U * V * D;                        % unnormalized eigenvectors of A
-d     = diag(D);
+    % if any(~isreal(diag(D)))
+    %     warning('Found complex eigenvalues of a symmetric real matrix. This indicates the operation is not stable. Imaginary parts will be dropped at end of calculation.')
+    % end
+
+    R     = U * V * D;                        % unnormalized eigenvectors of A
+    d     = diag(D);
+else
+    warning('[Eig_LowRankSymmetricRealMatrix.m] : more columns than rows, maybe computational costly.')
+    [R,D] = eig(U * diag(e) * U');   % eigendecomposition of complement
+    d     = diag(D);
+end
 
 R = real(R); d = real(d);                    % this can help stabilize. 
 R = bsxfun(@rdivide,R,sqrt(sum(R.^2,1)));    % normalize eigenvectors
@@ -49,7 +56,7 @@ d = d(idx);
 R = R(:,idx);
 
 if nargin > 2          % remove small eigenvalues below cutoff    
-    if cutoff < 1
+    if cutoff < 1 && cutoff > 0
         R       = R(:,d > cutoff * max(d));
         d       = d(d > cutoff * max(d));
     elseif round(cutoff) - cutoff == 0
