@@ -72,6 +72,7 @@ methods
                 otherwise
                     error('malformed covariance function')
             end
+            
             G = obj.y' * z;
             %----------------------------%
             % pseudo-inverse

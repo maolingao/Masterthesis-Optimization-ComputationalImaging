@@ -146,32 +146,35 @@ switch method
             end
             
             option.plotFlag     =   1;
+            HK
             [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             
             % !!!!!!!! MEMLIM !!!!!!!!
-            %{
+            %{%
             MEMLIM           =  option.MEMLIM;
             lambda           =  option.MEMSTR;
             alpha            =  option.EXPOSTR;
             % ################################# %
+            % ### evd
 %             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,MEMLIM,lambda);
 %             clear HK
 %             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , []);
             % ################################# %
-            if k ~= 2
-                R1 = HK.R;
-                D1 = HK.D;
-            end
-            [R2,D2]          =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
-            if k > 1                % prior H for next coming frame
-                [R,D]        =  driftH(R1,D1,R2,D2,MEMLIM,alpha,lambda);
-            else
-                R1 = R2; D1 = D2;
-                R  = []; D  = [];
-            end
-            clear HK
-            HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
+            % ### low rank evd
+            option.data.R = HK.R;
+            option.data.D = HK.D;
+            option.Wfun = HK.Wfun;
+            option.H0fun = HK.H0fun;
+            
+            [R,D] = purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D,option);
+            idx = 1:size(D,1);
+            R = R(:, idx);
+            D = D(idx,idx);
+            H_approx = R * D * R';
+            clear HK option.H0fun
+            option.H0fun = @(x) x + H_approx*x;
+            HK = hessianMatrix(eye(fsize)*scaler,[],[],[],R,D,option.Wfun); %,option.H0fun); % qn
             %}
             % ------- END MEMLIM -------
             % -------- kernel comparison figure --------

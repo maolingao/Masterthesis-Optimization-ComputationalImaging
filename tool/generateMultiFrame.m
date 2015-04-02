@@ -69,7 +69,7 @@ function [im,f] = initialize
 %     load('satel.mat');
     im  =   im2double(X);
     im  =   im./max(vec(im));
-    im  =   im./10^(3);                         % <---- scale down image
+    im  =   im./1e+03;     % cameraman       % <---- scale down image
     % filter
 %     f   =   fspecial('motion', 15, 30);
     load('AtmosphericBlur30.mat');

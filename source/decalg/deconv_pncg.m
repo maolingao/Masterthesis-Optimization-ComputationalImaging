@@ -44,9 +44,9 @@ else
     linewidth = option.LineWidth;
 end
 
-b           =   F'*im;
-imageSize   =   size(b);
 start       =   clip(start,inf,0);
+b           =   F'*im;  % F'*im + a*start;
+imageSize   =   size(b);
 %##### Tikhonov #####
 l = [0 -1 0
      -1 4 -1
