@@ -68,7 +68,7 @@ switch option.version
         if isempty(H.s) && isempty(H.R)
             p = -vec(r);
         else
-            p = M.s;                % correct error in searched space
+            p = M*r;                % qn
         end
         if ~isfield(option,'color')
             color = dre;
@@ -203,9 +203,9 @@ for k = 1 : (iter + 1)  %numel(im)
         p_1         =   p;
         switch option.version
             case 'FH'
-%                 p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
-                g   =   pinv(H.s'*H.y);
-                p   =   r - H.s * g * (H.y' * r); % this ensure conjugacy
+%                 g   =   pinv(H.s'*H.y);
+%                 p   =   r - H.s * g * (H.y' * r); % this ensure conjugacy
+                p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
             case 'CG'
                 p   =   r + H.*r;
             otherwise
@@ -258,6 +258,8 @@ subplot(122), hData = loglog(rerrs,'Color',color,'LineStyle',linestyle,'LineWidt
             for k = 1 : length(trgVec)
                 content{k} = strcat('$\eta$', sprintf(' %g',trgVec(k)));
             end
+        otherwise
+            content = '';
     end
 
 f10=figure(10); set(f10,'visible','off');

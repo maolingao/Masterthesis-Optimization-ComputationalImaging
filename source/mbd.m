@@ -144,75 +144,38 @@ switch method
                             frame4estiKernel            =   frameGrad;
                     end
             end
-            %
+            
             option.plotFlag     =   1;
-%             startK              =   startK./sum(vec(startK));
-%             startK              =   zeros(size(startK));
             [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
-%             figure, subplot(1,2,1),imagesc(pncg_kernel),colormap gray, axis image off
-%             pncg_kernel         =   center(pncg_kernel);
-%             gcf,  subplot(1,2,2),imagesc(pncg_kernel),colormap gray, axis image off
-%             keyboard
-%             close(gcf)
-            % ----------- figure all V's of matrix H -----------
-% % %             H_mtx        =  buildH(HK);
-% % %             [V,U]        =  eig(H_mtx);
-% % %             [U,idx]      =  sort(real(diag(U)),'descend');
-% % %             V            =  V(:,idx);
-% % %             idx          =  U > 1.1;
-% % %             Uleading     =  U(idx);
-% % %             Vleading     =  V(:,idx);
-% % %             imgCellvl    =  cellImg(Vleading,fsize);
-% % %             if ~isempty(imgCellvl)
-% % %                 tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
-% % %             end
-            % ----------- figure all S's Y's-----------
-% % %             [S,Y,Delta] =   discardObs(HK.s, HK.y, HK.delta, cutLine);
-% % %             imgCells    =   cellImg(S,fsize);
-% % %             imgCelly    =   cellImg(Y,fsize);
-% % %             tightSubplot(imgCells, [0,0], 'S', figPath, k)
-% % %             tightSubplot(imgCelly, [0,0], 'Y', figPath, k)
-%             if cutLine  >   option.MEMLIM
-%                 cutLine     =   option.MEMLIM + 1;
-%             else
-%                 cutLine     =   HK.i;
-%             end
-            % ----------- END all S's -----------
+            
             % !!!!!!!! MEMLIM !!!!!!!!
-            %{%
+            %{
             MEMLIM           =  option.MEMLIM;
             lambda           =  option.MEMSTR;
             alpha            =  option.EXPOSTR;
             % ################################# %
-            [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,MEMLIM,lambda);
-            clear HK
-            HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , []);
+%             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,MEMLIM,lambda);
+%             clear HK
+%             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , []);
             % ################################# %
-% %             if k ~= 2
-% %                 R1 = HK.R;
-% %                 D1 = HK.D;
-% %             end
-% %             [R2,D2]          =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
-% %             if k > 1                % prior H for next coming frame
-% %                 [R,D]        =  driftH(R1,D1,R2,D2,MEMLIM,alpha,lambda);
-% %             else
-% %                 R1 = R2; D1 = D2;
-% %                 R  = []; D  = [];
-% %             end
-% %             clear HK
-% %             HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
+            if k ~= 2
+                R1 = HK.R;
+                D1 = HK.D;
+            end
+            [R2,D2]          =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
+            if k > 1                % prior H for next coming frame
+                [R,D]        =  driftH(R1,D1,R2,D2,MEMLIM,alpha,lambda);
+            else
+                R1 = R2; D1 = D2;
+                R  = []; D  = [];
+            end
+            clear HK
+            HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
             %}
             % ------- END MEMLIM -------
-            % ----------- figure all Stilde's Ytilde's-----------
-%             imgCells    =   cellImg(HK.s,fsize);
-%             imgCelly    =   cellImg(HK.y,fsize);
-%             tightSubplot(imgCells, [0,0], 'Stilde', figPath, k)
-%             tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
-%             cutLine     =   HK.i;
-            % ----------- END all tilde's -----------
             % -------- kernel comparison figure --------
-            drawComparisonFig(natureK,pncg_kernel,k,'pncg','Kernel',figPath);
+            drawComparisonFig(natureK,pncg_kernel,k,'pncg','Kern',figPath);
             %}
             % ################################# estimate nature #################################
             if isfield(option,'blind') && strcmp(option.blind ,'b')

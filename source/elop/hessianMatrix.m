@@ -37,10 +37,8 @@ methods
             end
             if exist('Wfun','var') && ~isempty(Wfun)
                 obj.Wfun = Wfun;
-            elseif exist('R','var') && ~isempty(R)
-                obj.Wfun = @(x) x + R * (D * (R' * x));
             else
-                obj.Wfun = @(x) x;
+                obj.Wfun = 'CG';
             end
             if exist('H0fun','var') && ~isempty(H0fun)
                 obj.H0fun = H0fun;
@@ -62,14 +60,17 @@ methods
     function outp = mtimes(obj,x)
     % multiplication with matrix and vector
         epsl = 1e-30;
-        xresp = reshape(x,[size(obj.H,1),numel(x)./size(obj.H,1)]);
+        xresp = reshape(x,[numel(obj.H),numel(x)./numel(obj.H)]);
         % the part of current observations
         if ~isempty(obj.s)
-           % compute W*y via handle
-            if isa(obj.Wfun,'function_handle')
-                z = obj.Wfun(obj.y);
-            else
-                error('malformed covariance function')
+           % compute W*y according to solver
+            switch obj.Wfun
+                case 'CG'
+                    z = obj.s;
+                case 'Greenstadt'
+                    z = obj.y;
+                otherwise
+                    error('malformed covariance function')
             end
             G = obj.y' * z;
             %----------------------------%
