@@ -8,8 +8,8 @@ n = 60;
 Q = RandomRotation(n); 
 u = rand(n,1);
 u = clip(u,0.9,0.1);
-u = sort(u,'ascend');
-% step = 10; u(1:step) = 1e-1*u(1:step); u(step+1:end) = u(step+1:end);
+u = sort(u,'descend');
+step = 10; u(1:step) = 1e0*u(1:step); u(step+1:end) = clip(u(step+1:end)-0.7,0.2,0.1);
 % u = rand(n,1) + 1;
 D = diag(u);
 A = Q*D*Q';
@@ -62,7 +62,7 @@ switch option.solverMode
             H = hessianMatrix(eye(size(A)),[],[],[],R0,D0,option.Wfun); % pa
         end
     otherwise
-        error('malformed option.solverMode.s')
+        error('malformed option.solverMode.')
 end
 
 for i = 1: option.numFrame
@@ -75,7 +75,7 @@ x_start =   zeros(size(b));
 % pcg solver
 option.colorIdx = i*6;
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
-H
+
 % ########### MEMLIM #############
 %{%
 MEMLIM = option.MEMLIM;
@@ -83,23 +83,25 @@ lambda = option.MEMSTR;
 alpha  = option.EXPOSTR;
 % ------------------------------ %
 % ### evd
-% [S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,MEMLIM,lambda);
-% clear H
-% H = hessianMatrix(eye(size(A)), S, Y, Delta, [],[],option.Wfun,option.H0fun);
+[S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,MEMLIM,lambda);
+clear H
+H = hessianMatrix(eye(size(A)), S, Y, Delta, [], [], option.Wfun);% ,option.H0fun);
+H
+% keyboard
 % ------------------------------ %
 % ### low rank evd
-option.data.R = H.R;
-option.data.D = H.D;
-option.Wfun = H.Wfun;
-option.H0fun = H.H0fun;
-
-[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D,option);
-
-H_approx = R * D * R';
-clear H  option.H0fun option.Wfun
-option.H0fun = @(x) x + H_approx*x;
-option.Wfun = @(x) H_true*x;
-H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
+% option.data.R = H.R;
+% option.data.D = H.D;
+% option.Wfun = H.Wfun;
+% option.H0fun = H.H0fun;
+% 
+% [R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D,option);
+% 
+% H_approx = R * D * R';
+% clear H  option.H0fun option.Wfun
+% option.H0fun = @(x) x + H_approx*x;
+% option.Wfun = @(x) H_true*x;
+% H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
 %}
 % ################################
 
@@ -111,6 +113,7 @@ H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
 % figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
 % figname = fullfile(figPath,figname);
 % print('-depsc2', figname);
+
 end
 % H_mtx -> A^{-1}
 figure(997)
