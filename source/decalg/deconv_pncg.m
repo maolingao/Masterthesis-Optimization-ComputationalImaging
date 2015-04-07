@@ -39,7 +39,7 @@ else
     linestyle = option.LineStyle;
 end
 if ~isfield(option,'LineWidth')
-    linestyle = 2;
+    linewidth = 2;
 else
     linewidth = option.LineWidth;
 end
@@ -68,10 +68,15 @@ switch option.version
         if isempty(H.s) && isempty(H.R)
             p = -vec(r);
         else
-            p = M.s;                % correct error in searched space
+            p = M*r;
         end
         if ~isfield(option,'color')
-            color = dre;
+            switch option.img
+                case 'normal'
+                    color   =   blu;
+                case 'gradient'
+                    color   =   dre;
+            end
         end
     case 'CG'
         M   = hessianMatrix(H.H); % preconditioner
@@ -79,7 +84,12 @@ switch option.version
         r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
         r       =   r0;
         p       =   M*r0;
-        color   =   mpg;
+        switch option.img
+            case 'normal'
+                color   =   blu;
+            case 'gradient'
+                color   =   mpg;
+        end
     otherwise
         error('check option.version in deconv_pncg.m')
 end
@@ -203,9 +213,9 @@ for k = 1 : (iter + 1)  %numel(im)
         p_1         =   p;
         switch option.version
             case 'FH'
-%                 p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
-                g   =   pinv(H.s'*H.y);
-                p   =   r - H.s * g * (H.y' * r); % this ensure conjugacy
+                p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
+%                 g   =   pinv(H.s'*H.y);
+%                 p   =   r - H.s * g * (H.y' * r); % this ensure conjugacy
             case 'CG'
                 p   =   r + H.*r;
             otherwise
@@ -258,34 +268,38 @@ subplot(122), hData = loglog(rerrs,'Color',color,'LineStyle',linestyle,'LineWidt
             for k = 1 : length(trgVec)
                 content{k} = strcat('$\eta$', sprintf(' %g',trgVec(k)));
             end
+        otherwise
+            content = [];
     end
+% content{1} = 'gradient image';
+% content{2} = 'normal image';
 
 f10=figure(10); set(f10,'visible','off');
-hData = plot(time, errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
-    hLegend = legend(content); 
-    set(hLegend,'Interpreter','Latex','Location','northeast');
+hData = loglog(time, errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+%     hLegend = legend(content); 
+%     set(hLegend,'Interpreter','Latex','Location','northeast');
     hXLabel = xlabel('$time(sec)$');
     hYLabel = ylabel('$residual\ error$');
 axis tight; thisFigure; hold on
 f12=figure(12); set(f12,'visible','off');
-hData = plot(time,rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
-    hLegend = legend(content); 
-    set(hLegend,'Interpreter','Latex','Location','northwest');
+hData = loglog(time,rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+%     hLegend = legend(content); 
+%     set(hLegend,'Interpreter','Latex','Location','northeast');
     hXLabel = xlabel('$time(sec)$');
     hYLabel = ylabel('$relative\ error$');
 axis tight; thisFigure; hold on
 f11=figure(11); set(f11,'visible','off');
-hData = plot(errs, 'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
-    hLegend = legend(content); 
-    set(hLegend,'Interpreter','Latex','Location','northeast');
+hData = loglog(errs, 'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+%     hLegend = legend(content); 
+%     set(hLegend,'Interpreter','Latex','Location','northeast');
     hXLabel = xlabel('$\#steps$');
     hYLabel = ylabel('$residual\ error$');
 % set(gca,'Yscale','log'), 
 axis tight; thisFigure; hold on 
 f13=figure(13); set(f13,'visible','off');
-hData = plot(rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
-    hLegend = legend(content); 
-    set(hLegend,'Interpreter','Latex','Location','northwest');
+hData = loglog(rerrs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth); 
+%     hLegend = legend(content); 
+%     set(hLegend,'Interpreter','Latex','Location','northeast');
     hXLabel = xlabel('$\#steps$');
     hYLabel = ylabel('$relative\ error$');
 % set(gca,'Yscale','log'), 

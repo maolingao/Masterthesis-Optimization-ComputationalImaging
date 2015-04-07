@@ -13,12 +13,12 @@ end
 startup;
 figPath = option.figPath;
 
-f10 = figure(10); clf(10), set(f10,'visible','off')
-f11 = figure(11); clf(11), set(f11,'visible','off')
-f12 = figure(12); clf(12), set(f12,'visible','off')
-f13 = figure(13); clf(13), set(f13,'visible','off')
-fclk = figure(14); clf(fclk), set(fclk,'visible','on')
-fstp = figure(15); clf(fstp), set(fstp,'visible','on')
+% f10 = figure(10); clf(10), set(f10,'visible','off')
+% f11 = figure(11); clf(11), set(f11,'visible','off')
+% f12 = figure(12); clf(12), set(f12,'visible','off')
+% f13 = figure(13); clf(13), set(f13,'visible','off')
+% fclk = figure(14); clf(fclk), set(fclk,'visible','on')
+% fstp = figure(15); clf(fstp), set(fstp,'visible','on')
 
 if F.xsize > F.fsize
     imagesize = F.xsize;

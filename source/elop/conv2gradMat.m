@@ -34,6 +34,7 @@ classdef conv2gradMat < handle
                 obj.xsize = GXu.xsize;
                 obj.fsize = GXu.fsize;
                 obj.ysize = GXu.ysize;
+                obj.flag  = 0;
             end
         end
        
