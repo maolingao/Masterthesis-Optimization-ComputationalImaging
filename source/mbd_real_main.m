@@ -6,11 +6,11 @@ localsetup;
 
 % -------------------- readin video frames -------------------- %
 % generate psf
-path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
-videoFrame    = betterImRead(path);  % epsilon-lyrae
-% aux.start     = [1346, 1:option.numFrame];
-% aux.shift     = [0, 0];
-% videoFrame    = mfbd_load_wrap(aux); % copernicus
+% path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
+% videoFrame    = betterImRead(path);  % epsilon-lyrae
+aux.start     = [1346, 1:option.numFrame];
+aux.shift     = [0, 0];
+videoFrame    = mfbd_load_wrap(aux); % copernicus
 
 % frame amount
 if option.numFrame ~= inf
@@ -61,4 +61,4 @@ iter =  option.iter;
 nature = start;  % for register all frames
 PSFs = cell(option.numFrame - numFrame4Start,1);
 PSFs = cellfun(@(x) eye(option.F.fsize), PSFs, 'UniformOutput', false);
-I    =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);
+[I, err]   =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);

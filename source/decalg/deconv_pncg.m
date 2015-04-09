@@ -39,15 +39,15 @@ else
     linestyle = option.LineStyle;
 end
 
-b           =   F'*im;
+b           =   clip(F'*im,inf,0);
 imageSize   =   size(b);
 start       =   clip(start,inf,0);
 %##### Tikhonov #####
-l = [0 -1 0
+l = [0 -1 0                 % laplacian matrix
      -1 4 -1
-     0 -1 0]; % laplacian matrix WORK! 
+     0 -1 0]; 
 L = conv2MatOp(l,imageSize,'same');
-% eta = 0.01;
+
 
 % ##### setup #####
 %{%
@@ -63,7 +63,7 @@ switch option.version
         if isempty(H.s) && isempty(H.R)
             p = -vec(r);
         else
-            p = M.s;                % all pseudo-search directions
+            p = M*vec(r);                % qn
         end
         color   =   dre;
     case 'CG'
@@ -95,7 +95,7 @@ for k = 1 : (iter + 1)  %numel(im)
     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
         NOP;                                    % current solving x, BOP    
     else
-        pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f
+        pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f % <----- now the mask is a bit to strong....
 %         pncg_dI       =   preserveNorm(pncg_dI);        % preserve energy norm of f
     end
     % -----------------------------------------------
@@ -111,7 +111,7 @@ for k = 1 : (iter + 1)  %numel(im)
     % register images r.t. ground truth 
     fixed           =   nature;                            % r.t. ground truth
     moving          =   pncg_dI;
-    subpixel        =   0.1;
+    subpixel        =   1;
     [pncg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
     % -----------------------------------------------
     % absolute error
@@ -163,8 +163,9 @@ for k = 1 : (iter + 1)  %numel(im)
         end
     % -----------------------------------------------
     % main calculation
-        p = bsxfun(@rdivide,p,sqrt(sum(p.^2)));     % normalize every direction, columnwise, this helps stabilize
         tStart = tic;
+        
+        p = bsxfun(@rdivide,p,sqrt(sum(p.^2)));     % normalize every direction, columnwise, this helps stabilize
         % ###################
         q           =   nan(size(p));
         for i = 1 : size(p,2)
@@ -195,9 +196,9 @@ for k = 1 : (iter + 1)  %numel(im)
         p_1         =   p;
         switch option.version
             case 'FH'
-%                 p   =   vec(H*(reshape(r,imageSize)));  % p <-- H*(A*x-b) = H_i+1 * r_i+1
-                g   =   pinv(H.s'*H.y);
-                p   =   r - H.s * g * (H.y' * r);       % this ensure conjugacy
+                p   =   vec(H*r);               % p <-- H*(A*x-b) = H_i+1 * r_i+1
+%                 g   =   pinv(H.s'*H.y);
+%                 p   =   r - H.s * g * (H.y' * r);       % this ensure conjugacy
             case 'CG'
                 p   =   r + H.*r;
             otherwise

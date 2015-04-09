@@ -5,12 +5,13 @@
 localsetup;
 % -------------------- readin PSF -------------------- %
 % generate psf
-multiFilt    = betterImRead; % 100 speckle samples
+multiFilt    = betterImRead; % 201 speckle samples
 % load('/is/ei/mgao/Documents/thesis/Astro/simulation/motionblur/multiMotionBlur.mat');
 % multiFilt = multiMotionBlur;
 % sample psf
 numFrame     = option.numFrame;
-multiFilt_ds = multiFilt(randperm(length(multiFilt),numFrame)); 
+% multiFilt_ds = multiFilt(randperm(length(multiFilt),numFrame)); 
+multiFilt_ds = multiFilt(1:length(multiFilt)); 
 % multiFilt_ds = multiFilt(1:numFrame); 
 % -------------- generate blurry frames -------------- %
 % generate multi frame with controlable noise
@@ -29,4 +30,7 @@ multiFilt_ds =   multiFilt_ds((numFrame4Start+1):end);
 %
 %
 iter =  option.iter;
-I    =  mbd(multiFrame, F, start, iter, nature, multiFilt_ds, option);
+[I, err]     =  mbd(multiFrame, F, start, iter, nature, multiFilt_ds, option);
+
+filename = sprintf('err_s_snr%d_etaf%g_etax%g.mat',option.SNR,option.etaf,option.etax) ; %'err_s_snr_eta.mat'
+save(filename,'err')

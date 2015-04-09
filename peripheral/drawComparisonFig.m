@@ -1,6 +1,7 @@
-function drawComparisonFig(gtImg,cmpImg,counter,optimizerName,cmpTargetName,figPath)
+function drawComparisonFig(gtImg,cmpImg,counter,optimizerName,cmpTargetName,figPath,aux)
 % 
-if ~strcmp(cmpTargetName,'Kernel')
+if ~exist('aux','var'); aux = []; end
+if strcmp(aux,'cmp')
     % -------- comparison figure --------
     fImg = figure; set(fImg,'visible','off'),
     subplot(1,2,1)

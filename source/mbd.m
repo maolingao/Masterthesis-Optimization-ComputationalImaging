@@ -1,4 +1,4 @@
-function I = mbd(multiFrame, F, start, iterK, natureI, multiKernel, option)
+function [I, err]= mbd(multiFrame, F, start, iterK, natureI, multiKernel, option)
 % [pncg_dI, cg_dI, lucy_dI, gaussian_dI] = mbd(multiFrame, F, start, iterK, natureI, multiKernel)
 % offline multi-frame blind deconvolution
 if nargin < 7
@@ -12,13 +12,7 @@ end
 
 startup;
 figPath = option.figPath;
-
-f10 = figure(10); clf(10), set(f10,'visible','off')
-f11 = figure(11); clf(11), set(f11,'visible','off')
-f12 = figure(12); clf(12), set(f12,'visible','off')
-f13 = figure(13); clf(13), set(f13,'visible','off')
-fclk = figure(14); clf(fclk), set(fclk,'visible','on')
-fstp = figure(15); clf(fstp), set(fstp,'visible','on')
+if isfield('option','aux'); aux = option.aux; else aux = 'noCmp'; end
 
 if F.xsize > F.fsize
     imagesize = F.xsize;
@@ -27,49 +21,48 @@ else
     imagesize = F.fsize;
     fsize = F.xsize;
 end
+
 shape = F.shape;
 errs_allframes_pncg = []; rerrs_allframes_pncg = [];
 errs_allframes_pncgK = []; rerrs_allframes_pncgK = [];
 errs_allframes_cg = []; rerrs_allframes_cg = [];
-errs_allframes_gaussian = []; rerrs_allframes_gaussian = [];
-errs_allframes_rl = []; rerrs_allframes_rl = [];
+
 % ##### general setup #####
 numFrame = numel(multiFrame);
 for i = 1 : numFrame                            % register observation images
-    fixed = natureI;                            % r.t. ground truth
-    moving = multiFrame{i};
-    subpixel = 1;
+    fixed           =   natureI;                            % r.t. ground truth
+    moving          =   multiFrame{i};
+    subpixel        =   1;
     [multiFrame{i}, output] = efficient_imregister(fixed, moving, subpixel);
     %
-    multiKernel{i} =  center(multiKernel{i});   % center all kernel, only for error analysis
+    multiKernel{i}  =  center(multiKernel{i});   % center all kernel, only for error analysis
 end
-eta = option.eta;                                        % ### <--- regularization parameter
-% kernel estimating
-tolK   =  option.tolK;
-scaler =  1e0;
-HK     =  hessianMatrix(eye(fsize)*scaler);
-start  =  clip(start,inf,0);
-start(start<1e-7) = 0;
-cutLine = nan;
-timeK = 0;
+etax = option.etax;                               % ### <--- regularization parameter
+etaf = option.etaf;                               % ### <--- regularization parameter
+% kernel estimation
+tolK                =   option.tolK;
+scaler              =   1e0;
+HK                  =   hessianMatrix(eye(fsize)*scaler);
+start               =   clip(start,inf,0);
+start(start<1e-7)   =   0;
+timeK               =   0;
 % start  =  start./max(vec(start)) * 1e-3;
 %%%%%%%%%%%%%
-fixed    =  natureI;                            % r.t. ground truth
-moving   =  start;
-subpixel =  0.1;
+fixed               =   natureI;                            % r.t. ground truth
+moving              =   start;
+subpixel            =   1;
 [start_reg, output] =   efficient_imregister(fixed, moving, subpixel);
 tau = 0.3;   m      =   mask(start_reg, tau);
-start4convmat       =   betterEdgeTaper(start_reg,option);                      % edge taper initial guess of g.t.
+start4convmat       =   betterEdgeTaper(start_reg, option);                      % edge taper initial guess of g.t.
 pncg_dI4convmat     =   start4convmat;
 cg_dI4convmat       =   start4convmat;
 %%%%%%%%%%%%%
 % -------- ground truth comparison figure - start --------
-drawComparisonFig(natureI,start, 0 ,'start','Nature',figPath);
+drawComparisonFig(natureI,start, 0 ,'start','Nature',figPath,aux);
 
-% nature estimating
-iterN =  1;     % one step for estimating nature
-tolN  =  -inf;
-HN    =  hessianMatrix(eye(imagesize));
+% nature estimation
+iterN               =   1;     % one step for estimating nature
+tolN                =   -inf;
 % iteration
 methodsAmount = length(option.method);
 switch option.mode
@@ -135,12 +128,12 @@ switch method
                     if ~isfield(option,'flagMask') || option.flagMask == 0                       
                         m = ones(size(m));
                     end
-                    figure, set(gcf,'visible','off')
-                    imagesc(m), title('m'); colormap gray, axis image off
-                    filename = sprintf('mask_%d',k);
-                    filename = fullfile(figPath,filename);
-                    print(gcf, '-depsc2', filename)
-                    close gcf;
+%                     figure, set(gcf,'visible','off')
+%                     imagesc(m), title('m'); colormap gray, axis image off
+%                     filename = sprintf('mask_%d',k);
+%                     filename = fullfile(figPath,filename);
+%                     print(gcf, '-depsc2', filename)
+%                     close gcf;
                     % ^^^^^^^^^^^
                     switch option.img
                         case 'normal'
@@ -150,24 +143,24 @@ switch method
                             frame4estiKernel    =   frameEdgeTaperred;
                         case 'gradient'
                             % !!!!!!!! gradient image !!!!!!!!
-                            X                           =   conv2gradMat(im2double(pncg_dI4convmat),fsize,shape,m);    % initial guess of gradConvMtx X
+                            X                           =   conv2gradMat(im2double(pncg_dI4convmat),fsize,shape,m);  % initial guess of gradConvMtx X
                             frameGrad                   =   cell(1,2);
                             [frameGrad{1},frameGrad{2}] =   gradient(frameEdgeTaperred);
                             frameGrad                   =   cellfun(@(x)m.*x, frameGrad, 'UniformOutput', false);
                             %^^^^^^^
                             % gradImg for deconvolve psf
-                            [gx,gy]   = gradient(pncg_dI4convmat);                  % gradient of x
-                            gx        = m .* gx;
-                            gy        = m .* gy;                
-                            figure, set(gcf,'visible','off');
-                            subplot(2,2,1), imagesc(gx),colormap gray, axis image off, title('X_u')
-                            subplot(2,2,3), imagesc(gy),colormap gray, axis image off, title('X_v')
-                            subplot(2,2,2), imagesc(frameGrad{1}),colormap gray, axis image off, title('y_u')
-                            subplot(2,2,4), imagesc(frameGrad{2}),colormap gray, axis image off, title('y_v')
-                            filename = sprintf('gradImg4deconvPSF_%d',k);
-                            filename = fullfile(figPath,filename);
-                            print(gcf, '-depsc2', filename)
-                            close gcf;
+%                             [gx,gy]   = gradient(pncg_dI4convmat);                  % gradient of x
+%                             gx        = m .* gx;
+%                             gy        = m .* gy;                
+%                             figure, set(gcf,'visible','off');
+%                             subplot(2,2,1), imagesc(gx),colormap gray, axis image off, title('X_u')
+%                             subplot(2,2,3), imagesc(gy),colormap gray, axis image off, title('X_v')
+%                             subplot(2,2,2), imagesc(frameGrad{1}),colormap gray, axis image off, title('y_u')
+%                             subplot(2,2,4), imagesc(frameGrad{2}),colormap gray, axis image off, title('y_v')
+%                             filename = sprintf('gradImg4deconvPSF_%d',k);
+%                             filename = fullfile(figPath,filename);
+%                             print(gcf, '-depsc2', filename)
+%                             close gcf;
                             %^^^^^^^
                             startK                      =   X'* frameGrad;                                           % initial guess of kernel, b
                             frame4estiKernel            =   frameGrad;
@@ -175,39 +168,9 @@ switch method
             end
             %
             option.plotFlag     =   1;
-%             startK              =   startK./sum(vec(startK));
-%             startK              =   zeros(size(startK));
-            [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
+            [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, etaf, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
-%             figure, subplot(1,2,1),imagesc(pncg_kernel),colormap gray, axis image off
-%             pncg_kernel         =   center(pncg_kernel);
-%             gcf,  subplot(1,2,2),imagesc(pncg_kernel),colormap gray, axis image off
-%             keyboard
-%             close(gcf)
-            % ----------- figure all V's of matrix H -----------
-% % %             H_mtx        =  buildH(HK);
-% % %             [V,U]        =  eig(H_mtx);
-% % %             [U,idx]      =  sort(real(diag(U)),'descend');
-% % %             V            =  V(:,idx);
-% % %             idx          =  U > 1.1;
-% % %             Uleading     =  U(idx);
-% % %             Vleading     =  V(:,idx);
-% % %             imgCellvl    =  cellImg(Vleading,fsize);
-% % %             if ~isempty(imgCellvl)
-% % %                 tightSubplot(imgCellvl, [0,0], 'V', figPath, k)
-% % %             end
-            % ----------- figure all S's Y's-----------
-% % %             [S,Y,Delta] =   discardObs(HK.s, HK.y, HK.delta, cutLine);
-% % %             imgCells    =   cellImg(S,fsize);
-% % %             imgCelly    =   cellImg(Y,fsize);
-% % %             tightSubplot(imgCells, [0,0], 'S', figPath, k)
-% % %             tightSubplot(imgCelly, [0,0], 'Y', figPath, k)
-%             if cutLine  >   option.MEMLIM
-%                 cutLine     =   option.MEMLIM + 1;
-%             else
-%                 cutLine     =   HK.i;
-%             end
-            % ----------- END all S's -----------
+            
             % !!!!!!!! MEMLIM !!!!!!!!
             %{%
             MEMLIM           =  option.MEMLIM;
@@ -217,31 +180,10 @@ switch method
             [S,Y,Delta,GInv] =  purify(HK.s,HK.y,HK.delta,MEMLIM,lambda);
             clear HK
             HK               =  hessianMatrix(eye(fsize)*scaler, S, Y, Delta, [] , []);
-            % ################################# %
-% %             if k ~= 2
-% %                 R1 = HK.R;
-% %                 D1 = HK.D;
-% %             end
-% %             [R2,D2]          =  purify_lowRank(HK.s,HK.y,HK.delta,MEMLIM,HK.R,HK.D);
-% %             if k > 1                % prior H for next coming frame
-% %                 [R,D]        =  driftH(R1,D1,R2,D2,MEMLIM,alpha,lambda);
-% %             else
-% %                 R1 = R2; D1 = D2;
-% %                 R  = []; D  = [];
-% %             end
-% %             clear HK
-% %             HK               =  hessianMatrix(eye(fsize)*scaler, [], [], [], R, D);
-            %}
             % ------- END MEMLIM -------
-            % ----------- figure all Stilde's Ytilde's-----------
-%             imgCells    =   cellImg(HK.s,fsize);
-%             imgCelly    =   cellImg(HK.y,fsize);
-%             tightSubplot(imgCells, [0,0], 'Stilde', figPath, k)
-%             tightSubplot(imgCelly, [0,0], 'Ytilde', figPath, k)
-%             cutLine     =   HK.i;
-            % ----------- END all tilde's -----------
+            
             % -------- kernel comparison figure --------
-            drawComparisonFig(natureK,pncg_kernel,k,'pncg','Kernel',figPath);
+            drawComparisonFig(natureK,pncg_kernel,k,'pncg','Kernel',figPath,aux);
             %}
             % ################################# estimate nature #################################
             if isfield(option,'blind') && strcmp(option.blind ,'b')
@@ -261,24 +203,11 @@ switch method
 %                 end
                 % --------- gaussian step ---------
                 if k == 1
-                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
+                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,etax,option); % gaussian
                 else
-                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
+                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,etax,option); % gaussian
                 end
-                %
-                % !!!!!!!! non blind with MEMLIM!!!!!!!!
-    % % %             option.plotFlag = 1;
-    % % %             clear Kpncg
-    % % %             Kpncg = conv2MatOp(im2double(natureK),imagesize,shape);  % convMtx of kernel, pncg
-    % % %             [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, 10, start, tolN, eta, option); % pncg
-    % % %             % ##### MEMLIM #####
-    % % %             MEMLIM = option.MEMLIM;% size(HK.s,2);
-    % % %             lambda = option.memoryStrength;
-    % % %             [S,Y,Delta,GInv] = purify(HN.s,HN.y,HN.delta,HN.Ginv0,MEMLIM,lambda);
-    % % %             clear HN
-    % % %             HN = hessianMatrix(eye(fsize)*scaler, S, Y, Delta, GInv, size(S,2)+1);
-    %             max(max(S'*Y - diag(1./diag(HK.Ginv0))))
-                % !!!!!!!! END non blind with MEMLIM!!!!!!!!
+                
                 pncg_dI     =   clip(pncg_dI,inf,0);
                 %%%%%%%%%%%%%
                 fixed       =   natureI;                            % r.t. ground truth
@@ -291,7 +220,7 @@ switch method
                 %^^^^^^^^^^^^^
                 pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
                 % -------- ground truth comparison figure --------
-                drawComparisonFig(frame,pncg_dI,k,'pncg','Nature',figPath);
+                drawComparisonFig(frame,pncg_dI,k,'pncg','Nature',figPath,aux);
                 % statitics 
                 % all frame errors - ground truth
                 if k == 1
@@ -324,6 +253,8 @@ switch method
             else
                 I = 'non-blind';
             end
+            err.res = errs_allframes_pncg;
+            err.rel = rerrs_allframes_pncg;
     case 'cg'
     %%
 %         startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
@@ -387,7 +318,7 @@ switch method
             [cg_kernel,errs_cg_kernel]  =   deconv_cg(X, frame4estiKernel, natureK, iterK, startK, tolK, eta, option); % cg
             cg_kernel                   =   preserveNorm(cg_kernel);                                                   % preserve energy norm of PSF
             % -------- kernel comparison figure --------
-            drawComparisonFig(natureK,cg_kernel,k,'cg','Kernel',figPath);
+            drawComparisonFig(natureK,cg_kernel,k,'cg','Kernel',figPath,aux);
             %}
 %             keyboard
             % ##### estimate nature #####
@@ -425,7 +356,7 @@ switch method
 %             cg_dI_show = bsxfun(@times, cg_dI_show, sum(vec(frame))/sum(vec(cg_dI_show)));
             %--------------- END  ---------------%
             % -------- ground truth comparison figure --------
-            drawComparisonFig(frame,cg_dI,k,'cg','Nature',figPath);
+            drawComparisonFig(frame,cg_dI,k,'cg','Nature',figPath,aux);
 
             % statitics 
             % all frame errors 
@@ -452,140 +383,10 @@ switch method
             else
                 I = 'non-blind';
             end
-    case 'rl'
-    %%
-%         startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
-        f_rl = figure(112); clf(f_rl); set(f_rl,'visible','on')
-        for jj = 1 : loopCompAllFrame            
-            switch option.mode
-                case 'compPerFrame'
-                    k = j;
-                case 'compAllFrame'
-                    k= jj;
-                otherwise
-                    display('in [mbd.m]: option.mode can be either "compPerFrame" or "compAllFrame"');
-            end
-            % ##### special setup #####
-            frame = multiFrame{k};
-            natureK = multiKernel{k}; % for error calculation
-            % ##### estimate kernel #####
-            % !!!!!!!! edge taper !!!!!!!!
-            frame4estiKernel  =   betterEdgeTaper(frame,  option);
-            % !!!!!!!! non blind !!!!!!!!
-%             clear X
-%             natureI4convmat   =   betterEdgeTaper(natureI,option);
-%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
-            %
-            option.plotFlag = 1;
-            [rl_kernel,errs_rl_kernel] = deconv_rl(X,frame4estiKernel,iterK,natureK,startK,eta,option); % richardson-lucy
-            rl_kernel = preserveNorm(rl_kernel);            % preserve energy norm of PSF
-            % -------- kernel comparison figure --------
-            drawComparisonFig(natureK,rl_kernel,k,'rl','Kernel',figPath);
-            
-            % ##### estimate nature #####
-            %{
-            clear Krl
-            Krl = conv2MatOp(im2double(rl_kernel),imagesize,shape);  % convMtx of kernel, gaussian
-            option.plotFlag = 0;
-            if k == 1
-                [rl_dI,errs_rlN,rerrs_rlN] = deconv_rl(Krl,frame,iterN,natureI,start,eta,option); % gaussian
-            else
-                [rl_dI,errs_rlN,rerrs_rlN] = deconv_rl(Krl,frame,iterN,natureI,rl_dI,eta,option); % gaussian
-            end
-            clear X
-            X = conv2MatOp(im2double(rl_dI),fsize,shape);   % new guess of convMtx X
-            % -------- ground truth comparison figure --------
-            drawComparisonFig(natureI,rl_dI,k,'rl','Nature',figPath);
-            
-            % statitics 
-            % all frame errors
-            errs_allframes_rl = [errs_allframes_rl,errs_rlN(end)]; % gaussian 
-            rerrs_allframes_rl = [rerrs_allframes_rl,rerrs_rlN(end)]; % relative error, gaussian
-
-            % plots    
-            % -------- ground truth frame error figure --------
-            % for debug
-            drawAllFrameErrorFig(errs_allframes_rl, rerrs_allframes_rl, numFrame, k, 'rl', ora, figPath, 'debug', f_rl);
-            %}
-        end            
-            % -------- ground truth frame error figure --------
-            % for latex
-            % residual error & relative error
-            drawAllFrameErrorFig(errs_allframes_rl, rerrs_allframes_rl, numFrame, numFrame, 'rl', ora, figPath, 'latex');
-            %
-            if exist('rl_dI','var')
-                I = rl_dI;
-            else
-                I = 'non-blind';
-            end
-    case 'gaussian'
-    %%
-%         startK = ones(fsize)./prod(fsize);              % initial guess of kernel, flat image with uniform entries
-        f_gaussian = figure(112); clf(f_gaussian); set(f_gaussian,'visible','on')
-        for jj = 1 : loopCompAllFrame            
-            switch option.mode
-                case 'compPerFrame'
-                    k = j;
-                case 'compAllFrame'
-                    k= jj;
-                otherwise
-                    display('in [mbd.m]: option.mode can be either "compPerFrame" or "compAllFrame"');
-            end
-            % ##### special setup #####
-            frame = multiFrame{k};
-            natureK = multiKernel{k}; % for error calculation
-            % ##### estimate kernel #####
-            % !!!!!!!! edge taper !!!!!!!!
-            frame4estiKernel  =   betterEdgeTaper(frame,  option);
-            % !!!!!!!! non blind !!!!!!!!
-%             clear X
-%             natureI4convmat   =   betterEdgeTaper(natureI,option);
-%             X = conv2MatOp(im2double(natureI4convmat),fsize,shape);   % convMtx X of nature --- mfd
-            %
-            option.plotFlag = 1;
-            [gaussian_kernel,errs_gaussian_kernel] = deconv_gaussian(X,frame4estiKernel,iterK,natureK,startK,eta,option); % gaussian
-            gaussian_kernel = preserveNorm(gaussian_kernel);            % preserve energy norm of PSF
-            % -------- kernel comparison figure --------
-            drawComparisonFig(natureK,gaussian_kernel,k,'gaussian','Kernel',figPath);
-            % ##### estimate nature #####
-            %{
-            clear Kgaussian
-            Kgaussian = conv2MatOp(im2double(gaussian_kernel),imagesize,shape);  % convMtx of kernel, gaussian
-            option.plotFlag = 0;
-            if k == 1
-                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,start,eta,option); % gaussian
-            else
-                [gaussian_dI,errs_gaussianN,rerrs_gaussianN] = deconv_gaussian(Kgaussian,frame,iterN,natureI,gaussian_dI,eta,option); % gaussian
-            end
-            clear X
-            X = conv2MatOp(im2double(gaussian_dI),fsize,shape);   % new guess of convMtx X
-            % -------- ground truth comparison figure --------
-            drawComparisonFig(natureI,gaussian_dI,k,'gaussian','Nature',figPath);
-            gaussianNatureImg = figure;  set(gaussianNatureImg,'visible','off'),
-            
-            % statitics 
-            % all frame errors
-            errs_allframes_gaussian = [errs_allframes_gaussian,errs_gaussianN(end)]; % gaussian 
-            rerrs_allframes_gaussian = [rerrs_allframes_gaussian,rerrs_gaussianN(end)]; % relative error, gaussian
-
-            % plots    
-            % -------- ground truth frame error figure --------
-            % for debug
-            drawAllFrameErrorFig(errs_allframes_gaussian, rerrs_allframes_gaussian, numFrame, k,'gaussian', blu, figPath, 'debug', f_gaussian);
-            %}
-        end            
-            % -------- ground truth frame error figure --------
-            % for latex
-            % residual error & relative error
-            drawAllFrameErrorFig(errs_allframes_gaussian, rerrs_allframes_gaussian, numFrame, numFrame,'gaussian', blu, figPath, 'latex');
-            %
-            if exist('gaussian_dI','var')
-                I = gaussian_dI;
-            else
-                I = 'non-blind';
-            end
+            err.res = errs_allframes_cg;
+            err.rel = rerrs_allframes_cg;
     otherwise
-        display '[mbd.m]: option.method can be one of those: 'pncg', 'cg', 'rl', 'gaussian''
+        display '[mbd.m]: option.method can be one of those: 'pncg', 'cg''
 end
 end
     

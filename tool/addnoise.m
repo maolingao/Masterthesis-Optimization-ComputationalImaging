@@ -23,7 +23,11 @@ noise = noise./max(abs(vec(noise)));    % scale noise onto [-1,1]
 factor = sqrt(v/var(vec(noise)));       % scaler factor which satisfies the desired SNR
 noise = noise*factor;                   % 
 I_noisy = I_noisy + noise;                    % add noise
+if max(I_noisy(:)) > 1
+    I_noisy = I_noisy ./ max(I_noisy(:));   % normalize
+end
 I_noisy = clip(I_noisy,1,0);            % chop pixel value onto [0,1]
+
 %}
 %
 %//////// rescale
