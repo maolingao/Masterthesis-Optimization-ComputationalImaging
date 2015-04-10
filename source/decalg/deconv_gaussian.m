@@ -21,7 +21,7 @@ gaussian_dI = start; % custermized start guess;
 errs = nan(1,iter);
 rerrs = nan(1,iter);
             
-epsl = 1e-30;
+epsl = 1e-10;
 time = 1e-2;
 errRelChange = nan;
 %##### Tikhonov #####
@@ -93,19 +93,19 @@ for i = 1 : (iter + 1)
 %     gaussian_dI = gaussian_dI .* ( ( F' * im + epsl) ./ ( F'*(F*gaussian_dI) + epsl ) ); % <-- update rule
     
     % Laplacian regularization    
-    bgau            =   clip(F'*im, inf, 0);
-    agau            =   clip( ( F'*(F*gaussian_dI) + eta*(lap(gaussian_dI,'+')) ) , inf, 0);
-    cgau            =   clip(eta*(lap(gaussian_dI,'-')), inf, 0);
+    bgau            =   clip(F'*im, 1e300, 1e-7);
+    agau            =   clip( ( F'*(F*gaussian_dI) ) , 1e300, 1e-7) + eta*(lap(gaussian_dI,'+'));
+    cgau            =   clip(eta*(lap(gaussian_dI,'-')), inf, -inf);
     
-    num             =   bgau + sqrt(bgau.*bgau + 4*agau.*cgau); % + epsl;
+    num             =   clip(bgau + sqrt(clip(bgau.*bgau + 4*agau.*cgau,1e300,1e-24)), 1e300, 1e-7); % + epsl;
     denom           =   2.*agau + epsl;
     update          =   num ./ denom;
     
-    figure(3), 
+    figure(33), 
     subplot(131), imagesc(update), title('update'), colormap gray, axis image off
     subplot(132), imagesc(num), title('num'), colormap gray, axis image off
     subplot(133), imagesc(denom), title('denom'), colormap gray, axis image off
-    keyboard
+%     keyboard
     gaussian_dI     =   clip(gaussian_dI .* update, inf, 0);
 %%%%%%%%%%%%%%%%%%%%%
     tElapsed = toc(tStart);
