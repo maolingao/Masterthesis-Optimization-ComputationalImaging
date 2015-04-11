@@ -33,4 +33,5 @@ iter =  option.iter;
 [I, err]     =  mbd(multiFrame, F, start, iter, nature, multiFilt_ds, option);
 
 filename = sprintf('err_s_snr%d_etaf%g_etax%g.mat',option.SNR,option.etaf,option.etax) ; %'err_s_snr_eta.mat'
+filename = fullfile(option.figPath,filename);
 save(filename,'err')

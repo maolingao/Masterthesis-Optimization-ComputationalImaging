@@ -196,17 +196,17 @@ switch method
                 clear HN
                 HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
                 % --------- pncg step ---------
-                if k == 1
-                    [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, etax, option); % pncg
-                else
-                    [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, etax, option); % pncg
-                end
-                % --------- gaussian step ---------
 %                 if k == 1
-%                     [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,etax,option); % gaussian
+%                     [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, etax, option); % pncg
 %                 else
-%                     [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,etax,option); % gaussian
+%                     [pncg_dI, ~, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, etax, option); % pncg
 %                 end
+                % --------- gaussian step ---------
+                if k == 1
+                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,etax,option); % gaussian
+                else
+                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,etax,option); % gaussian
+                end
                 
                 pncg_dI     =   clip(pncg_dI,inf,0);
                 %%%%%%%%%%%%%
