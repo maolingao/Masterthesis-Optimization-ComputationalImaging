@@ -12,7 +12,7 @@ end
 
 startup;
 figPath = option.figPath;
-if isfield('option','aux'); aux = option.aux; else aux = 'noCmp'; end
+if isfield(option,'aux'); aux = option.aux; else aux = 'noCmp'; end
 
 if F.xsize > F.fsize
     imagesize = F.xsize;
