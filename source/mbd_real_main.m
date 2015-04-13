@@ -33,7 +33,7 @@ videoFrameMono = selectColorChannel(videoFrame, 1);
 % end
 %^^^^^^^^
 % scale images
-[videoFrameMono] = scaling(videoFrameMono, 1.35e-3);
+[videoFrameMono] = scaling(videoFrameMono, 1/125);
 
 % --- setting for real data ---
 option.F.xsize = size(videoFrameMono{1});
