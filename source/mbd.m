@@ -252,6 +252,9 @@ switch method
             end
             err.res = errs_allframes_pncg;
             err.rel = rerrs_allframes_pncg;
+            err.resK = errs_allframes_pncgK;
+            err.relK = rerrs_allframes_pncgK;
+            err.timeK = timeK;
     case 'cg'
     %%
 %         startK = zeros(fsize);                   % initial guess of kernel, flat image with all NULL
