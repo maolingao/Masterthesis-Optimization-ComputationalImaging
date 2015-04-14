@@ -61,4 +61,5 @@ iter =  option.iter;
 nature = start;  % for register all frames
 PSFs = cell(option.numFrame - numFrame4Start,1);
 PSFs = cellfun(@(x) eye(option.F.fsize), PSFs, 'UniformOutput', false);
-[I, err]   =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);
+% [I, err]   =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);
+[I, err] = mbd_update(videoFrameMono, option.F, start, iter, nature, PSFs, option);

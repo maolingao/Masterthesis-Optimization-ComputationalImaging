@@ -100,7 +100,7 @@ for i = 1 : (iter + 1)
     num             =   clip(bgau + sqrt(clip(bgau.*bgau + 4*agau.*cgau,1e300,1e-24)), 1e300, 1e-7); % + epsl;
     denom           =   2.*agau + epsl;
     update          =   num ./ denom;
-    
+        
     figure(33), 
     subplot(131), imagesc(update), title('update'), colormap gray, axis image off
     subplot(132), imagesc(num), title('num'), colormap gray, axis image off

@@ -57,6 +57,18 @@ start4convmat       =   betterEdgeTaper(start_reg, option);                     
 pncg_dI4convmat     =   start4convmat;
 cg_dI4convmat       =   start4convmat;
 %%%%%%%%%%%%%
+% ^^^^^^^^^^^
+% rmap mask
+if ~isfield(option,'flagMask') || option.flagMask == 0                       
+    m = ones(size(m));
+end
+%                     figure, set(gcf,'visible','off')
+%                     imagesc(m), title('m'); colormap gray, axis image off
+%                     filename = sprintf('mask_%d',k);
+%                     filename = fullfile(figPath,filename);
+%                     print(gcf, '-depsc2', filename)
+%                     close gcf;
+% ^^^^^^^^^^^
 % -------- ground truth comparison figure - start --------
 drawComparisonFig(natureI,start, 0 ,'start','Nature',figPath,aux);
 
@@ -123,18 +135,6 @@ switch method
                     
                 case 'b'  % blind
                     clear X
-                    % ^^^^^^^^^^^
-                    % rmap mask
-                    if ~isfield(option,'flagMask') || option.flagMask == 0                       
-                        m = ones(size(m));
-                    end
-%                     figure, set(gcf,'visible','off')
-%                     imagesc(m), title('m'); colormap gray, axis image off
-%                     filename = sprintf('mask_%d',k);
-%                     filename = fullfile(figPath,filename);
-%                     print(gcf, '-depsc2', filename)
-%                     close gcf;
-                    % ^^^^^^^^^^^
                     switch option.img
                         case 'normal'
                             % !!!!!!!! normal image !!!!!!!!
@@ -215,9 +215,6 @@ switch method
                 subpixel    =   0.1;
                 [pncg_dI, output]   =   efficient_imregister(fixed, moving, subpixel);
                 %%%%%%%%%%%%%
-                %^^^^^^^^^^^^^
-                m = mask(pncg_dI,tau);
-                %^^^^^^^^^^^^^
                 pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.
                 % -------- ground truth comparison figure --------
                 drawComparisonFig(frame,pncg_dI,k,'pncg','Nature',figPath,aux);
