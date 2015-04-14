@@ -5,8 +5,10 @@ multiFilt   =   betterImRead; % 201 speckle samples
 f           =   multiFilt{1};
 f           =   f./sum(f(:));
 sf          =   size(f);
+%^^^^^^^
 load('satel.mat');
 % X           =   imread('cameraman.tif');
+%^^^^^^^
 x           =   im2double(X);  nature   =   x;
 sx          =   size(x);
 F           =   conv2MatOp(f,sx,'same');

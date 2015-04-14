@@ -66,7 +66,7 @@ for i = 1 : (iter + 1)
         rerrs(i)    =   (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
     % plot
-    f2 = figure(2);
+    f2 = figure(2); set(gcf,'visible','off');
     subplot(121) 
     imagesc(clip(gaussian_dI,1,0)); axis image, colormap(gray)
     title(sprintf('Gaussian - Iteration %d/%d',i,iter + 1))
@@ -100,13 +100,15 @@ for i = 1 : (iter + 1)
     num             =   clip(bgau + sqrt(clip(bgau.*bgau + 4*agau.*cgau,1e300,1e-24)), 1e300, 1e-7); % + epsl;
     denom           =   2.*agau + epsl;
     update          =   num ./ denom;
-        
-    figure(33), 
-    subplot(131), imagesc(update), title('update'), colormap gray, axis image off
-    subplot(132), imagesc(num), title('num'), colormap gray, axis image off
-    subplot(133), imagesc(denom), title('denom'), colormap gray, axis image off
+    
 %     keyboard
     gaussian_dI     =   clip(gaussian_dI .* update, inf, 0);
+    
+    figure(33), 
+    subplot(221), imagesc(update), title('update'), colormap gray, axis image off
+    subplot(223), imagesc(gaussian_dI), title('gaussian esti.'), colormap gray, axis image off
+    subplot(222), imagesc(num), title('num'), colormap gray, axis image off
+    subplot(224), imagesc(denom), title('denom'), colormap gray, axis image off
 %%%%%%%%%%%%%%%%%%%%%
     tElapsed = toc(tStart);
     time = [time; time(end)+tElapsed];
@@ -143,7 +145,7 @@ end
 %----- image evolution and residual curve -----
 figPath = option.figPath;
 %
-f2 = figure(2); set(f2,'visible','on')
+f2 = figure(2); set(f2,'visible','off')
 filename = 'deconv_gaussian_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
