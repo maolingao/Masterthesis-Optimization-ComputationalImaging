@@ -1,31 +1,32 @@
-function [x] = cg(A,b,x_start,tol,iter)
-
+function x = cg(A,b,x_start,tol,iter)
 % example
 %{
-  n = 60;
-  m = 80;
+% eigenvalues are btw 1 ~ several hundreds(big range)
+  n = 600;
+  m = 800;
   A = randn(n,m);
   A = A * A';
   b = randn(n,1);
   tic, x = cg(A,b); toc
   norm(A*x-b)
 %}
-%{    n = 60;
-    % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
-    u = rand(n,1);
-    Q = RandomRotation(n); 
-    D = diag(u);
-    A = Q*D*Q';
-    x = randn(n,1)
-    b = A*x;
-    tic, x = cg(A,b); toc
-    norm(A*x-b)
+%{
+% eigenvalues are btw 0 ~ 1(tight range)
+  n = 60;
+  u = rand(n,1);
+  Q = RandomRotation(n);
+  D = diag(u);
+  A = Q*D*Q';
+  x = randn(n,1);
+  b = A*x;
+  tic, x = cg(A,b); toc
+  norm(A*x-b)
 %}
 startup;
-if nargin < 3
-    x_start = b;
-end
 
+if nargin < 3
+    x_start = zeros(size(b));
+end
 if nargin < 4
     tol = 10^-10;
 end
@@ -39,11 +40,9 @@ p = -r;
 epsl = 1e-30; % numerical stability
 
 err= [];
-
 for k = 1:numel(b)
     err = [err,norm(r)];
-    figure(2), hData = plot(0:length(err)-1,err,'Color',blu); drawnow,hold on, set(gca,'Yscale','log'); 
-    thisFigure;
+    figure(2), plot(err,'Color',blu), drawnow,hold on, set(gca,'Yscale','log');
     if k == iter + 1
         break
     end
@@ -59,14 +58,12 @@ for k = 1:numel(b)
         beta = ((r_1'*r_1) + epsl)\(r'*r);
         p_1 = p;
         p = -r + beta*p_1;
-        conj = p_1'*A*p
+        orth = p_1'*A*p
     end
     
 end
 
-figure(22), set(gcf,'visible','off'), 
-hData = plot(0:length(err)-1,err,'Color',blu); drawnow,hold on, set(gca,'Yscale','log')
-thisFigure;
+figure(22), set(gcf,'visible','off'), plot(err,'Color',blu), drawnow,hold on, set(gca,'Yscale','log')
 
 
 end

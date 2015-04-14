@@ -10,6 +10,9 @@ if nargin < 5
 lambda = 0;
 end
 
+%     disp(sprintf('max(vec(G^T - G)) = %d', max(vec(G' - G))))
+%     diag(real(D))
+%     real(U)'*real(U)
 if MEMLIM > size(s,2) % MEMLIM > observations --> guarentee s and y are conjugate by eig-decomp
     G       =   s'*y;
     [U,D]   =   eig(G);
@@ -24,10 +27,12 @@ else % MEMLIM < observations --> purify
     epsl    =   1e-10;
     SIGMA   =   'LM';
     G       =   s'*y;
-
+    % keyboard
     [U,D]   =   eigs(G,(MEMLIM),SIGMA); % preserve G's eigenvalue with MEMLIM largest magnetitude
     % and cooresponding eigenvector
-   
+    %
+%     U       =   real(U(:,1:MEMLIM));
+%     D       =   clip(real(D(1:MEMLIM,1:MEMLIM)),inf,0);
     idx     =   sum(diag(D)>1e-6);
     if idx == 0
         S       =   [];
@@ -42,7 +47,11 @@ else % MEMLIM < observations --> purify
         U       =   real(U(:,1:idx));
         D       =   clip(real(D(1:idx,1:idx)),inf,0);
     end
-
+    %
+    % display(sprintf('Dmin=--------------------------------------%d',min((diag(D)))));
+    % U = bsxfun(@times,U,((sqrt(diag(D))+eps).\1)'); % make D unit matrix, numerical stabil if invert it
+    % D = eye(MEMLIM);
+    %
     %--------------- unittest_1 ---------------%
     % should give a matrix U'*U approximately = I, diagnal matrix(actually inv(D))
     % keyboard
@@ -53,7 +62,16 @@ else % MEMLIM < observations --> purify
     S       =   s * U * sqrt(lambda); % new tuple of {S, Y, Delta}
     Y       =   y * U * sqrt(lambda); % S should be orthogonal to Y, S'*Y = D
     Delta   =   delta * U * sqrt(lambda);
-
+    %
+%     D       =   sqrt(lambda * D); % memory strength
+%     S       =   sqrt(s * U * sqrt(lambda)); % new tuple of {S, Y, Delta}
+%     Y       =   sqrt(y * U * sqrt(lambda)); % S should be orthogonal to Y, S'*Y = D
+%     Delta   =   sqrt(delta * U * sqrt(lambda));
+    %
+%     S       =   s * U * sqrt(lambda) * (eye(size(D))./sqrt(D+eps)); % new tuple of {S, Y, Delta}
+%     Y       =   y * U * sqrt(lambda) * (eye(size(D))./sqrt(D+eps)); % S should be orthogonal to Y, S'*Y = D
+%     Delta   =   delta * U * sqrt(lambda) * (eye(size(D))./sqrt(D+eps));
+%     D       =   lambda * eye(size(D)); % memory strength%
     %--------------- unittest_2 ---------------%
     % should give a matrix with amost all zero element
     % keyboard

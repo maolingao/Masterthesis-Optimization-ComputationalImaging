@@ -16,9 +16,15 @@ w        = bsxfun(@times, w_row, w_col);
 w        = w./5;
 w        = 0.2 - w;
 w(w<0.1) = 0.05;
-w(w>0.18) = 0.50;
+w(w>0.18) = 0.90;
 fRef = maxPixelValue * w;
 f(f < fRef) = 0;
+% 2 lines near edges must be zero
+f(:,1:2) = 0;
+f(:,end-1:end) = 0;
+f(1:2,:) = 0;
+f(end-1:end,:) = 0;
+
 
 % keyboard
 % figure, imagesc(f)

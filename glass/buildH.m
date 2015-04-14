@@ -10,19 +10,20 @@ epsll = 1e-9;
 %                         keyboard
             Ginv = H.Ginv0;
         elseif size(H.s,2) < 2 
-            Ginv = 1/((H.s)'*H.y + eps);
+            Ginv = 1/((H.s)'*H.s + eps);
         else
-            G = H.s' * H.y;
-            %----------------------------%
-            % pseudo-inverse
+            display('keyboard in buildH.m')
+%             keyboard
+%             G = H.s'*H.y;
+            G = H.y' * H.y;
             Ginv = pinv(G);
-            %----------------------------%
-            % backslash
-%             Ginv = G \ eye(size(H.s,2));
+%             Ginv = invGram(H.Ginv0,H.s,H.y);
+
         end
         SGinv = H.s * Ginv;
         SGinvDelta = SGinv * (H.delta)';
         tailM = SGinvDelta + SGinvDelta' - SGinv * H.y' * SGinvDelta';
+        H.Ginv0 = Ginv;
         %}
     else
         tailM = 0;

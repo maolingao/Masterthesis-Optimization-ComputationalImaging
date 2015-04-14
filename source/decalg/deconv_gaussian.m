@@ -4,7 +4,6 @@ startup;
 
 if nargin < 5
     start = F'*im;
-    % start = start./sum(start(:)); % nfactor
 end
 
 if nargin < 6
@@ -18,11 +17,11 @@ end
 %##### setup #####
 gaussian_dI = start; % custermized start guess; 
 % gaussian_dI = nature; % custermized start guess; 
-imageSize = size(gaussian_dI);
+
 errs = nan(1,iter);
 rerrs = nan(1,iter);
             
-epsl = 1e-7;
+epsl = 1e-10;
 time = 1e-2;
 errRelChange = nan;
 %##### Tikhonov #####
@@ -41,73 +40,75 @@ Ln = conv2MatOp(ln,imageSize,F.shape);
 %##### iteration #####
 for i = 1 : (iter + 1)
     
-    im_residual = F * gaussian_dI - im;
-%     im_residual = (gaussian_dI - double(nature)) ;
+    im_residual     =   F * gaussian_dI - im;
     % crop away edge
-%     keyboard
-    kernelSize = min(F.xsize, F.fsize);
-    corpMarginSize = kernelSize;
-    Pim = patimat('same',size(im_residual),corpMarginSize,0);
-    im_residual = Pim'*im_residual;
-    %
+    kernelSize      =   min(F.xsize, F.fsize);
+    corpMarginSize  =   kernelSize;
+    Pim             =   patimat('same',size(im_residual),corpMarginSize,0);
+    im_residual     =   Pim'*im_residual;
+    
     % absolute error
-    errorabso = gaussian_dI - nature;
+    errorabso       =   gaussian_dI - nature;
     if unique(abs(kernelSize - size(gaussian_dI)) > abs(max(F.xsize, F.fsize) - size(gaussian_dI)))
-        errorabso = Pim'*errorabso;        % current solving x, crop    
-        natureCrop = Pim'*nature;
+        errorabso   =   Pim'*errorabso;        % current solving x, crop    
+        natureCrop  =   Pim'*nature;
     else
-        errorabso = errorabso;             % current solving f, NOT crop
-        natureCrop = nature;
+        errorabso   =   errorabso;             % current solving f, NOT crop
+        natureCrop  =   nature;
     end
-    %
+    
     % average residual & relative error of ground truth
     if norm(im_residual,'fro' )==0
-        errs(i) = 1e-20;
-        rerrs(i) = 1e-20;
+        errs(i)     =   1e-20;
+        rerrs(i)    =   1e-20;
     else            
-        errs(i) = (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
-        rerrs(i) = (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
+        errs(i)     =   (norm(im_residual,'fro') / numel(im_residual)); % average, absolute residual
+        rerrs(i)    =   (norm(errorabso,'fro') / norm(natureCrop,'fro')); % relative error ||x - hat(x)|| / ||x||
     end
-    %
-    f2 = figure(2);
+    % plot
+    f2 = figure(2); set(gcf,'visible','off');
     subplot(121) 
     imagesc(clip(gaussian_dI,1,0)); axis image, colormap(gray)
     title(sprintf('Gaussian - Iteration %d/%d',i,iter + 1))
     drawnow    
-    
     subplot(122)
-    hData = loglog(errs, 'Color', blu);
-    hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
-    hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
-    thisFigure; 
-    drawnow 
+    hData           =   loglog(errs, 'Color', blu);
+    hYLabel         =   ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
+    hXLabel         =   xlabel('$\#steps$', 'Interpreter','Latex');
+    thisFigure;         drawnow 
         
-    % stop creterien ########
+    % stop creterien
     if i > 3
-        errRelChange = errs(2:i) - errs(1:i-1);
-        errRelChange = sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
+        errRelChange    =  errs(2:i) - errs(1:i-1);
+        errRelChange    =  sum(errRelChange(i-3:i-1)) / sum(errs(i-3:i)) * 4/3 ;
     end
-    if i == (iter + 1) || errRelChange > -1e-3
-        gaussian_dI = clip(gaussian_dI,1,0);
+    if i == (iter + 1) || errRelChange > inf %-1e-3
+        gaussian_dI     =   clip(gaussian_dI,1,0);
         break
     end    
+    
     tStart = tic; 
 %%%%%%%%%%%%%%%%%%%%%
     % pure
-%     gaussian_dI = gaussian_dI .* ( ( F' * im + epsl) ./ ( F'*(F*gaussian_dI) + epsl ) ); % <-- trivial update rule
+%     gaussian_dI = gaussian_dI .* ( ( F' * im + epsl) ./ ( F'*(F*gaussian_dI) + epsl ) ); % <-- update rule
     
     % Laplacian regularization    
-    bgau = clip(F'*im,inf, 0);
-%     agau = clip( ( F'*(F*gaussian_dI) + eta*((Lp*gaussian_dI)) ) ,inf,0);
-%     cgau = clip(eta*((Ln*gaussian_dI)), inf, 0);
-    agau = clip( ( F'*(F*gaussian_dI) + eta*(lap(gaussian_dI,'+')) ) ,inf,0);
-    cgau = clip(eta*(lap(gaussian_dI,'-')), inf, 0);
+    bgau            =   clip(F'*im, 1e300, 1e-7);
+    agau            =   clip( ( F'*(F*gaussian_dI) ) , 1e300, 1e-7) + eta*(lap(gaussian_dI,'+'));
+    cgau            =   clip(eta*(lap(gaussian_dI,'-')), inf, -inf);
     
-    nom = bgau + sqrt(bgau.*bgau + 4*agau.*cgau) + epsl;
-    denom = 2.*agau + epsl;
+    num             =   clip(bgau + sqrt(clip(bgau.*bgau + 4*agau.*cgau,1e300,1e-24)), 1e300, 1e-7); % + epsl;
+    denom           =   2.*agau + epsl;
+    update          =   num ./ denom;
     
-    update = nom ./ denom;
-    gaussian_dI = clip(gaussian_dI .* update,1,0);
+%     keyboard
+    gaussian_dI     =   clip(gaussian_dI .* update, inf, 0);
+    
+    figure(33), 
+    subplot(221), imagesc(update), title('update'), colormap gray, axis image off
+    subplot(223), imagesc(gaussian_dI), title('gaussian esti.'), colormap gray, axis image off
+    subplot(222), imagesc(num), title('num'), colormap gray, axis image off
+    subplot(224), imagesc(denom), title('denom'), colormap gray, axis image off
 %%%%%%%%%%%%%%%%%%%%%
     tElapsed = toc(tStart);
     time = [time; time(end)+tElapsed];
@@ -118,7 +119,7 @@ end
 %----- main curves -----
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
-if option.plotFlag == 1
+if isfield('option','plotFlag') && option.plotFlag == 1
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
 subplot(121), hData = loglog(time ,errs,'Color',blu); thisFigure; hold on
@@ -144,7 +145,7 @@ end
 %----- image evolution and residual curve -----
 figPath = option.figPath;
 %
-f2 = figure(2); set(f2,'visible','on')
+f2 = figure(2); set(f2,'visible','off')
 filename = 'deconv_gaussian_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)

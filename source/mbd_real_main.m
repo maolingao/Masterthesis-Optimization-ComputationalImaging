@@ -20,8 +20,20 @@ else
 end
 % extract color channel
 videoFrameMono = selectColorChannel(videoFrame, 1);
+%^^^^^^^^
+% saturateMap_videoFrameMono = cellfun(@(x)x>254, videoFrameMono, 'UniformOutput', false);
+% for k = 1:length(saturateMap_videoFrameMono)
+%     figure, set(gcf,'visible','off');
+%     imagesc(saturateMap_videoFrameMono{1});
+%     axis image off; colormap gray;
+%     filename = sprintf('saturateMap_%d',k);
+%     filename = fullfile(option.figPath,filename);
+%     print(gcf, '-depsc2', filename)
+%     close gcf;
+% end
+%^^^^^^^^
 % scale images
-[videoFrameMono] = scaling(videoFrameMono, 1e-3);
+[videoFrameMono] = scaling(videoFrameMono, 1/125);
 
 % --- setting for real data ---
 option.F.xsize = size(videoFrameMono{1});
@@ -49,4 +61,5 @@ iter =  option.iter;
 nature = start;  % for register all frames
 PSFs = cell(option.numFrame - numFrame4Start,1);
 PSFs = cellfun(@(x) eye(option.F.fsize), PSFs, 'UniformOutput', false);
-I    =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);
+% [I, err]   =  mbd(videoFrameMono, option.F, start, iter, nature, PSFs, option);
+[I, err] = mbd_update(videoFrameMono, option.F, start, iter, nature, PSFs, option);
