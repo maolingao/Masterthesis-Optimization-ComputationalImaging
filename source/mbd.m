@@ -212,7 +212,7 @@ switch method
                 %%%%%%%%%%%%%
                 fixed       =   natureI;                            % r.t. ground truth
                 moving      =   pncg_dI;
-                subpixel    =   0.1;
+                subpixel    =   1;
                 [pncg_dI, output]   =   efficient_imregister(fixed, moving, subpixel);
                 %%%%%%%%%%%%%
                 pncg_dI4convmat     =   betterEdgeTaper(pncg_dI,option);                      % edge taper every guess of g.t.

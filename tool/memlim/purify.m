@@ -38,6 +38,7 @@ else % MEMLIM < observations --> purify
         S       =   [];
         Y       =   [];
         Delta   =   [];
+        GInv    =   [];
         return
     end
     if idx >= MEMLIM
