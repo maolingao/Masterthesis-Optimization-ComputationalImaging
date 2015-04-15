@@ -359,6 +359,13 @@ filename = sprintf('kernel_b_noiseFree');
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename), close gcf
     
-    
-    
+%% illustration of our model
+figPath = '/is/ei/mgao/Documents/thesis/article/figure/fig4thesis';
+
+localsetup;
+multiFilt    = betterImRead; % 100 speckle samples
+numFrame     = option.numFrame;
+multiFilt_ds = multiFilt(randperm(length(multiFilt),numFrame)); 
+[multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);
+
     
