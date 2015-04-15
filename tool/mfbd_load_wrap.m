@@ -5,8 +5,7 @@ if nargin < 1
     aux.start = [1346, 1:9];
 end
 
-imagepath = '/is/ei/mgao/Documents/thesis/Astro/real_data/sequence';
-figPath = '/is/ei/mgao/Documents/thesis/Astro/real_data/copernicus';
+imagepath = '/home/gao/Documents/MPI/thesis/Astro/real_data/sequence';
 
 aux.fname = @(i) sprintf('%s/kopernikus%04d.png', imagepath, i);
 aux.shiftfile = sprintf('%s/alignment.ausw', imagepath);

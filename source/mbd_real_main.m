@@ -6,7 +6,7 @@ localsetup;
 
 % -------------------- readin video frames -------------------- %
 % generate psf
-% path = '/is/ei/mgao/Documents/thesis/Astro/real_data/star';
+% path = '/home/gao/Documents/MPI/thesis/Astro/real_data/star';
 % videoFrame    = betterImRead(path);  % epsilon-lyrae
 aux.start     = [1346, 1:option.numFrame];
 aux.shift     = [0, 0];
