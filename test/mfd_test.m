@@ -1,6 +1,7 @@
 % mfd_test
 clear all
 %
+startup;
 localsetup;
 figPath = option.figPath;
 %
@@ -29,6 +30,7 @@ iter = option.iter;
 
 %% CG & PCG
 figure(997), clf
+figure(100), clf
 figure(2), clf
 figure(22), set(gcf,'visible','off'),clf
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -55,7 +57,7 @@ switch option.solverMode
     case 'CG'
         option.Wfun = @(x) H_true*x;
         if option.flag_pa == 0 || ~isfield(option,'flag_pa')
-            option.linestyle = '-';
+            option.linestyle = '--';
             H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun); % qn
         else
             option.linestyle = '-.';
@@ -71,10 +73,10 @@ for i = 1: option.numFrame
 b = rand(n,1);
 x_start =   zeros(size(b)); 
 % cg solver
-[x_cg] = cg(A,b,x_start,tol,iter);
+[x_cg,x_cg_seq] = cg(A,b,x_start,tol,iter);
 % pcg solver
 % option.colorIdx = i*6;
-[x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
+[x_pncg,H,residual_pncg,x_pncg_seq]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 H
 % ########### FIGURE #############
 % Gram matrix
@@ -110,26 +112,36 @@ option.H0fun = @(x) x + H_approx*x;
 option.Wfun = @(x) H_true*x;
 H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
 %}
-% ################################
+% ########### FIGURE #############
+% difference of sequence of estimate - cg and pcg
+figure(100), set(gcf,'visible','on')
+hData = plot(0:iter,sum((x_pncg_seq-x_cg_seq).^2),'Color',blu); hold on
+hXLabel = xlabel('$\#\text{steps}$'); hYLabel = ylabel('difference of estimations');
+thisFigure; 
 end
+figure(100)
+ylim([-1e-20,1e-20])
+figname = strcat('estiDiff', '.tikz');
+figname = fullfile(figPath,figname);
+printTikz;
 % H_mtx -> A^{-1}
 figure(997)
-figname = strcat('H_toy_',option.version,'_', num2str(i), '.eps');
+figname = strcat('H_toy_',option.version,'_', num2str(i), '.tikz');
 figname = fullfile(figPath,figname);
-print('-depsc2',figname)
+printTikz;
 
 % residual
 figure(22),set(gcf,'visible','off'); 
-% hLegend = legend('classic','probabilistic');
+hLegend = legend('classic','probabilistic');
 % hLegend = legend('classic','rank10','rank20','rank30','rank40','rank50','rank60');
-hLegend = legend('frame 1','frame 2','frame 2','frame 4','frame 5','frame 6','frame 7','frame 8','frame 9','frame 10');
+% hLegend = legend('frame 1','frame 2','frame 2','frame 4','frame 5','frame 6','frame 7','frame 8','frame 9','frame 10');
 % hTitle = title('H0fun:lra; Wfun:H\_true');
 set(hLegend,'Location','northeast')
 hYLabel = ylabel('$\|Bx - b\| / pixel$');
-hXLabel = xlabel('$\#steps$');
+hXLabel = xlabel('$\#\text{steps}$');
 thisFigure;
-figname = 'residualPCGCG.eps'; figname = fullfile(figPath,figname);
-print('-depsc2',figname)
+figname = 'residualPCGCG.tikz'; figname = fullfile(figPath,figname);
+printTikz;
 %
 %
 %

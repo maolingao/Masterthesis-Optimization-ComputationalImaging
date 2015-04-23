@@ -1,4 +1,4 @@
-function [x,H,residual] = pncg_Hmfd(A,b,H,x_start,tol,iter,option)
+function [x,H,residual,x_seq] = pncg_Hmfd(A,b,H,x_start,tol,iter,option)
 % probabilistic solver, conjugate gradient
 % written for mfd_test script, to verify idea of multi-frame deconv(update of H with class hessianMatrix)
 
@@ -63,7 +63,7 @@ switch option.version
             clr = jet;
             color = clr(option.colorIdx,:);
         else
-            color = dre;
+            color = mpg;
         end
         
     case 'CG'
@@ -78,18 +78,18 @@ end
 
 
 A_inv = inv(A); 
-diffz = []; err=[];
+diffz = []; err=[]; x_seq=[];
 epsl = 1e-30;
 residual = r; 
 
 for k = 1:numel(b)
     
     err = [err,norm(r)]; 
+    x_seq = [x_seq,x];
     figure(2), hData = plot(0:length(err)-1,err,'Color',color); 
     set(hData,'LineStyle',option.linestyle);
     drawnow, hold on, set(gca,'Yscale','log')
     thisFigure;
-    
     if k == iter + 1
         disp('==> maximal iteration reached!')
         break
@@ -149,7 +149,7 @@ for k = 1:numel(b)
         diffz = [diffz, norm(H_mtx - A_inv) / numel(H.H)];
         figure(997); 
         hData = plot(diffz,'b'); drawnow, hold on;
-        hXLabel = xlabel('$\#steps$'); hYLabel = ylabel('$\| H - B^{-1} \| / pixel$');
+        hXLabel = xlabel('$\#\text{steps}$'); hYLabel = ylabel('$\| H - B^{-1} \| / pixel$');
         thisFigure;
 % orthogonal      
         residual = [residual,r]; 

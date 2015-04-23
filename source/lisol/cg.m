@@ -1,4 +1,4 @@
-function [x] = cg(A,b,x_start,tol,iter)
+function [x,x_seq] = cg(A,b,x_start,tol,iter)
 
 % example
 %{
@@ -39,11 +39,13 @@ p = -r;
 epsl = 1e-30; % numerical stability
 
 err= [];
+x_seq = [];
 
 for k = 1:numel(b)
     err = [err,norm(r)];
-    figure(2), hData = plot(0:length(err)-1,err,'Color',blu); drawnow,hold on, set(gca,'Yscale','log'); 
+    figure(2), hData = plot(0:length(err)-1,err,'Color',ora); drawnow,hold on, set(gca,'Yscale','log'); 
     thisFigure;
+    x_seq = [x_seq,x];
     if k == iter + 1
         break
     end
@@ -65,7 +67,7 @@ for k = 1:numel(b)
 end
 
 figure(22), set(gcf,'visible','off'), 
-hData = plot(0:length(err)-1,err,'Color',blu); drawnow,hold on, set(gca,'Yscale','log')
+hData = plot(0:length(err)-1,err,'Color',ora); drawnow,hold on, set(gca,'Yscale','log')
 thisFigure;
 
 
