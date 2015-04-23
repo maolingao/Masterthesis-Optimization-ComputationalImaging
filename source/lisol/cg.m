@@ -12,14 +12,14 @@ function [x] = cg(A,b,x_start,tol,iter)
 %}
 %{    n = 60;
     % u =-10 * log(rand(n,1));u(1:5) = 100*u(1:5);
-    u = rand(n,1);
-    Q = RandomRotation(n); 
-    D = diag(u);
-    A = Q*D*Q';
-    x = randn(n,1)
-    b = A*x;
-    tic, x = cg(A,b); toc
-    norm(A*x-b)
+%     u = rand(n,1);
+%     Q = RandomRotation(n); 
+%     D = diag(u);
+%     A = Q*D*Q';
+%     x = randn(n,1)
+%     b = A*x;
+%     tic, x = cg(A,b); toc
+%     norm(A*x-b)
 %}
 startup;
 if nargin < 3

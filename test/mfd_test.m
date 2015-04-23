@@ -32,7 +32,7 @@ figure(997), clf
 figure(2), clf
 figure(22), set(gcf,'visible','off'),clf
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-option.MEMLIM = 20;     % <-- toggle here for different MEMLIM for same problem(ONLY excute this cell!)
+option.MEMLIM = 0;     % <-- toggle here for different MEMLIM for same problem(ONLY excute this cell!)
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 %
 option.solverMode = 'CG';
@@ -71,11 +71,20 @@ for i = 1: option.numFrame
 b = rand(n,1);
 x_start =   zeros(size(b)); 
 % cg solver
-% [x_cg] = cg(A,b,x_start,tol,iter);
+[x_cg] = cg(A,b,x_start,tol,iter);
 % pcg solver
-option.colorIdx = i*6;
+% option.colorIdx = i*6;
 [x_pncg,H,residual_pncg]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 H
+% ########### FIGURE #############
+% Gram matrix
+figure(101), set(gcf,'visible','off')
+imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image
+set(gca,'xtick',[],'ytick',[]); box on 
+xlabel('column'); ylabel('row'); colorbar('southoutside'); 
+figname = strcat('gm_toy_',option.version,'_', num2str(i), '.tikz');
+figname = fullfile(figPath,figname);
+printTikz;
 % ########### MEMLIM #############
 %{%
 MEMLIM = option.MEMLIM;
@@ -102,15 +111,6 @@ option.Wfun = @(x) H_true*x;
 H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
 %}
 % ################################
-
-% ########### FIGURE #############
-% Gram matrix
-% figure(101), set(gcf,'visible','off')
-% imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image off
-% colorbar('southoutside')
-% figname = strcat('gm_toy_',option.version,'_', num2str(i), '.eps');
-% figname = fullfile(figPath,figname);
-% print('-depsc2', figname);
 end
 % H_mtx -> A^{-1}
 figure(997)
