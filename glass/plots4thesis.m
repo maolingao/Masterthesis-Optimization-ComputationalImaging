@@ -1,3 +1,5 @@
+%% toy example single problem
+
 %% motion blur with different boundary conditions
 figPath = '/is/ei/mgao/Documents/thesis/article/figure/fig4thesis';
 
