@@ -150,7 +150,7 @@ tDeconv = time(end);
 %----- main curves -----
 errs    =   errs(~isnan(errs));
 rerrs   =   rerrs(~isnan(rerrs));
-if option.plotFlag == 1
+if isfield('option', 'plotFlag') && option.plotFlag == 1
 color = mpg;
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),

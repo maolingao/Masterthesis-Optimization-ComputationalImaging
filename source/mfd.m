@@ -45,125 +45,6 @@ H = hessianMatrix(eye(fsize));
 tol = 1*10^(-30);
 eta = 0;
 % iteration
-%{
-%
-for i = 1 : length(multiFrame)
-% all methods in one loop
-%
-% setups
-    nature = multiFilt{i};                          % <-- guess kernel
-%     f = multiFilt{i};                    % <-- guess ground truth
-%     F = conv2MatOp(f,imagesize,shape); % <-- guess ground truth
-    frame = multiFrame{i};
-    start = F'*frame;
-%     start = ones(size(F'*frame))/numel(F'*frame);
-    tol = 1e-20;
-    eta = 0.001;
-%
-    
-% calculation    
-    % #################
-    % check
-    %{
-    buildH;
-    [convMtx,convMtxTranpose] = buildF('same',nature,F.x);
-    ATA = convMtx'*convMtx;
-    figure(666), imagesc(ATA*H_mtx), colormap gray
-    %}
-    % #################
-    option.version = 'FH';
-    [pncg_dI,H,errs_pncg] = deconv_pncg(F,frame,nature,H,iter,start,tol,eta,option); % pncg
-%     H = updateH(H, 5);
-    % ######
-    % save gramm matrix
-    %{%
-    figure, set(gcf,'visible','off'), imagesc(log(abs(H.s'*H.y))), colormap gray, axis off equal
-    figname = strcat('gm_FH_', num2str(i), 'frames.eps');
-    print('-depsc2',figname)
-    %%}
-    % #######
-    if i == 1       
-%         [pncg_dI,H,errs_pncg] = deconv_pncg(F,frame,nature,H,iter,start,tol,eta); % pncg
-        [cg_dI,errs_cg] = deconv_cg(F,frame,nature,iter,start,tol,eta); % cg
-%         [lucy_dI,errs_lucy] = deconv_rl(F,frame,iter,nature); % lucy
-%         [gaussian_dI,errs_gauss] = deconv_gaussian(F,frame,iter,nature); % gauss
-    else
-%         [pncg_dI,H,errs_pncg] = deconv_pncg(F,frame,nature,H,iter,pncg_dI,tol,eta); % pncg
-        [cg_dI,errs_cg] = deconv_cg(F,frame,nature,iter,start,tol,eta); % cg
-%         [lucy_dI,errs_lucy] = deconv_rl(F,frame,iter,nature,lucy_dI); % lucy
-%         [gaussian_dI,errs_gauss] = deconv_gaussian(F,frame,iter,nature,gaussian_dI); % gauss
-    end
-%
-% statitics        
-    % all step errors
-    errs_allsteps_pncg =  [errs_allsteps_pncg, errs_pncg]; % pncg
-    errs_allsteps_cg =  [errs_allsteps_cg, errs_cg]; % cg
-%     errs_allsteps_lucy =  [errs_allsteps_lucy, errs_lucy]; % lucy
-%     errs_allsteps_gauss =  [errs_allsteps_gauss, errs_gauss]; % gauss
-    % all frame errors
-    errs_allframes_pncg = [errs_allframes_pncg,errs_pncg(end)]; % pncg 
-    errs_allframes_cg = [errs_allframes_cg,errs_cg(end)]; % cg 
-%     errs_allframes_lucy = [errs_allframes_lucy,errs_lucy(end)]; % lucy
-%     errs_allframes_gauss = [errs_allframes_gauss,errs_gauss(end)]; % gauss
-%
-% plots    
-    % pncg
-    f_pncg = figure; set(f_pncg,'visible','off'),subplot(121)
-    imagesc(clip(pncg_dI,1,0)), axis image,colormap(gray)
-    title(sprintf('pncg - frame %d/%d',i,length(multiFrame)))
-    drawnow
-    subplot(122)   
-    plot(1:length(errs_allframes_pncg),errs_allframes_pncg,'k')
-    xlabel('#frames'), ylabel('residual |Fx - y| / pixel')
-    title(sprintf('frame %d/%d',i,length(multiFrame)))
-    drawnow
-    % cg
-    f_cg = figure; set(f_cg,'visible','off'),subplot(121)
-    imagesc(clip(cg_dI,1,0)); axis image,colormap(gray)
-    title(sprintf('cg - frame %d/%d',i,length(multiFrame)))
-    drawnow          
-
-    subplot(122)
-    plot(1:length(errs_allframes_cg),errs_allframes_cg,'g')
-    xlabel('#frames'), ylabel('residual |Fx - y| / pixel')
-    title(sprintf('frame %d/%d',i,length(multiFrame)))
-    drawnow    
-%     % lucy
-%     figure(11), subplot(121)
-%     imagesc(lucy_dI); axis image,colormap(gray)
-%     title(sprintf('lucy - frame %d/%d',i,length(multiFrame)))
-%     drawnow          
-% 
-%     subplot(122)
-%     plot(1:length(errs_allframes_lucy),errs_allframes_lucy,'r')
-%     xlabel('#frames'), ylabel('residual |Fx - y| / pixel')
-%     title(sprintf('frame %d/%d',i,length(multiFrame)))
-%     drawnow    
-%     % gauss
-%     figure(12), subplot(121)
-%     imagesc(gaussian_dI); axis image,colormap(gray)
-%     title(sprintf('gauss - frame %d/%d',i,length(multiFrame)))
-%     drawnow          
-% 
-%     subplot(122)
-%     plot(1:length(errs_allframes_gauss),errs_allframes_gauss,'b')
-%     xlabel('#frames'), ylabel('residual |Fx - y| / pixel')
-%     title(sprintf('frame %d/%d',i,length(multiFrame)))
-%     drawnow    
-
-
-% ################
-% important information
-%{
-    buildH;
-    if exist('H_mtx','var')
-    [V,D,W] = eig(H_mtx);eva = sort(diag(D),'descend');
-    [U,S,V] = svd(H_mtx);sva = sort(diag(S),'descend');
-    end
-    %}
-% ################
-end
-%}
 for k = 1 : numel(option.method)
     switch option.method{k}
         case 'pncg'
@@ -174,69 +55,39 @@ for k = 1 : numel(option.method)
                         nature = multiFilt{i};                          % <-- guess kernel
                         frame = multiFrame{i};
                         start = F'*frame; start = start./sum(start(:)); % nfactor
+                        tgtSize = fsize;
                         %     start = ones(size(F'*frame))/numel(F'*frame);
                     case 'nature'
                         f = multiFilt{i};                               % <-- guess ground truth
                         F = conv2MatOp(f,imagesize,shape);              % <-- guess ground truth
                         frame = multiFrame{i};
                         start = F'*frame; start = start./max(start(:)); % nfactor
+                        tgtSize = size(start);
                         %     start = ones(size(F'*frame))/numel(F'*frame);
                     otherwise
                         print '[mfd.m]: option.target can be one of those: 'kernel', 'nature''
                 end
-%                 start = zeros(size(F'*frame));
                 % ##### estimate nature #####
-                % #################
-                % check
-                %{
-                buildH;
-                [convMtx,convMtxTranpose] = buildF('same',nature,F.x);
-                ATA = convMtx'*convMtx;
-                figure(666), imagesc(ATA*H_mtx), colormap gray
-                %}
-                % #################
-                [pncg_dI,H,errs_pncg] = deconv_pncg(F,frame,nature,H,iter,start,tol,eta,option); % pncg
-            %     H = updateH(H, 5);
-                % ######
-                % save gramm matrix
-                %{%
-                figure, set(gcf,'visible','off')
-                imagesc(log(abs(H.s'*H.y))), colormap gray, colorbar('southoutside'), axis off equal
-                filename = strcat('gm_',option.version,'_', num2str(i), 'frames.eps');
-                filename = fullfile(figPath,filename);
-                print(gcf,'-depsc2',filename)
-                %}
-                % #######
-                if i == 1       
-            %         [pncg_dI,H,errs_pncg] = deconv_pncg(F,frame,nature,H,iter,start,tol,eta); % pncg
-                else
-            %         [pncg_dI,H,errs_pncg] = deconv_pncg(F,frame,nature,H,iter,pncg_dI,tol,eta); % pncg
-                end
-            %
-            % statitics        
+                [pncg_dI,H,data_pncg] = deconv_pncg(F,frame,nature,H,iter,start,tol,eta,option); % pncg
+                % ########### MEMLIM #############
+                MEMLIM = option.MEMLIM;
+                lambda = option.MEMSTR;
+                % ------------------------------ %
+                % ### evd
+                [S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,MEMLIM,lambda);
+                clear H
+                H = hessianMatrix(eye(tgtSize), S, Y, Delta, [],[]);
+                % ------------------------------ %
+                % statitics        
                 % all step errors
-                errs_allsteps_pncg =  [errs_allsteps_pncg, errs_pncg]; % pncg
+                errs_allsteps_pncg =  [errs_allsteps_pncg, data_pncg.errs]; % pncg
                 % all frame errors
-                errs_allframes_pncg = [errs_allframes_pncg,errs_pncg(end)]; % pncg 
+                errs_allframes_pncg = [errs_allframes_pncg,data_pncg.errs(end)]; % pncg 
             %
-            % plots    
-                % pncg
-                f_pncg = figure; set(f_pncg,'visible','off')
-                subplot(121)
-                imagesc(clip(pncg_dI,1,0)), axis image,colormap(gray)
-                title(sprintf('pncg - frame %d/%d',i,length(multiFrame)))
-                drawnow
-                subplot(122)   
-                plot(1:length(errs_allframes_pncg),errs_allframes_pncg,'Color',dre)
-                xlabel('#frames','FontSize', 15), ylabel('residual |Fx - y| / pixel','FontSize', 15)
-                title(sprintf('frame %d/%d',i,length(multiFrame)))
-                drawnow
-                % save figure            
-                figure(f_pncg); set(f_pncg,'visible','off')
-                filename = ['mfd_deconv_pncg_with_curve'];
-                filename = fullfile(figPath,filename);
-                print(gcf, '-depsc2', filename)
-                %                
+            % plots              
+                % residual curves
+                figure(200), 
+                plot(0:length(data_pncg.errs)-1,data_pncg.errs); hold on
                 %----- pncg deconved image -----
                 f_pncg = figure; set(f_pncg,'visible','off');
                 imagesc(clip(pncg_dI,1,0)); axis image, colormap(gray)
@@ -245,16 +96,6 @@ for k = 1 : numel(option.method)
                 filename = fullfile(figPath,filename);
                 print(gcf, '-depsc2', filename)
 
-            % ################
-            % important information
-            %{
-                buildH;
-                if exist('H_mtx','var')
-                [V,D,W] = eig(H_mtx);eva = sort(diag(D),'descend');
-                [U,S,V] = svd(H_mtx);sva = sort(diag(S),'descend');
-                end
-                %}
-            % ################
             end
             I = pncg_dI;        
         case 'cg' 

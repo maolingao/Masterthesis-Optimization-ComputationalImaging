@@ -38,6 +38,7 @@ else % MEMLIM < observations --> purify
         S       =   [];
         Y       =   [];
         Delta   =   [];
+        GInv    =   [];
         return
     end
     if idx >= MEMLIM
@@ -47,11 +48,7 @@ else % MEMLIM < observations --> purify
         U       =   real(U(:,1:idx));
         D       =   clip(real(D(1:idx,1:idx)),inf,0);
     end
-    %
-    % display(sprintf('Dmin=--------------------------------------%d',min((diag(D)))));
-    % U = bsxfun(@times,U,((sqrt(diag(D))+eps).\1)'); % make D unit matrix, numerical stabil if invert it
-    % D = eye(MEMLIM);
-    %
+    
     %--------------- unittest_1 ---------------%
     % should give a matrix U'*U approximately = I, diagnal matrix(actually inv(D))
     % keyboard

@@ -1,4 +1,4 @@
-function [pncg_dI, H, errs, time, rerrs] = deconv_pncg(F, im, nature, H, iter, start, tol, eta, option)
+function [pncg_dI, H, data] = deconv_pncg(F, im, nature, H, iter, start, tol, eta, option)
 % probabilistic solver, conjugate gradient
 % written for mfd_test script, to verify idea of multi-frame deconv(update of H with class hessianMatrix)
 
@@ -244,7 +244,7 @@ pncg_dI = clip(pncg_dI,1,0);
 errs = errs(~isnan(errs));
 rerrs = rerrs(~isnan(rerrs));
 % rerrs = rerrs./max(rerrs); % normalize rel. error
-if option.plotFlag == 1
+if isfield('option', 'plotFlag') && option.plotFlag == 1
     
 % for debug
 fclk = figure(14); set(fclk,'visible','on'),
@@ -334,4 +334,7 @@ close gcf
 % filename = 'deconv_pncg_relativeError';
 % filename = fullfile(figPath,filename);
 % print(gcf, '-depsc2', filename)
+data.errs = errs;
+data.time = time;
+data.rerrs = rerrs;
 end
