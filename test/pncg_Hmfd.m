@@ -60,7 +60,7 @@ switch option.version
             p = M*r;        % low rank approx --> if H_true, then solve in one step
         end
         if isfield(option,'colorIdx')
-            clr = jet;
+            clr = winter;
             color = clr(option.colorIdx,:);
         else
             color = mpg;

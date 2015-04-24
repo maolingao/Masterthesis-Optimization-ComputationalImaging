@@ -10,14 +10,13 @@ Q = RandomRotation(n);
 u = rand(n,1);
 u = clip(u,0.9,0.1);
 u = sort(u,'ascend');
-% step = 10; u(1:step) = 1e-1*u(1:step); u(step+1:end) = u(step+1:end);
-% u = rand(n,1) + 1;
+step = 50; u(1:step) = 1e-1*u(1:step); u(step+1:end) = u(step+1:end);
 D = diag(u);
 A = Q*D*Q';
 H_true = Q * diag(1./u) * Q';
 % b = randn(n,1);
 % x = H_true * b;
-tol = 1e-8;
+tol = 1e-10;
 iter = option.iter;
 
 % Identity + H_true
@@ -30,11 +29,10 @@ iter = option.iter;
 
 %% CG & PCG
 figure(997), clf
-figure(100), clf
 figure(2), clf
 figure(22), set(gcf,'visible','off'),clf
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-option.MEMLIM = 0;     % <-- toggle here for different MEMLIM for same problem(ONLY excute this cell!)
+option.MEMLIM = 60;     % <-- toggle here for different MEMLIM for same problem(ONLY excute this cell!)
 % ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 %
 option.solverMode = 'CG';
@@ -57,7 +55,7 @@ switch option.solverMode
     case 'CG'
         option.Wfun = @(x) H_true*x;
         if option.flag_pa == 0 || ~isfield(option,'flag_pa')
-            option.linestyle = '--';
+            option.linestyle = '-';
             H = hessianMatrix(eye(size(A)),[],[],[],[],[],option.Wfun,option.H0fun); % qn
         else
             option.linestyle = '-.';
@@ -73,20 +71,20 @@ for i = 1: option.numFrame
 b = rand(n,1);
 x_start =   zeros(size(b)); 
 % cg solver
-[x_cg,x_cg_seq] = cg(A,b,x_start,tol,iter);
+% [x_cg,x_cg_seq] = cg(A,b,x_start,tol,iter);
 % pcg solver
-% option.colorIdx = i*6;
+option.colorIdx = i*10;
 [x_pncg,H,residual_pncg,x_pncg_seq]= pncg_Hmfd(A,b,H,x_start,tol,iter,option);
 H
 % ########### FIGURE #############
 % Gram matrix
-figure(101), set(gcf,'visible','off')
-imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image
-set(gca,'xtick',[],'ytick',[]); box on 
-xlabel('column'); ylabel('row'); colorbar('southoutside'); 
-figname = strcat('gm_toy_',option.version,'_', num2str(i), '.tikz');
-figname = fullfile(figPath,figname);
-printTikz;
+% figure(101), set(gcf,'visible','off')
+% imagesc(log10(abs((H.y'*option.Wfun(H.y))))), colormap gray,  axis image
+% set(gca,'xtick',[],'ytick',[]); box on 
+% xlabel('column'); ylabel('row'); colorbar('southoutside'); 
+% figname = strcat('gm_toy_',option.version,'_', num2str(i), '.tikz');
+% figname = fullfile(figPath,figname);
+% printTikz;
 % ########### MEMLIM #############
 %{%
 MEMLIM = option.MEMLIM;
@@ -94,36 +92,25 @@ lambda = option.MEMSTR;
 alpha  = option.EXPOSTR;
 % ------------------------------ %
 % ### evd
-% [S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,MEMLIM,lambda);
-% clear H
-% H = hessianMatrix(eye(size(A)), S, Y, Delta, [],[],option.Wfun,option.H0fun);
+[S,Y,Delta,GInv] = purify(H.s,H.y,H.delta,MEMLIM,lambda);
+clear H
+H = hessianMatrix(eye(size(A)), S, Y, Delta, [],[],option.Wfun,option.H0fun);
 % ------------------------------ %
 % ### low rank evd
-option.data.R = H.R;
-option.data.D = H.D;
-option.Wfun = H.Wfun;
-option.H0fun = H.H0fun;
-
-[R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D,option);
-
-H_approx = R * D * R';
-clear H  option.H0fun option.Wfun
-option.H0fun = @(x) x + H_approx*x;
-option.Wfun = @(x) H_true*x;
-H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
+% option.data.R = H.R;
+% option.data.D = H.D;
+% option.Wfun = H.Wfun;
+% option.H0fun = H.H0fun;
+% 
+% [R,D] = purify_lowRank(H.s,H.y,H.delta,MEMLIM,H.R,H.D,option);
+% 
+% H_approx = R * D * R';
+% clear H  option.H0fun option.Wfun
+% option.H0fun = @(x) x + H_approx*x;
+% option.Wfun = @(x) H_true*x;
+% H = hessianMatrix(eye(size(A)),[],[],[],R,D,option.Wfun);%,option.H0fun); % qn
 %}
-% ########### FIGURE #############
-% difference of sequence of estimate - cg and pcg
-figure(100), set(gcf,'visible','on')
-hData = plot(0:iter,sum((x_pncg_seq-x_cg_seq).^2),'Color',blu); hold on
-hXLabel = xlabel('$\#\text{steps}$'); hYLabel = ylabel('difference of estimations');
-thisFigure; 
 end
-figure(100)
-ylim([-1e-20,1e-20])
-figname = strcat('estiDiff', '.tikz');
-figname = fullfile(figPath,figname);
-printTikz;
 % H_mtx -> A^{-1}
 figure(997)
 figname = strcat('H_toy_',option.version,'_', num2str(i), '.tikz');
@@ -132,9 +119,9 @@ printTikz;
 
 % residual
 figure(22),set(gcf,'visible','off'); 
-hLegend = legend('classic','probabilistic');
+% hLegend = legend('classic','probabilistic');
 % hLegend = legend('classic','rank10','rank20','rank30','rank40','rank50','rank60');
-% hLegend = legend('frame 1','frame 2','frame 2','frame 4','frame 5','frame 6','frame 7','frame 8','frame 9','frame 10');
+hLegend = legend('frame 1','frame 2','frame 2','frame 4','frame 5','frame 6','frame 7','frame 8','frame 9','frame 10');
 % hTitle = title('H0fun:lra; Wfun:H\_true');
 set(hLegend,'Location','northeast')
 hYLabel = ylabel('$\|Bx - b\| / pixel$');
