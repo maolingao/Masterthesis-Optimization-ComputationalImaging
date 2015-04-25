@@ -133,7 +133,12 @@ for i = 1 : methodsAmount
             end
             
 end 
-save('data_nb_cg.mat','data');
+switch option.version
+    case 'CG'
+        save('data_nb_cg.mat','data');
+    case 'FH'
+        save('data_nb_pcg.mat','data');
+end
 %##### set, label and save figure #####
 saveResultFigure;
 
