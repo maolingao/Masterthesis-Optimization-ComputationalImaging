@@ -94,6 +94,10 @@ for i = 1 : methodsAmount
             [pncg_kernel, H, data_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, H, iter, startK, tol, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ###### psf residual curve ######
+            if exist('data','var')
+                len = length(data.errs(:,1));
+                data_pncgK = extendDataStr(data_pncgK,len);
+            end
             data.errs(:,k) = data_pncgK.errs;
             data.rerrs(:,k) = data_pncgK.rerrs;
             data.time(:,k) = data_pncgK.time;
@@ -111,26 +115,13 @@ for i = 1 : methodsAmount
             % ################################# %
             % -------- kernel comparison figure --------
             drawComparisonFig(natureK,pncg_kernel,k,'pncg','cmp',figPath);
-       
-            % statitics 
-            % all frame errors - kernel
-            time                     = timeLabel(time, data_pncgK.time);
-            errs_allframes_pncgK     = [errs_allframes_pncgK,  data_pncgK.errs];
-            rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, data_pncgK.rerrs];
+      
         end
-            % -------- ground truth frame error figure --------
-            % for latex
-            % residual error & relative error
-%             drawAllFrameErrorFig(errs_allframes_pncg, rerrs_allframes_pncg, numFrame, numFrame, 'pncg', dre, figPath, 'latex');
-            % -------- kernel frame error figure --------
-            % for latex
-            % residual error & relative error
-            drawAllFrameErrorFigKernel(errs_allframes_pncgK, rerrs_allframes_pncgK, time, numFrame, numFrame, 'pncg', dre, figPath,  'latex')
-            if exist('pncg_dI','var')
+        if exist('pncg_dI','var')
                 I = pncg_dI;
             else
                 I = pncg_kernel;
-            end
+        end
             
 end 
 switch option.version

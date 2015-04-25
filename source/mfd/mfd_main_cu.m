@@ -22,7 +22,6 @@ start        =   nature;
 %
 %
 iter =  option.iter;
-I    =  mfd_cu_gt(multiFrame, F, start, iter, nature, multiFilt_ds, option);
-% I    =  mfd_cu(multiFrame, F, start, iter, nature, multiFilt_ds, option);
+I    =  mfd_cu(multiFrame, F, start, iter, nature, multiFilt_ds, option);
 % option.solver = 'lucy';
 % I    =  mfd_cu_em(multiFrame, F, start, iter, nature, multiFilt_ds, option);
