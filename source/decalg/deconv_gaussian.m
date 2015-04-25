@@ -1,4 +1,4 @@
-function [gaussian_dI,errs,rerrs] = deconv_gaussian(F,im,iter,nature,start,eta,option)
+function [gaussian_dI,data] = deconv_gaussian(F,im,iter,nature,start,eta,option)
 % Gaussian noise deconvolution
 startup;
 
@@ -112,6 +112,10 @@ for i = 1 : (iter + 1)
     tElapsed = toc(tStart);
     time = [time; time(end)+tElapsed];
 end
+
+data.errs = errs;
+data.time = time;
+data.rerrs = rerrs;
 
 
 %##### figure #####

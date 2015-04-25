@@ -1,4 +1,4 @@
-function [lucy_dI,errs,rerrs] = deconv_rl(F,im,iter,nature,start,eta,option)
+function [lucy_dI,data] = deconv_rl(F,im,iter,nature,start,eta,option)
 % Richardson-Lucy deconvolution
 startup;
 
@@ -174,6 +174,10 @@ for i = 1 : (iter + 1)
     time = [time;time(end)+tElapsed];
 
 end
+
+data.errs = errs;
+data.time = time;
+data.rerrs = rerrs;
 
 %%##### figure #####
 %----- main curves -----
