@@ -6,3 +6,4 @@
 local
 data
 fig
+*.mat

@@ -19,6 +19,7 @@ figPath = option.figPath;
 % f13 = figure(13); clf(13), set(f13,'visible','off')
 % fclk = figure(14); clf(fclk), set(fclk,'visible','on')
 % fstp = figure(15); clf(fstp), set(fstp,'visible','on')
+figure(200), clf
 
 if F.xsize > F.fsize
     imagesize = F.xsize;
@@ -43,7 +44,7 @@ for i = 1 : numFrame                            % register observation images
     %
     multiKernel{i} =  center(multiKernel{i});   % center all kernel, only for error analysis
 end
-eta = option.eta;                                        % ### <--- regularization parameter
+eta = option.etaf;                                        % ### <--- regularization parameter
 % kernel estimating
 tolK   =  option.tolK;
 scaler =  1e0;
@@ -148,13 +149,12 @@ switch method
             option.plotFlag     =   1;
 %             startK              =   startK./sum(vec(startK));
 %             startK              =   zeros(size(startK));
-            [pncg_kernel, HK, errs_pncgK, clkK, rerrs_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
+            [pncg_kernel, HK, data_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
-%             figure, subplot(1,2,1),imagesc(pncg_kernel),colormap gray, axis image off
-%             pncg_kernel         =   center(pncg_kernel);
-%             gcf,  subplot(1,2,2),imagesc(pncg_kernel),colormap gray, axis image off
-%             keyboard
-%             close(gcf)
+            % ###### psf residual curve ######
+            figure(200), set(gcf,'visible','on')
+            subplot(121), loglog(1:length(data_pncgK.errs),data_pncgK.errs); hold on
+            subplot(122), loglog(data_pncgK.time,data_pncgK.errs); hold on
             % ----------- figure all V's of matrix H -----------
 % % %             H_mtx        =  buildH(HK);
 % % %             [V,U]        =  eig(H_mtx);
@@ -275,9 +275,9 @@ switch method
             end            
             % statitics 
             % all frame errors - kernel
-            timeK                    = timeLabel(timeK, clkK);
-            errs_allframes_pncgK     = [errs_allframes_pncgK,  errs_pncgK];
-            rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, rerrs_pncgK];
+            timeK                    = timeLabel(timeK, data_pncgK.time);
+            errs_allframes_pncgK     = [errs_allframes_pncgK,  data_pncgK.errs];
+            rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, data_pncgK.rerrs];
         end
             % -------- ground truth frame error figure --------
             % for latex

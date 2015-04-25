@@ -61,7 +61,7 @@ switch option.version
 %         M       =   hessianMatrix(H.H,H.s,H.y,H.delta); % preconditioner
         M       =   hessianMatrix(H.H,H.s,H.y,H.delta,H.R,H.D); % preconditioner
         x       =   start;
-        r0      =   (F'*(F*x) +eta*((L*x)) + a*x) - b;
+        r0      =   (F'*(F*x) + eta*((L*x)) + a*x) - b;
         r       =   r0;
 %         p       =   M*r0;
         assert(isprop(H,'s') && isprop(H,'R'));
@@ -108,13 +108,13 @@ for k = 1 : (iter + 1)  %numel(im)
     pncg_dI         =   reshape(x,imageSize);  
     % -----------------------------------------------
     % if solving f, regularize kernel f
-    kernelSize = min(F.xsize, F.fsize);
-    if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
-        NOP;                                    % current solving x, BOP    
-    else
-        pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f
-%         pncg_dI       =   preserveNorm(pncg_dI);        % preserve energy norm of f
-    end
+%     kernelSize = min(F.xsize, F.fsize);
+%     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
+%         NOP;                                    % current solving x, BOP    
+%     else
+%         pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f
+% %         pncg_dI       =   preserveNorm(pncg_dI);        % preserve energy norm of f
+%     end
     % -----------------------------------------------
     % residual error
     im_residual     =   betterMinus(F * pncg_dI, im); % 
@@ -128,7 +128,7 @@ for k = 1 : (iter + 1)  %numel(im)
     % register images r.t. ground truth 
     fixed           =   nature;                            % r.t. ground truth
     moving          =   pncg_dI;
-    subpixel        =   0.1;
+    subpixel        =   1;
     [pncg_dI_reg, output] = efficient_imregister(fixed, moving, subpixel);
     % -----------------------------------------------
     % absolute error
@@ -151,11 +151,15 @@ for k = 1 : (iter + 1)  %numel(im)
     end
     % -----------------------------------------------
     % plot 
-    f4 = figure(4); subplot(121)
+    f4 = figure(4); subplot(131)
+    imagesc(clip(nature,1,0)); axis image,colormap(gray)
+    title('ground truth')
+    drawnow          
+    subplot(132)
     imagesc(clip(pncg_dI,1,0)); axis image,colormap(gray)
     title(sprintf('my pncg - iteration %d/%d',k,iter + 1))
     drawnow          
-    subplot(122)
+    subplot(133)
     hData = loglog(errs,'Color',color,'LineStyle',linestyle,'LineWidth',linewidth);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
