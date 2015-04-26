@@ -155,6 +155,7 @@ switch method
             figure(200), set(gcf,'visible','on')
             subplot(121), loglog(1:length(data_pncgK.errs),data_pncgK.errs); hold on
             subplot(122), loglog(data_pncgK.time,data_pncgK.errs); hold on
+            dataK{k} = data_pncgK;
             % ----------- figure all V's of matrix H -----------
 % % %             H_mtx        =  buildH(HK);
 % % %             [V,U]        =  eig(H_mtx);
@@ -226,22 +227,22 @@ switch method
                 HN = hessianMatrix(eye(imagesize));                          % normal CG step for g.t. estimation
                 % --------- pncg step ---------
 %                 if k == 1
-%                     [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
+%                     [pncg_dI, HN, data_pncgN.errs, ~, data_pncgN.rerrs] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, start, tolN, eta, option); % pncg
 %                 else
-%                     [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
+%                     [pncg_dI, HN, data_pncgN.errs, ~, data_pncgN.rerrs] = deconv_pncg(Kpncg, frame, natureI, HN, iterN, pncg_dI, tolN, eta, option); % pncg
 %                 end
                 % --------- gaussian step ---------
                 if k == 1
-                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
+                    [pncg_dI,data_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,start,eta,option); % gaussian
                 else
-                    [pncg_dI,errs_pncgN,rerrs_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
+                    [pncg_dI,data_pncgN] = deconv_gaussian(Kpncg,frame,iterN,natureI,pncg_dI,eta,option); % gaussian
                 end
                 %
                 % !!!!!!!! non blind with MEMLIM!!!!!!!!
     % % %             option.plotFlag = 1;
     % % %             clear Kpncg
     % % %             Kpncg = conv2MatOp(im2double(natureK),imagesize,shape);  % convMtx of kernel, pncg
-    % % %             [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(Kpncg, frame, natureI, HN, 10, start, tolN, eta, option); % pncg
+    % % %             [pncg_dI, HN, data_pncgN.errs, ~, data_pncgN.rerrs] = deconv_pncg(Kpncg, frame, natureI, HN, 10, start, tolN, eta, option); % pncg
     % % %             % ##### MEMLIM #####
     % % %             MEMLIM = option.MEMLIM;% size(HK.s,2);
     % % %             lambda = option.memoryStrength;
@@ -263,11 +264,11 @@ switch method
                 % statitics 
                 % all frame errors - ground truth
                 if k == 1
-                    errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(1), errs_pncgN(end)]; % residual, pncg 
-                    rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(1),rerrs_pncgN(end)]; % relative error, pncg
+                    errs_allframes_pncg  = [errs_allframes_pncg, data_pncgN.errs(1), data_pncgN.errs(end)]; % residual, pncg 
+                    rerrs_allframes_pncg = [rerrs_allframes_pncg,data_pncgN.rerrs(1),data_pncgN.rerrs(end)]; % relative error, pncg
                 else                
-                    errs_allframes_pncg  = [errs_allframes_pncg, errs_pncgN(end)]; % residual, pncg 
-                    rerrs_allframes_pncg = [rerrs_allframes_pncg,rerrs_pncgN(end)]; % relative error, pncg
+                    errs_allframes_pncg  = [errs_allframes_pncg, data_pncgN.errs(end)]; % residual, pncg 
+                    rerrs_allframes_pncg = [rerrs_allframes_pncg,data_pncgN.rerrs(end)]; % relative error, pncg
                 end
                 % -------- ground truth frame error figure --------
                 % for debug
@@ -279,6 +280,16 @@ switch method
             errs_allframes_pncgK     = [errs_allframes_pncgK,  data_pncgK.errs];
             rerrs_allframes_pncgK    = [rerrs_allframes_pncgK, data_pncgK.rerrs];
         end
+            dataN.errs = errs_allframes_pncg;
+            dataN.rerrs = rerrs_allframes_pncg;
+            switch option.version
+                case 'FH'
+                    save('dataK_b_pcg.mat','dataK');
+                    save('dataN_b_pcg.mat','dataN');
+                case 'CG'
+                    save('dataK_b_cg.mat','dataK');
+                    save('dataN_b_cg.mat','dataN');
+            end
             % -------- ground truth frame error figure --------
             % for latex
             % residual error & relative error

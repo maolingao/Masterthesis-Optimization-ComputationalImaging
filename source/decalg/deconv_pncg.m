@@ -108,13 +108,13 @@ for k = 1 : (iter + 1)  %numel(im)
     pncg_dI         =   reshape(x,imageSize);  
     % -----------------------------------------------
     % if solving f, regularize kernel f
-%     kernelSize = min(F.xsize, F.fsize);
-%     if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
-%         NOP;                                    % current solving x, BOP    
-%     else
-%         pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f
-% %         pncg_dI       =   preserveNorm(pncg_dI);        % preserve energy norm of f
-%     end
+    kernelSize = min(F.xsize, F.fsize);
+    if unique(abs(kernelSize - size(pncg_dI)) > abs(max(F.xsize, F.fsize) - size(pncg_dI)))
+        NOP;                                    % current solving x, BOP    
+    else
+        pncg_dI       =   lowerBound(pncg_dI);          % current solving f, low bound f
+        pncg_dI       =   preserveNorm(pncg_dI);        % preserve energy norm of f
+    end
     % -----------------------------------------------
     % residual error
     im_residual     =   betterMinus(F * pncg_dI, im); % 
