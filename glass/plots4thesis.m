@@ -192,7 +192,7 @@ print(gcf, '-depsc2', filename), close gcf
 end
 
 %% different regularization parameter for same SNR img
-figPath = '/is/ei/mgao/Documents/thesis/article/figure/fig4thesis';
+figPath = '/home/gao/Documents/MPI/thesis/article/figure/fig4thesis';
 close all hidden
 multiFilt    = betterImRead; % 100 speckle samples
 f  =  multiFilt{round(1e2*rand(1))};
@@ -213,7 +213,7 @@ print(gcf, '-depsc2', filename), close gcf
 
 y = F*x;
 %##### settings ##### 
-option.mode = 'SNR'; % 'eta';
+option.mode =  'eta'; % 'SNR'; %
 etaVec = [0, 1e-4, 1e-3, 1e-2, 1e-1, 1e0];
 SNRVec = 10:10:60;
 %##### settings ##### 
@@ -288,7 +288,9 @@ for k = 1 :  length(trgVec) % length(etaVec)
     end
     
     
-    [pncg_dI, HN, errs_pncgN, ~, rerrs_pncgN] = deconv_pncg(F, y, x, HN, iterN, start, tolN, eta, option); % pncg
+    [pncg_dI, HN, data] = deconv_pncg(F, y, x, HN, iterN, start, tolN, eta, option); % pncg
+    
+    data_snr{k} = data;
     %
     figure, imagesc(pncg_dI)
     axis image off; colormap gray;
@@ -297,8 +299,13 @@ for k = 1 :  length(trgVec) % length(etaVec)
     print(gcf, '-depsc2', filename), close gcf
     
 end
-
-    saveErrCurve;
+switch option.mode
+    case 'SNR'
+      save('data_snrDiff_eta0.mat','data_snr')
+    case 'eta'
+      save('data_snrFix_etaDiff.mat','data_snr')
+end
+%     saveErrCurve;
 %% direct kernel estimation
 figPath = '/is/ei/mgao/Documents/thesis/article/figure/fig4thesis';
 
