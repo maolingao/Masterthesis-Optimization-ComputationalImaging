@@ -152,7 +152,7 @@ f2 = figure(2); set(f2,'visible','on')
 filename = 'deconv_gaussian_with_curve';
 filename = fullfile(figPath,filename);
 print(gcf, '-depsc2', filename)
-% keyboard
+
 %----- gaussian deconved image -----
 f_gaussian = figure; set(f_gaussian,'visible','off');
 imagesc(clip(gaussian_dI,1,0)); axis image off, colormap(gray)

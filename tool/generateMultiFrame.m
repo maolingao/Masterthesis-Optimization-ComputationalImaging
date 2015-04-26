@@ -40,12 +40,6 @@ for i = 1:numFrame + 1
     if isfield(option,'SNR')
         convIm      =  addnoise( convIm, SNR, nature);
     end
-    figure(333), imagesc(convIm), colormap gray, axis off image;
-    if exist('SNR','var')
-        title(sprintf('SNR = %ddB',SNR));
-    else
-        title(sprintf('blurry image'));
-    end
     multiFrame{i}   =  convIm;
     % ########## show kernel and blurry image ##########
     %{
@@ -57,6 +51,13 @@ for i = 1:numFrame + 1
     %}    
 
 end
+
+    figure(333), imagesc(convIm), colormap gray, axis off image;
+    if exist('SNR','var')
+        title(sprintf('SNR = %ddB',SNR));
+    else
+        title(sprintf('blurry image'));
+    end
 
 % ####### save setup figures ######
 setupConv;

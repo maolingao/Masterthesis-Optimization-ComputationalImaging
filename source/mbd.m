@@ -149,6 +149,10 @@ switch method
             option.plotFlag     =   1;
 %             startK              =   startK./sum(vec(startK));
 %             startK              =   zeros(size(startK));
+            if mod(k,100) == 1 && floor(k/100)
+                tolK = option.tolK/2^(floor(k/100));
+                keyboard
+            end
             [pncg_kernel, HK, data_pncgK] = deconv_pncg(X, frame4estiKernel, natureK, HK, iterK, startK, tolK, eta, option); % pncg
             pncg_kernel         =   preserveNorm(pncg_kernel);            % preserve energy norm of PSF
             % ###### psf residual curve ######
