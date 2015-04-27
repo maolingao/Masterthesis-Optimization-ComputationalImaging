@@ -378,4 +378,68 @@ numFrame     = option.numFrame;
 multiFilt_ds = multiFilt(randperm(length(multiFilt),numFrame)); 
 [multiFrame,multiFilt_ds,F,nature] = generateMultiFrame(numFrame, multiFilt_ds, option);
 
+%% 
+figPath = '/home/gao/Documents/MPI/thesis/article/figure/fig4thesis';
+startup; 
+
+fstp_err = figure;
+fstp_rerr = figure;
+
+%%% 4 legend
+load('dataK_nb_cg_gradImg.mat')
+stepLine = 1:length(dataK{1}.time);
+
+figure(fstp_err),  
+hData = loglog(stepLine,dataK{1}.errs,'Color', dre, 'linewidth',2); hold on
+hData = loglog(stepLine,dataK{1}.errs,'Color', mpg, 'linewidth',2);
+figure(fstp_rerr),  
+hData = loglog(stepLine,dataK{1}.rerrs,'Color', dre, 'linewidth',2); hold on
+hData = loglog(stepLine,dataK{1}.rerrs,'Color', mpg, 'linewidth',2);
+
+load('dataK_nb_cg_gradImg.mat')
+stepLine = 1:length(dataK{1}.time);
+
+numset = length(dataK);
+color = dre;
+
+for k = 1 : numset
     
+    figure(fstp_err), hData = loglog(stepLine, dataK{k}.errs,'Color',color,'lineWidth',2); thisFigure; hold on
+    figure(fstp_rerr), hData = loglog(stepLine, dataK{k}.rerrs,'Color',color,'lineWidth',2);  thisFigure; hold on
+    
+end
+
+load('dataK_nb_cg_normalImg.mat')
+
+stepLine = 1:length(dataK{1}.time);
+
+numset = length(dataK);
+color = mpg;
+
+for k = 1 : numset
+    
+    figure(fstp_err), hData = loglog(stepLine, dataK{k}.errs,'Color',color,'lineWidth',2);  thisFigure; hold on
+    figure(fstp_rerr), hData = loglog(stepLine, dataK{k}.rerrs,'Color',color,'lineWidth',2);  thisFigure; hold on
+    
+end
+
+%
+figure(fstp_err)
+hXLabel = xlabel('$\#\text{steps}$', 'Interpreter','Latex');
+hYLabel = ylabel('$\|f * x - y\| / pixel$');
+hLegend = legend('gradient image', 'normal image');
+set(hLegend,'location','northeast')
+thisFigure
+figName = strcat('fstp_err_grad_normal_img','.tikz');
+figname = fullfile(figPath,figName);
+printTikz;
+%
+figure(fstp_rerr)
+hXLabel = xlabel('$\#\text{steps}$', 'Interpreter','Latex');
+hYLabel = ylabel('$\text{relative error}$');
+hLegend = legend('gradient image', 'normal image');
+set(hLegend,'location','northeast')
+thisFigure
+figName = strcat('fstp_rerr_grad_normal_img','.tikz');
+figname = fullfile(figPath,figName);
+printTikz;
