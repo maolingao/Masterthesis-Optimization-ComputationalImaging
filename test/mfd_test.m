@@ -8,15 +8,16 @@ figPath = option.figPath;
 n = 60;
 Q = RandomRotation(n); 
 u = rand(n,1);
-u = clip(u,0.9,0.1);
+u = clip(u,1,0.1);
 u = sort(u,'ascend');
-step = 50; u(1:step) = 1e-1*u(1:step); u(step+1:end) = u(step+1:end);
+step = 50; u(1:step) = 1e-1*u(1:step)+0.1; u(step+1:end) = u(step+1:end);
+% step = 50; u(1:step) = 0.1*ones(step,1); u(step+1:end) = u(step+1:end);
 D = diag(u);
 A = Q*D*Q';
 H_true = Q * diag(1./u) * Q';
 % b = randn(n,1);
 % x = H_true * b;
-tol = 1e-10;
+tol = 1e-8;
 iter = option.iter;
 
 % Identity + H_true
@@ -127,7 +128,8 @@ set(hLegend,'Location','northeast')
 hYLabel = ylabel('$\|Bx - b\| / pixel$');
 hXLabel = xlabel('$\#\text{steps}$');
 thisFigure;
-figname = 'residualPCGCG.tikz'; figname = fullfile(figPath,figname);
+
+figname = sprintf('multiframe_evdG_firstStep_QN_clustered_MEMLIM%d.tikz',option.MEMLIM); figname = fullfile(figPath,figname);
 printTikz;
 %
 %
