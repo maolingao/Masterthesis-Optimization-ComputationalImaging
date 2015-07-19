@@ -11,16 +11,38 @@ if nargin < 6
 end
 if nargin < 7
     option.figPath = '/is/ei/mgao/figure2drag';
+    option.color = 'ora';
+    option.LineStyle = '-';
+end
+if ~isfield(option,'color')
+    color = ora;
+else
+    color = eval(option.color);
+end
+if ~isfield(option,'LineStyle')
+    linestyle = '-';
+else
+    linestyle = option.LineStyle;
+end
+if ~isfield(option,'noiseVar')
+    noiseVar = 0.004;
+else
+    noiseVar = option.noiseVar;
 end
 
+
+%% ############################
 lucy_dI = start; % custermized start guess; 
 imageSize = size(lucy_dI);
 %##### Tikhonov #####
-%{
-l = [0 -1 0
-     -1 4 -1
-     0 -1 0]; % laplacian matrix WORK! 
-L = conv2MatOp(l,imageSize,'same');
+%{%
+% l = [0 -1 0
+%      -1 4 -1
+%      0 -1 0]; % laplacian matrix WORK! 
+% l = -[0.5 1 0.5
+%      1 -6 1
+%      0.5 1 0.5]; % try
+% L = conv2MatOp(l,imageSize,'same');
 %}
 % eta = 0.001;  % choice according to image noise
 % namda =  1e-3;
@@ -51,7 +73,7 @@ for i = 1 : (iter + 1)
     drawnow    
     
     subplot(122)
-    hData = loglog(errs, 'Color', ora);
+    hData = loglog(errs, 'Color',color,'LineStyle',linestyle);
     hYLabel = ylabel('$\|Fx - y\| / pixel$', 'Interpreter','Latex');
     hXLabel = xlabel('$\#steps$', 'Interpreter','Latex');
     thisFigure;   
@@ -80,22 +102,8 @@ for i = 1 : (iter + 1)
     lucy_dI = clip(lucy_dI,1,0);
     %}
     % Laplacian regularization
-    %{
-    LI = clip(laplacian(lucy_dI), inf, -inf);
-    ItrLI = clip(lucy_dI'*LI, inf, -inf);                          % Itranspose*laplacian*I
-    [gx,gy] = gradient(lucy_dI);
-    nablaI = sqrt(gx.^2 + gy.^2);
-    etaf = -1/eta;
-%     rt = clip(etaf * exp( etaf * ItrLI) * nablaI * LI, inf, -inf); % Itranspose*laplacian*I
-%     rt = clip(etaf * exp( etaf * nablaI.*nablaI) * nablaI * LI, inf, -inf); % abs(nabla*I)
-%     rt = clip( exp( ItrLI) .* nablaI .* LI, inf, -inf);               % Itranspose*laplacian*I
-    rt = clip( exp( nablaI.*nablaI) .* nablaI .* LI, inf, -inf); % abs(nabla*I)
-%     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl);
-    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));
-    lucy_dI = clip(lucy_dI,1,0);
-    %}
-    %{
     % Tai Paper
+    %{
     LI = lap(lucy_dI);                          % laplace(I)
     [gx,gy] = gradient(lucy_dI);
     nablaI = sqrt(gx.^2 + gy.^2);                     % abs(nabla(I))
@@ -104,51 +112,42 @@ for i = 1 : (iter + 1)
     lucy_dI = clip(lucy_dI,1,0);    
     %}
     % Tai code    
-    [gx,gy] = gradient(lucy_dI);
-    [ggx,~] = gradient(flip(gx,2));
-    [~,ggy] = gradient(flip(gy,2));
-    rt = abs(gx).*ggx + abs(gy).*ggy ;
-    
-     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));         % clip pixel here btw 0 and 1
-%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );         % clip pixel here btw 0 and 1
-   
-    lucy_dI = clip(lucy_dI,1,0);    
     %{
-    % easy update by Levin
-    LI = clip(laplacian(lucy_dI), inf, -inf);
-    rt = LI;
-    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) + epsl  ) ./ ( F' * ones(size(im)) + epsl));
-    lucy_dI = clip(lucy_dI,1,0);
-    %}
-    % ***** gaussian noise model *****
-    % pure
-%     lucy_dI = lucy_dI + ( F' * (im  - (F * lucy_dI) ) );
-    % TV regularization    
-    %{
+    noiseVar = option.noiseVar;
+    if noiseVar == 0
+        noiseVar = epsl;
+    else 
+        NOP;
+    end
     [gx,gy] = gradient(lucy_dI);
-    nablaI = sqrt(gx.^2 + gy.^2);
-    [dgx, ~] = gradient(gx./(nablaI + epsl));
-    [~, dgy] = gradient(gy./(nablaI + epsl));
-    rt = - (dgx + dgy); 
-    lucy_dI = lucy_dI + ( F' * (im  - (F * lucy_dI) ) ) + eta * rt;
-    lucy_dI = clip(lucy_dI,1,0);
+%     [ggx,~] = gradient(flip(gx,2));
+%     [~,ggy] = gradient(flip(gy,2));
+    [ggx,~] = gradient(gx);
+    [~,ggy] = gradient(gy);
+    gx = abs(gx);
+    gy = abs(gy);
+    gx = clip(gx,1,1/255);
+    gy = clip(gy,1,1/255);
+    d = 2; % Tai's parameter
+    minWeight = exp(-1/(noiseVar) * (1/255).^d) .* (1/255).^(d-1);
+%     keyboard
+    wx = exp(-1/(noiseVar) * gx.^d) .* gx.^(d-1) / minWeight;
+    wy = exp(-1/(noiseVar) * gy.^d) .* gy.^(d-1) / minWeight;
+    rt = wx.*ggx + wy.*ggy ;
+    figure(995), imagesc(rt), axis image, colorbar('southoutside'), colormap gray, drawnow
+    keyboard 
+     lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) ) ) ./ ( F' * ones(size(im))));    
+%    lucy_dI = lucy_dI ./ (1 - eta * rt + epsl) .* ( F' * ((im ) ./ (F*lucy_dI + epsl) )  );      
+    lucy_dI = clip(lucy_dI,1,0);         % clip pixel here btw 0 and 1
     %}
-    % Laplacian regularization
-    %{
-    LI = clip(laplacian(lucy_dI), inf, -inf);
-    ItrLI = clip(lucy_dI'*LI, inf, -inf);                          % Itranspose*laplacian*I
-    [gx,gy] = gradient(lucy_dI);
-    nablaI = sqrt(gx.^2 + gy.^2);
-    etaf = -1/eta;
-%     rt = clip(etaf * exp( etaf * ItrLI) .* nablaI .* LI, 1, -1); % Itranspose*laplacian*I
-%     rt = clip(etaf * exp( etaf * nablaI.*nablaI) * nablaI * LI, inf, -inf); % abs(nabla*I)
-    rt = clip( exp( ItrLI) .* nablaI .* LI, 1, -1); % Itranspose*laplacian*I
-%     rt = clip( exp(  nablaI.*nablaI) .* nablaI .* LI, inf, -inf); % abs(nabla*I)
-    lucy_dI = lucy_dI + ( F' * (im  - (F * lucy_dI) ) ) + eta * rt;
-    lucy_dI = clip(lucy_dI,1,0);
-%     figure(10), imagesc(rt), colormap gray, axis equal
+    % my try
+    %{%
+    rt = clip(lap(lucy_dI),4,-4);
+%     figure(155), imagesc(rt), colormap gray, axis image, colorbar('southoutside')
+%     keyboard
+    lucy_dI = lucy_dI ./ (1 + eta * rt) .* (( F' * ((im  + epsl ) ./ (F*lucy_dI + epsl) )) ./ ( F' * ones(size(im))));         % clip pixel here btw 0 and 1
+    lucy_dI =  clip(lucy_dI,1,0);
     %}
-    % Bilateral regularization
 %%%%%%%%%%%%%%%%%%%%%
     tElapsed = toc(tStart);
     time = [time;time(end)+tElapsed];
@@ -192,7 +191,21 @@ print(gcf, '-depsc2', filename)
 f_lucy = figure; set(f_lucy,'visible','off');
 imagesc(clip(lucy_dI,1,0)); axis image off, colormap(gray)
 title('lucy')
-filename = 'deconv_lucy';
+filename = sprintf('deconv_lucy_eta%d',eta);
 filename = fullfile(figPath,filename);
+print(gcf, '-depsc2', filename)
+%----- relative error for regularization -----
+figure(34), set(gcf,'visible','on');
+hData = plot(rerrs,'Color',color,'LineStyle',linestyle); hold on;
+hLegend = legend('$\eta\ 0$','$\eta\ 1e-5$','$\eta\ 1e-4$','$\eta\ 1e-3$', '$\eta\ 1e-2$',...
+'$\eta\ 1e-1$','$\eta\ 1$','$\eta\ 10$','$\eta\ 1e2$','$\eta\ 1e3$');
+% hLegend = legend('SNR 10','SNR 20','SNR 30','SNR 40','SNR 50');
+set(hLegend,'Interpreter','latex');
+hYLabel = ylabel('$\|x - \hat{x}\| / \|x\|$','Interpreter','Latex') ;
+% ylabel('$Relative error$','Interpreter','Latex')
+hXLabel = xlabel('$\#steps$','Interpreter','Latex');
+filename = 'deconv_lucy_relativeError_enlarge';
+filename = fullfile(figPath,filename);
+thisFigure;
 print(gcf, '-depsc2', filename)
 end
